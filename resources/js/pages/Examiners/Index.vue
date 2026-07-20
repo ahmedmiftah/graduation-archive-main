@@ -9,6 +9,9 @@ import { computed, ref } from 'vue';
 const page  = usePage<SharedData>();
 const flash = computed(() => page.props.flash ?? {});
 
+const userDeptId = computed(() => page.props.auth?.user?.department_id ?? null);
+const userDeptName = computed(() => page.props.auth?.user?.department?.name ?? null);
+
 interface Department {
     id: number;
     name: string;
@@ -35,7 +38,12 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 // ── Department filter ─────────────────────────────────────────────
-const selectedDept = ref<number | ''>(props.filters.department_id ?? '');
+const selectedDept = ref<number | ''>(userDeptId.value ?? props.filters.department_id ?? '');
+
+const filteredExaminers = computed(() => {
+    if (!userDeptId.value) return props.examiners; // If no department (e.g., super admin), show all or based on their logic
+    return props.examiners.filter(ex => ex.department_id === userDeptId.value);
+});
 
 function applyFilter() {
     const params = selectedDept.value !== '' ? { department_id: selectedDept.value } : {};
@@ -119,27 +127,16 @@ function deleteExaminer() {
                 {{ flash.error }}
             </div>
 
-            <!-- Department filter -->
-            <div class="flex items-center gap-3">
+            <!-- Department filter (Hidden as per user request) -->
+            <div v-if="false" class="flex items-center gap-3">
                 <label class="text-sm font-medium text-gray-700 dark:text-gray-300">تصفية حسب القسم:</label>
                 <select
+                    disabled
                     v-model="selectedDept"
                     class="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                    @change="applyFilter"
                 >
-                    <option value="">جميع الأقسام</option>
-                    <option v-for="dept in departments" :key="dept.id" :value="dept.id">
-                        {{ dept.name }}
-                    </option>
+                    <option :value="userDeptId">{{ userDeptName }}</option>
                 </select>
-                <button
-                    v-if="selectedDept !== ''"
-                    type="button"
-                    class="text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                    @click="selectedDept = ''; applyFilter()"
-                >
-                    ✕ إلغاء التصفية
-                </button>
             </div>
 
             <!-- Table -->
@@ -155,7 +152,7 @@ function deleteExaminer() {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-                        <tr v-for="examiner in examiners" :key="examiner.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
+                        <tr v-for="examiner in filteredExaminers" :key="examiner.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
                             <td class="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
                                 {{ examiner.full_name }}
                             </td>
@@ -189,7 +186,7 @@ function deleteExaminer() {
                                 </div>
                             </td>
                         </tr>
-                        <tr v-if="examiners.length === 0">
+                        <tr v-if="filteredExaminers.length === 0">
                             <td colspan="5" class="px-4 py-10 text-center text-sm text-gray-500">
                                 {{ selectedDept !== '' ? 'لا يوجد ممتحنون في هذا القسم' : 'لا يوجد ممتحنون مسجلون' }}
                             </td>

@@ -30,13 +30,20 @@ interface Department {
     specializations?: Specialization[];
 }
 
-defineProps<{
+const props = defineProps<{
     departments: Department[];
 }>();
 
+const filteredDepartments = computed(() => {
+    if (isSuperAdmin.value || !authUser.value?.department_id) {
+        return props.departments;
+    }
+    return props.departments.filter(d => d.id === authUser.value?.department_id);
+});
+
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'لوحة التحكم', href: '/dashboard' },
-    { title: 'الأقسام', href: '/departments' },
+    { title: 'التخصصات', href: '/departments' },
 ];
 
 // ── Department modal ──────────────────────────────────────────────
@@ -119,12 +126,12 @@ function toggleExpand(id: number) {
 </script>
 
 <template>
-    <Head title="الأقسام" />
+    <Head title="التخصصات" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 p-4" dir="rtl">
             <!-- Header -->
             <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">إدارة الأقسام</h1>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">إدارة التخصصات</h1>
                 <button
                     v-if="isSuperAdmin"
                     type="button"
@@ -162,7 +169,7 @@ function toggleExpand(id: number) {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-                        <template v-for="dept in departments" :key="dept.id">
+                        <template v-for="dept in filteredDepartments" :key="dept.id">
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
                                 <td class="px-4 py-3">
                                     <button
@@ -239,7 +246,7 @@ function toggleExpand(id: number) {
                                 </td>
                             </tr>
                         </template>
-                        <tr v-if="departments.length === 0">
+                        <tr v-if="filteredDepartments.length === 0">
                             <td colspan="5" class="px-4 py-8 text-center text-sm text-gray-500">لا توجد أقسام</td>
                         </tr>
                     </tbody>

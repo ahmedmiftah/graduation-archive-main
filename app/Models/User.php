@@ -46,4 +46,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Project::class, 'supervisor_id');
     }
+
+    public function feedbackReplies(): HasMany
+    {
+        return $this->hasMany(ProjectFeedbackReply::class);
+    }
+
+    public function feedbackAuditLogs(): HasMany
+    {
+        return $this->hasMany(ProjectFeedbackAuditLog::class);
+    }
 }

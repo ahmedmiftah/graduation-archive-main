@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 
 interface Department    { id: number; name: string }
 interface Specialization { id: number; name: string; department_id: number }
@@ -52,6 +53,16 @@ const form = useForm({
     })) as Student[],
 });
 
+const page = usePage();
+const authUser = computed(() => page.props.auth?.user);
+
+const filteredDepartments = computed(() => {
+    if (authUser.value?.role === 'super_admin' || !authUser.value?.department_id) {
+        return props.departments;
+    }
+    return props.departments.filter(d => d.id === authUser.value?.department_id);
+});
+
 const filteredSpecializations = computed(() =>
     form.department_id
         ? props.specializations.filter(s => s.department_id === form.department_id)
@@ -61,6 +72,12 @@ const filteredSpecializations = computed(() =>
 watch(() => form.department_id, (newVal, oldVal) => {
     if (oldVal !== null && newVal !== oldVal) form.specialization_id = null;
 });
+
+// If editing user is restricted to a department, ensure it's selected. 
+// (The project may already have it set, but just in case)
+if (authUser.value?.department_id && form.department_id !== authUser.value.department_id) {
+    form.department_id = authUser.value.department_id;
+}
 
 function addStudent() {
     form.students.push({ full_name: '', registration_number: '' });
@@ -162,11 +179,12 @@ const currentFileName = computed(() => {
                             </label>
                             <select
                                 v-model="form.department_id"
-                                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                                :disabled="!!authUser?.department_id && authUser?.role !== 'super_admin'"
+                                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800"
                                 :class="{ 'border-red-500': form.errors.department_id }"
                             >
                                 <option :value="null">اختر القسم</option>
-                                <option v-for="dept in departments" :key="dept.id" :value="dept.id">{{ dept.name }}</option>
+                                <option v-for="dept in filteredDepartments" :key="dept.id" :value="dept.id">{{ dept.name }}</option>
                             </select>
                             <p v-if="form.errors.department_id" class="mt-1 text-xs text-red-600">{{ form.errors.department_id }}</p>
                         </div>

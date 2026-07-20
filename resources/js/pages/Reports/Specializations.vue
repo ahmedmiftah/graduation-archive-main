@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import ExportButtons from '@/components/ExportButtons.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { BarChart2, Bell, BookOpen, Building2, FolderOpen, LayoutGrid, Search, Upload, UserCheck, Users } from 'lucide-vue-next';
 import { type BreadcrumbItem } from '@/types';
+import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+const page = usePage();
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -42,7 +45,7 @@ const excelUrl = computed(() => route('reports.export.excel', { type: 'specializ
 
 // ── Bar chart helpers ──────────────────────────────────────────────────────
 
-const maxCount = computed(() => Math.max(...props.report.top_specializations.map((s) => s.project_count), 1));
+const maxCount = computed(() => Math.max(...filteredTop.value.map((s) => s.project_count), 1));
 
 const barWidth = (count: number) => Math.round((count / maxCount.value) * 100) + '%';
 
@@ -91,7 +94,7 @@ const yearTotals = computed(() => {
                     <h2 class="font-semibold text-gray-700 dark:text-gray-200">أكثر 10 تخصصات استخداماً</h2>
                 </div>
                 <div class="space-y-3 p-5">
-                    <div v-for="spec in report.top_specializations" :key="spec.id">
+                    <div v-for="spec in filteredTop" :key="spec.id">
                         <div class="mb-1 flex items-center justify-between gap-4">
                             <div class="min-w-0">
                                 <span class="block truncate text-sm font-medium text-gray-800 dark:text-gray-200">
@@ -168,7 +171,7 @@ const yearTotals = computed(() => {
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                            <tr v-for="spec in report.rare_specializations" :key="spec.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
+                            <tr v-for="spec in filteredRare" :key="spec.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
                                 <td class="px-4 py-3 text-sm text-gray-800 dark:text-gray-200">{{ spec.name }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ spec.department?.name ?? '—' }}</td>
                                 <td class="px-4 py-3">

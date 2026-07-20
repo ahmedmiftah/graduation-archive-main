@@ -5,7 +5,9 @@ import AppLayout from '@/layouts/AppLayout.vue'
 import { type BreadcrumbItem } from '@/types'
 import { router } from '@inertiajs/vue3'
 import { Building2, FolderOpen, Star } from 'lucide-vue-next'
-import { computed, ref } from 'vue'
+import { computed, ref } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -52,6 +54,11 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'تقرير الأقسام', href: '/reports/department' },
 ]
 
+// Chart data for departments
+const deptChartData = computed(() =>
+    props.report.departments.map(d => ({ status_name: d.name, count: d.project_count }))
+)
+
 const selectedDept = ref<number | ''>(props.filter.department_id ?? '')
 
 function applyFilter() {
@@ -67,6 +74,17 @@ function applyFilter() {
 const totalProjects = computed(() =>
     props.report.departments.reduce((s, d) => s + d.project_count, 0),
 )
+
+const page = usePage();
+const authUser = computed(() => page.props.auth?.user);
+const isSuperAdmin = computed(() => authUser.value?.role === 'super_admin');
+const userDeptName = computed(() => authUser.value?.department?.name ?? null);
+const userDeptId = computed(() => authUser.value?.department_id ?? null);
+
+const filteredSupervisors = computed(() => {
+    if (isSuperAdmin.value) return props.report.supervisors;
+    return props.report.supervisors.filter(sup => sup.department === userDeptName.value);
+});
 
 const overallAvg = computed(() => {
     const scored = props.report.departments.filter(d => d.avg_score !== null)
@@ -98,12 +116,18 @@ const excelUrl = computed(() => route('reports.export.excel', { type: 'departmen
             <div v-if="departments.length > 0" class="no-print flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
                 <div class="flex-1 min-w-[200px]">
                     <label class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">تصفية حسب القسم</label>
-                    <select
+                    <select 
+                        :disabled="!isSuperAdmin"
                         v-model="selectedDept"
-                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                        class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800"
                     >
-                        <option value="">جميع الأقسام</option>
-                        <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
+                        <option value="">كل الأقسام</option>
+                        <template v-if="isSuperAdmin">
+                            <option v-for="dept in departments" :key="dept.id" :value="dept.id">{{ dept.name }}</option>
+                        </template>
+                        <template v-else>
+                            <option :value="userDeptId">{{ userDeptName }}</option>
+                        </template>
                     </select>
                 </div>
                 <button
@@ -145,6 +169,8 @@ const excelUrl = computed(() => route('reports.export.excel', { type: 'departmen
                     sub="للمشاريع المقيَّمة"
                 />
             </div>
+
+
 
             <!-- Departments table -->
             <div class="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -251,7 +277,7 @@ const excelUrl = computed(() => route('reports.export.excel', { type: 'departmen
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
-                            <tr v-for="sup in report.supervisors" :key="sup.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
+                            <tr v-for="sup in filteredSupervisors" :key="sup.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
                                 <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{{ sup.name }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ sup.department ?? '—' }}</td>
                                 <td class="px-4 py-3">
@@ -260,7 +286,7 @@ const excelUrl = computed(() => route('reports.export.excel', { type: 'departmen
                                     </span>
                                 </td>
                             </tr>
-                            <tr v-if="!report.supervisors.length">
+                            <tr v-if="!filteredSupervisors.length">
                                 <td colspan="3" class="px-4 py-8 text-center text-sm text-gray-400">لا يوجد مشرفون</td>
                             </tr>
                         </tbody>

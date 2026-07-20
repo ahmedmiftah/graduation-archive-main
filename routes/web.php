@@ -10,6 +10,9 @@ use App\Http\Controllers\ExaminerController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectExaminerController;
+use App\Http\Controllers\FeedbackController;
+use App\Http\Controllers\ProjectFeedbackController;
+use App\Http\Controllers\Api\ProjectFeedbackApiController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SpecializationController;
 use Illuminate\Support\Facades\Route;
@@ -40,6 +43,10 @@ Route::middleware(['auth', 'role:dept_manager,super_admin'])->prefix('reports')-
     Route::get('/export/excel',    [ReportController::class, 'exportExcel'])         ->name('export.excel');
 });
 
+// Statistics page – accessible to dept_manager, dept_staff, super_admin
+
+
+
 // super_admin only
 Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', fn () => Inertia::render('Admin/Dashboard'))->name('dashboard');
@@ -62,6 +69,9 @@ Route::middleware(['auth', 'role:super_admin,dept_manager'])->group(function () 
     Route::resource('examiners', ExaminerController::class)
         ->only(['index', 'store', 'update', 'destroy']);
 
+    Route::get('feedback', [FeedbackController::class, 'index'])->name('feedback.index');
+    Route::get('feedback/{feedback}', [FeedbackController::class, 'show'])->name('feedback.show');
+
     Route::post('projects/{id}/assign-examiner', [ProjectExaminerController::class, 'assign'])
         ->name('projects.assign-examiner');
 
@@ -75,6 +85,9 @@ Route::middleware(['auth', 'role:super_admin,dept_manager'])->group(function () 
         ->name('projects.score');
 });
 
+Route::post('projects/{id}/feedback', [ProjectFeedbackController::class, 'store'])
+    ->name('projects.feedback.store');
+
 // Projects — all authenticated users can browse; role checks handled in controller/form requests
 Route::middleware(['auth'])->group(function () {
     Route::resource('projects', ProjectController::class);
@@ -84,6 +97,15 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('search', [SearchController::class, 'index'])->name('search.index');
     Route::get('search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');
+});
+
+Route::middleware(['auth', 'role:super_admin,dept_manager'])->prefix('api')->name('api.feedback.')->group(function () {
+    Route::get('feedback', [ProjectFeedbackApiController::class, 'index'])->name('index');
+    Route::get('feedback/{id}', [ProjectFeedbackApiController::class, 'show'])->name('show');
+    Route::patch('feedback/{id}/read', [ProjectFeedbackApiController::class, 'markAsRead'])->name('read');
+    Route::patch('feedback/{id}/status', [ProjectFeedbackApiController::class, 'updateStatus'])->name('status');
+    Route::post('feedback/{id}/reply', [ProjectFeedbackApiController::class, 'reply'])->name('reply');
+    Route::delete('feedback/{id}', [ProjectFeedbackApiController::class, 'destroy'])->name('destroy');
 });
 
 // super_admin only — create and delete departments

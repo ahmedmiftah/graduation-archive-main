@@ -17,7 +17,7 @@ import UserMenuContent from '@/components/UserMenuContent.vue';
 import { getInitials } from '@/composables/useInitials';
 import type { BreadcrumbItem, NavItem } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
+import { Bell, BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 interface Props {
@@ -30,6 +30,11 @@ const props = withDefaults(defineProps<Props>(), {
 
 const page = usePage();
 const auth = computed(() => page.props.auth);
+const notifications = computed(() => page.props.notifications ?? { unreadCount: 0 });
+const showNotifications = computed(() => {
+    const role = auth.value.user?.role ?? '';
+    return role === 'super_admin' || role === 'dept_manager';
+});
 
 const isCurrentRoute = (url: string) => {
     return page.url === url;
@@ -76,7 +81,7 @@ const rightNavItems: NavItem[] = [
                             <SheetHeader class="flex justify-start text-left">
                                 <AppLogoIcon class="size-6 fill-current text-black dark:text-white" />
                             </SheetHeader>
-                            <div class="flex flex-col justify-between h-full space-y-4 py-6 flex-1">
+                            <div class="flex h-full flex-1 flex-col justify-between space-y-4 py-6">
                                 <nav class="-mx-3 space-y-1">
                                     <Link
                                         v-for="item in mainNavItems"
@@ -155,6 +160,23 @@ const rightNavItems: NavItem[] = [
                                 </TooltipProvider>
                             </template>
                         </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <Link
+                            v-if="showNotifications"
+                            :href="route('feedback.index')"
+                            class="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-transparent bg-surface text-text-dark hover:border-primary/30 hover:text-primary"
+                            aria-label="الإشعارات"
+                        >
+                            <Bell class="h-5 w-5" />
+                            <span
+                                v-if="notifications.unreadCount > 0"
+                                class="absolute -end-1 -top-1 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-[0.65rem] font-semibold text-white"
+                            >
+                                {{ notifications.unreadCount }}
+                            </span>
+                        </Link>
                     </div>
 
                     <DropdownMenu>

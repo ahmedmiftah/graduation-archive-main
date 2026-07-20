@@ -73,6 +73,29 @@ class ReportController extends Controller
         ]);
     }
 
+    public function statistics(Request $request): Response
+    {
+        // Optional filter by degree level (e.g., 'bachelor', 'diploma', 'master')
+        $degreeLevel = $request->query('degree_level');
+
+        $departments = Department::withCount([
+            'projects as project_count' => function ($q) use ($degreeLevel) {
+                $q->where('is_deleted', false);
+                if ($degreeLevel) {
+                    $q->where('degree_level', $degreeLevel);
+                }
+            },
+        ])->get(['id', 'name', 'project_count']);
+
+        return Inertia::render('Statistics', [
+            'stats' => [
+                'departments' => $departments,
+                'degree_level' => $degreeLevel,
+            ],
+        ]);
+    }
+    
+
     public function exportPdf(Request $request): \Illuminate\Http\Response
     {
         $type = $request->input('type', 'department');

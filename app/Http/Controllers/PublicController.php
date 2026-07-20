@@ -35,7 +35,9 @@ class PublicController extends Controller
                   ->orWhere('description', 'like', "%{$search}%")
                   ->orWhereHas('department', fn($q) => $q->where('name', 'like', "%{$search}%"))
                   ->orWhereHas('specialization', fn($q) => $q->where('name', 'like', "%{$search}%"))
-                  ->orWhereHas('supervisor', fn($q) => $q->where('name', 'like', "%{$search}%"));
+                  ->orWhereHas('supervisor', fn($q) => $q->where('name', 'like', "%{$search}%"))
+                  ->orWhereHas('students', fn($q) => $q->where('full_name', 'like', "%{$search}%"))
+                  ->orWhereHas('examiners', fn($q) => $q->where('full_name', 'like', "%{$search}%"));
             });
         }
 

@@ -22,7 +22,7 @@ const props = defineProps<{
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'لوحة التحكم', href: '/dashboard' },
-    { title: 'الأقسام', href: '/departments' },
+    { title: 'التخصصات', href: '/departments' },
     { title: 'تعديل قسم', href: '#' },
 ];
 

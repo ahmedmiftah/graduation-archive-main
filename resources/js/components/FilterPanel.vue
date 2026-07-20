@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
 
 interface Specialization { id: number; name: string; department_id: number }
 interface Department    { id: number; name: string; specializations?: Specialization[] }
@@ -30,11 +31,26 @@ const emit = defineEmits<{
 const open = ref(false);
 
 const local = ref<FilterValues>({ ...props.modelValue });
+const page = usePage();
+const authUser = computed(() => page.props.auth?.user);
+
+const filteredDepartments = computed(() => {
+    if (authUser.value?.role === 'super_admin' || !authUser.value?.department_id) {
+        return props.departments;
+    }
+    return props.departments.filter(d => d.id === authUser.value?.department_id);
+});
+
+// Force department to user's department if applicable
+if (authUser.value?.department_id) {
+    local.value.department_id = authUser.value.department_id;
+}
 
 // Specializations matching the selected department
-const filteredSpecs = computed(() =>
-    props.specializations.filter(s => s.department_id == local.value.department_id),
-);
+const filteredSpecs = computed(() => {
+    if (!local.value.department_id) return props.specializations;
+    return props.specializations.filter(s => s.department_id == local.value.department_id);
+});
 
 // Number of active non-sort filters
 const activeCount = computed(() =>
@@ -92,12 +108,15 @@ const selectClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm 
             <!-- Department -->
             <div class="flex flex-col gap-1">
                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">القسم</label>
-                <select v-model="local.department_id" :class="selectClass">
+                <select 
+                    v-model="local.department_id" 
+                    :class="selectClass"
+                    :disabled="!!authUser?.department_id && authUser?.role !== 'super_admin'"
+                >
                     <option value="">كل الأقسام</option>
-                    <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
+                    <option v-for="d in filteredDepartments" :key="d.id" :value="d.id">{{ d.name }}</option>
                 </select>
             </div>
-
             <!-- Specialization (cascades on department) -->
             <div class="flex flex-col gap-1">
                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">التخصص</label>

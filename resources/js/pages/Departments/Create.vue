@@ -5,7 +5,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'لوحة التحكم', href: '/dashboard' },
-    { title: 'الأقسام', href: '/departments' },
+    { title: 'التخصصات', href: '/departments' },
     { title: 'إضافة قسم', href: '/departments/create' },
 ];
 

@@ -14,6 +14,14 @@ class SearchService
 
     public function searchProjects(array $filters): LengthAwarePaginator
     {
+        /** @var \App\Models\User|null $user */
+        $user = auth()->user();
+
+        // Enforce departmental isolation
+        if ($user && !$user->hasRole('super_admin') && $user->department_id) {
+            $filters['department_id'] = $user->department_id;
+        }
+
         $query = Project::with(['department', 'specialization', 'supervisor', 'currentStatus'])
             ->withCount('students')
             ->where('is_deleted', false);
@@ -31,6 +39,12 @@ class SearchService
                   })
                   ->orWhereHas('supervisor', function ($q) use ($search) {
                       $q->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('students', function ($q) use ($search) {
+                      $q->where('full_name', 'like', "%{$search}%");
+                  })
+                  ->orWhereHas('examiners', function ($q) use ($search) {
+                      $q->where('full_name', 'like', "%{$search}%");
                   });
             });
         }

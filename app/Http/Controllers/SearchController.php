@@ -34,14 +34,33 @@ class SearchController extends Controller
 
     public function suggestions(Request $request): JsonResponse
     {
-        $q = trim($request->query('q', ''));
+        $q_val = trim($request->query('q', ''));
 
-        if (mb_strlen($q) < 2) {
+        if (mb_strlen($q_val) < 2) {
             return response()->json([]);
         }
 
-        $suggestions = Project::where('is_deleted', false)
-            ->where('project_title', 'like', "%{$q}%")
+        /** @var \App\Models\User|null $user */
+        $user = auth()->user();
+
+        $query = Project::where('is_deleted', false);
+
+        if ($user && !$user->hasRole('super_admin') && $user->department_id) {
+            $query->where('department_id', $user->department_id);
+        }
+
+        $suggestions = $query->where(function ($q) use ($q_val) {
+                $q->where('project_title', 'like', "%{$q_val}%")
+                  ->orWhereHas('supervisor', function ($query) use ($q_val) {
+                      $query->where('name', 'like', "%{$q_val}%");
+                  })
+                  ->orWhereHas('students', function ($query) use ($q_val) {
+                      $query->where('full_name', 'like', "%{$q_val}%");
+                  })
+                  ->orWhereHas('examiners', function ($query) use ($q_val) {
+                      $query->where('full_name', 'like', "%{$q_val}%");
+                  });
+            })
             ->orderByDesc('visit_count')
             ->limit(5)
             ->pluck('project_title');
