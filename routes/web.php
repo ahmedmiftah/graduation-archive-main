@@ -15,6 +15,8 @@ use App\Http\Controllers\ProjectFeedbackController;
 use App\Http\Controllers\Api\ProjectFeedbackApiController;
 use App\Http\Controllers\SearchController;
 use App\Http\Controllers\SpecializationController;
+use App\Http\Controllers\ProjectProposalWebController;
+use App\Http\Controllers\Api\ProjectProposalController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -106,6 +108,24 @@ Route::middleware(['auth', 'role:super_admin,dept_manager'])->prefix('api')->nam
     Route::patch('feedback/{id}/status', [ProjectFeedbackApiController::class, 'updateStatus'])->name('status');
     Route::post('feedback/{id}/reply', [ProjectFeedbackApiController::class, 'reply'])->name('reply');
     Route::delete('feedback/{id}', [ProjectFeedbackApiController::class, 'destroy'])->name('destroy');
+});
+
+// Proposals API Routes
+Route::middleware(['auth', 'role:super_admin,dept_manager,dept_staff'])->prefix('api')->name('api.proposals.')->group(function () {
+    Route::get('proposals', [ProjectProposalController::class, 'index'])->name('index');
+    Route::post('proposals', [ProjectProposalController::class, 'store'])->name('store');
+    Route::get('proposals/{proposal}', [ProjectProposalController::class, 'show'])->name('show');
+    Route::put('proposals/{proposal}', [ProjectProposalController::class, 'update'])->name('update');
+    Route::delete('proposals/{proposal}', [ProjectProposalController::class, 'destroy'])->name('destroy');
+    Route::post('proposals/{proposal}/change-status', [ProjectProposalController::class, 'changeStatus'])->name('change-status');
+});
+
+// Proposals Web Routes (Inertia)
+Route::middleware(['auth', 'role:super_admin,dept_manager,dept_staff'])->prefix('proposals')->name('proposals.')->group(function () {
+    Route::get('/', [ProjectProposalWebController::class, 'index'])->name('index');
+    Route::get('/create', [ProjectProposalWebController::class, 'create'])->name('create');
+    Route::get('/{proposal}', [ProjectProposalWebController::class, 'show'])->name('show');
+    Route::get('/{proposal}/edit', [ProjectProposalWebController::class, 'edit'])->name('edit');
 });
 
 // super_admin only — create and delete departments

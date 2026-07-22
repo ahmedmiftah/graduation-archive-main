@@ -10,10 +10,23 @@ import { computed, reactive, ref } from 'vue';
 
 // ── Types ────────────────────────────────────────────────────────────
 
-interface Department    { id: number; name: string }
-interface Specialization { id: number; name: string; department_id: number }
-interface Supervisor    { id: number; name: string }
-interface ProjectStatus { id: number; status_name: string }
+interface Department {
+    id: number;
+    name: string;
+}
+interface Specialization {
+    id: number;
+    name: string;
+    department_id: number;
+}
+interface Supervisor {
+    id: number;
+    name: string;
+}
+interface ProjectStatus {
+    id: number;
+    status_name: string;
+}
 
 interface Project {
     id: number;
@@ -27,7 +40,11 @@ interface Project {
     students_count: number;
 }
 
-interface PaginationLink { url: string | null; label: string; active: boolean }
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
 
 interface PaginatedProjects {
     data: Project[];
@@ -40,9 +57,9 @@ interface PaginatedProjects {
 }
 
 interface FilterOptions {
-    departments:    (Department & { specializations: Specialization[] })[];
+    departments: (Department & { specializations: Specialization[] })[];
     academic_years: string[];
-    supervisors:    Supervisor[];
+    supervisors: Supervisor[];
 }
 
 // ── Props ────────────────────────────────────────────────────────────
@@ -64,8 +81,8 @@ const props = defineProps<{
 
 // ── Page globals ─────────────────────────────────────────────────────
 
-const page     = usePage<SharedData>();
-const flash    = computed(() => page.props.flash ?? {});
+const page = usePage<SharedData>();
+const flash = computed(() => page.props.flash ?? {});
 const userRole = computed(() => (page.props.auth.user as { role?: string }).role ?? '');
 
 const canCreate = computed(() => ['dept_staff', 'dept_manager', 'super_admin'].includes(userRole.value));
@@ -79,9 +96,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 // ── Similarity warning (flash from store/update) ─────────────────────
 
 const dismissedWarning = ref(false);
-const similarProjects  = computed<SimilarProject[]>(() =>
-    dismissedWarning.value ? [] : (flash.value.similarity_warning ?? []),
-);
+const similarProjects = computed<SimilarProject[]>(() => (dismissedWarning.value ? [] : (flash.value.similarity_warning ?? [])));
 
 // ── Filter state ─────────────────────────────────────────────────────
 
@@ -89,29 +104,27 @@ const searchQuery = ref(props.filters.search ?? '');
 const suggestions = ref<string[]>([]);
 
 const filters = reactive<FilterValues>({
-    department_id:     props.filters.department_id     ?? '',
+    department_id: props.filters.department_id ?? '',
     specialization_id: props.filters.specialization_id ?? '',
-    academic_year:     props.filters.academic_year     ?? '',
-    supervisor_id:     props.filters.supervisor_id     ?? '',
-    degree_level:      props.filters.degree_level      ?? '',
-    sort:              props.filters.sort              ?? 'created_at',
-    status:            props.filters.status            ?? '',
+    academic_year: props.filters.academic_year ?? '',
+    supervisor_id: props.filters.supervisor_id ?? '',
+    degree_level: props.filters.degree_level ?? '',
+    sort: props.filters.sort ?? 'created_at',
+    status: props.filters.status ?? '',
 });
 
 // Flat specializations list for FilterPanel
-const allSpecs = computed(() =>
-    props.filterOptions.departments.flatMap(d => d.specializations ?? []),
-);
+const allSpecs = computed(() => props.filterOptions.departments.flatMap((d) => d.specializations ?? []));
 
 function buildParams(): Record<string, string> {
     const p: Record<string, string> = {};
-    if (searchQuery.value)          p.search            = searchQuery.value;
-    if (filters.department_id)      p.department_id     = String(filters.department_id);
-    if (filters.specialization_id)  p.specialization_id = String(filters.specialization_id);
-    if (filters.academic_year)      p.academic_year     = filters.academic_year;
-    if (filters.supervisor_id)      p.supervisor_id     = String(filters.supervisor_id);
-    if (filters.degree_level)       p.degree_level      = filters.degree_level;
-    if (filters.status)             p.status            = filters.status;
+    if (searchQuery.value) p.search = searchQuery.value;
+    if (filters.department_id) p.department_id = String(filters.department_id);
+    if (filters.specialization_id) p.specialization_id = String(filters.specialization_id);
+    if (filters.academic_year) p.academic_year = filters.academic_year;
+    if (filters.supervisor_id) p.supervisor_id = String(filters.supervisor_id);
+    if (filters.degree_level) p.degree_level = filters.degree_level;
+    if (filters.status) p.status = filters.status;
     if (filters.sort && filters.sort !== 'created_at') p.sort = filters.sort;
     return p;
 }
@@ -124,8 +137,13 @@ function clearAll() {
     searchQuery.value = '';
     suggestions.value = [];
     Object.assign(filters, {
-        department_id: '', specialization_id: '', academic_year: '',
-        supervisor_id: '', degree_level: '', sort: 'created_at', status: '',
+        department_id: '',
+        specialization_id: '',
+        academic_year: '',
+        supervisor_id: '',
+        degree_level: '',
+        sort: 'created_at',
+        status: '',
     });
     router.get(route('projects.index'), {}, { preserveState: true, replace: true });
 }
@@ -147,7 +165,7 @@ function onSelect(s: string) {
 async function loadSuggestions(q: string) {
     try {
         const res = await fetch(route('search.suggestions') + '?q=' + encodeURIComponent(q));
-        suggestions.value = await res.json() as string[];
+        suggestions.value = (await res.json()) as string[];
     } catch {
         suggestions.value = [];
     }
@@ -161,22 +179,25 @@ function onFilterChanged(val: FilterValues) {
 
 // ── Active filter chips ──────────────────────────────────────────────
 
-interface Chip { key: keyof FilterValues | 'search'; label: string }
+interface Chip {
+    key: keyof FilterValues | 'search';
+    label: string;
+}
 
 const activeChips = computed<Chip[]>(() => {
     const chips: Chip[] = [];
     if (searchQuery.value) chips.push({ key: 'search', label: `"${searchQuery.value}"` });
     if (filters.department_id) {
-        const d = props.filterOptions.departments.find(x => x.id == filters.department_id);
+        const d = props.filterOptions.departments.find((x) => x.id == filters.department_id);
         if (d) chips.push({ key: 'department_id', label: d.name });
     }
     if (filters.specialization_id) {
-        const s = allSpecs.value.find(x => x.id == filters.specialization_id);
+        const s = allSpecs.value.find((x) => x.id == filters.specialization_id);
         if (s) chips.push({ key: 'specialization_id', label: s.name });
     }
     if (filters.academic_year) chips.push({ key: 'academic_year', label: filters.academic_year });
     if (filters.supervisor_id) {
-        const s = props.filterOptions.supervisors.find(x => x.id == filters.supervisor_id);
+        const s = props.filterOptions.supervisors.find((x) => x.id == filters.supervisor_id);
         if (s) chips.push({ key: 'supervisor_id', label: s.name });
     }
     if (filters.degree_level) {
@@ -205,8 +226,7 @@ function canEdit(_p: Project) {
 }
 
 function canApprove(p: Project) {
-    return ['dept_manager', 'super_admin'].includes(userRole.value)
-        && p.current_status?.status_name === 'proposal_submitted';
+    return ['dept_manager', 'super_admin'].includes(userRole.value) && p.current_status?.status_name === 'proposal_submitted';
 }
 
 // ── Actions ──────────────────────────────────────────────────────────
@@ -216,7 +236,9 @@ const confirmDelete = ref<Project | null>(null);
 function deleteProject() {
     if (!confirmDelete.value) return;
     router.delete(route('projects.destroy', [confirmDelete.value.id]), {
-        onFinish: () => { confirmDelete.value = null; },
+        onFinish: () => {
+            confirmDelete.value = null;
+        },
     });
 }
 
@@ -227,42 +249,45 @@ function approveProject(id: number) {
 // ── Status helpers ───────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<string, string> = {
-    archived:            'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
-    proposal_submitted:  'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
+    archived: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
+    proposal_submitted: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
     supervisor_approved: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-    hod_approved:        'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-    in_progress:         'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400',
-    ready_for_defense:   'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
-    under_defense:       'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
-    revisions_required:  'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
-    rejected:            'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
-    cancelled:           'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+    hod_approved: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+    in_progress: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400',
+    ready_for_defense: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
+    under_defense: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
+    revisions_required: 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
+    rejected: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
+    cancelled: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 
 const STATUS_LABELS: Record<string, string> = {
-    archived:            'مؤرشف',
-    proposal_submitted:  'في انتظار الموافقة',
+    archived: 'مؤرشف',
+    proposal_submitted: 'في انتظار الموافقة',
     supervisor_approved: 'موافقة المشرف',
-    hod_approved:        'موافقة رئيس القسم',
-    in_progress:         'قيد التنفيذ',
-    ready_for_defense:   'جاهز للمناقشة',
-    under_defense:       'تحت المناقشة',
-    revisions_required:  'يحتاج تعديلات',
-    rejected:            'مرفوض',
-    cancelled:           'ملغي',
+    hod_approved: 'موافقة رئيس القسم',
+    in_progress: 'قيد التنفيذ',
+    ready_for_defense: 'جاهز للمناقشة',
+    under_defense: 'تحت المناقشة',
+    revisions_required: 'يحتاج تعديلات',
+    rejected: 'مرفوض',
+    cancelled: 'ملغي',
 };
 
-function statusColor(name: string) { return STATUS_COLORS[name] ?? 'bg-gray-100 text-gray-600'; }
-function statusLabel(name: string) { return STATUS_LABELS[name] ?? name; }
+function statusColor(name: string) {
+    return STATUS_COLORS[name] ?? 'bg-gray-100 text-gray-600';
+}
+function statusLabel(name: string) {
+    return STATUS_LABELS[name] ?? name;
+}
 </script>
 
 <template>
     <Head title="المشاريع" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 p-4" dir="rtl">
-
             <!-- ── Header ─────────────────────────────────────────── -->
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between pl-20">
                 <div class="flex items-center gap-3">
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">المشاريع</h1>
                     <span class="rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
@@ -272,23 +297,17 @@ function statusLabel(name: string) { return STATUS_LABELS[name] ?? name; }
                 <a
                     v-if="canCreate"
                     :href="route('projects.create')"
-                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    class="me-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                 >
                     + إضافة مشروع
                 </a>
             </div>
 
             <!-- ── Flash ──────────────────────────────────────────── -->
-            <div
-                v-if="flash.success"
-                class="rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400"
-            >
+            <div v-if="flash.success" class="rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
                 {{ flash.success }}
             </div>
-            <div
-                v-if="flash.error"
-                class="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"
-            >
+            <div v-if="flash.error" class="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
                 {{ flash.error }}
             </div>
 
@@ -332,11 +351,7 @@ function statusLabel(name: string) { return STATUS_LABELS[name] ?? name; }
                     {{ chip.label }}
                     <span class="text-blue-500">✕</span>
                 </button>
-                <button
-                    type="button"
-                    class="text-xs text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
-                    @click="clearAll"
-                >
+                <button type="button" class="text-xs text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400" @click="clearAll">
                     مسح الكل
                 </button>
             </div>
@@ -363,11 +378,7 @@ function statusLabel(name: string) { return STATUS_LABELS[name] ?? name; }
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-                        <tr
-                            v-for="project in projects.data"
-                            :key="project.id"
-                            class="hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                        >
+                        <tr v-for="project in projects.data" :key="project.id" class="hover:bg-gray-50 dark:hover:bg-gray-800/50">
                             <td class="max-w-xs px-4 py-3">
                                 <a
                                     :href="route('projects.show', [project.id])"
@@ -377,13 +388,17 @@ function statusLabel(name: string) { return STATUS_LABELS[name] ?? name; }
                                 </a>
                             </td>
                             <td class="whitespace-nowrap px-4 py-3">
-                                <span :class="[
-                                    'rounded-full px-2 py-0.5 text-xs font-medium',
-                                    project.degree_level === 'master' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400' :
-                                    project.degree_level === 'diploma' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400' :
-                                    'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400'
-                                ]">
-                                    {{ project.degree_level === 'diploma' ? 'دبلوم' : (project.degree_level === 'master' ? 'ماجستير' : 'بكالوريوس') }}
+                                <span
+                                    :class="[
+                                        'rounded-full px-2 py-0.5 text-xs font-medium',
+                                        project.degree_level === 'master'
+                                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400'
+                                            : project.degree_level === 'diploma'
+                                              ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400'
+                                              : 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+                                    ]"
+                                >
+                                    {{ project.degree_level === 'diploma' ? 'دبلوم' : project.degree_level === 'master' ? 'ماجستير' : 'بكالوريوس' }}
                                 </span>
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
@@ -444,9 +459,7 @@ function statusLabel(name: string) { return STATUS_LABELS[name] ?? name; }
                             </td>
                         </tr>
                         <tr v-if="projects.data.length === 0">
-                            <td colspan="9" class="px-4 py-10 text-center text-sm text-gray-500">
-                                لا توجد مشاريع مطابقة للبحث
-                            </td>
+                            <td colspan="9" class="px-4 py-10 text-center text-sm text-gray-500">لا توجد مشاريع مطابقة للبحث</td>
                         </tr>
                     </tbody>
                 </table>
@@ -454,9 +467,7 @@ function statusLabel(name: string) { return STATUS_LABELS[name] ?? name; }
 
             <!-- ── Pagination ─────────────────────────────────────── -->
             <div v-if="projects.last_page > 1" class="flex items-center justify-between text-sm">
-                <p class="text-gray-600 dark:text-gray-400">
-                    صفحة {{ projects.current_page }} من {{ projects.last_page }}
-                </p>
+                <p class="text-gray-600 dark:text-gray-400">صفحة {{ projects.current_page }} من {{ projects.last_page }}</p>
                 <div class="flex gap-1">
                     <template v-for="link in projects.links" :key="link.label">
                         <button
