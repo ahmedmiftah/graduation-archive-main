@@ -7,6 +7,7 @@ interface Proposal {
     id: number;
     title: string;
     supervisor: { name: string } | null;
+    department: { name: string } | null;
     status: string;
     submission_date: string | null;
     committee_decision: string | null;
@@ -25,6 +26,13 @@ const filters = ref({
     status: '',
     page: 1,
 });
+
+import { usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+
+const page = usePage();
+const authUser = computed(() => page.props.auth?.user);
+const isSuperAdmin = computed(() => authUser.value?.role === 'super_admin');
 
 const fetchProposals = async () => {
     try {
@@ -103,6 +111,7 @@ onMounted(() => {
                 <thead>
                     <tr class="border-b bg-gray-50">
                         <th class="p-4 font-semibold text-gray-600">عنوان المشروع</th>
+                        <th class="p-4 font-semibold text-gray-600" v-if="isSuperAdmin">القسم</th>
                         <th class="p-4 font-semibold text-gray-600">المشرف</th>
                         <th class="p-4 font-semibold text-gray-600">الحالة</th>
                         <th class="p-4 font-semibold text-gray-600">تاريخ التسليم</th>
@@ -114,6 +123,7 @@ onMounted(() => {
                 <tbody>
                     <tr v-for="proposal in proposals" :key="proposal.id" class="border-b hover:bg-gray-50">
                         <td class="p-4">{{ proposal.title }}</td>
+                        <td class="p-4" v-if="isSuperAdmin">{{ proposal.department ? proposal.department.name : 'غير محدد' }}</td>
                         <td class="p-4">{{ proposal.supervisor ? proposal.supervisor.name : 'غير محدد' }}</td>
                         <td class="p-4">
                             <span class="rounded bg-blue-100 px-2 py-1 text-sm text-blue-800">{{ proposal.status }}</span>
@@ -143,7 +153,7 @@ onMounted(() => {
                         </td>
                     </tr>
                     <tr v-if="proposals.length === 0">
-                        <td colspan="7" class="p-4 text-center text-gray-500">لا توجد مقترحات</td>
+                        <td :colspan="isSuperAdmin ? 8 : 7" class="p-4 text-center text-gray-500">لا توجد مقترحات</td>
                     </tr>
                 </tbody>
             </table>

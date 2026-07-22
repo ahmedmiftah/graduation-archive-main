@@ -18,6 +18,7 @@ class StoreProjectProposalRequest extends FormRequest
         return [
             'title' => ['required', 'string', 'max:255'],
             'description' => ['required', 'string'],
+            'department_id' => ['nullable', 'exists:departments,id'],
             'specialization_id' => ['required', 'exists:specializations,id'],
             'academic_year' => ['required', 'string', 'max:9'], // e.g., 2024
             'semester' => ['required', Rule::in(['ربيع', 'خريف'])],

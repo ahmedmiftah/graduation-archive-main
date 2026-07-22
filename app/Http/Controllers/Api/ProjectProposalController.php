@@ -34,6 +34,14 @@ class ProjectProposalController extends Controller
             'title', 'student_name', 'supervisor_name',
             'department_id', 'specialization_id', 'academic_year', 'status',
         ]);
+
+        $user = $request->user();
+        
+        // Enforce departmental isolation
+        if ($user && !$user->hasRole('super_admin') && $user->department_id) {
+            $filters['department_id'] = $user->department_id;
+        }
+
         $perPage = $request->get('per_page', 15);
         $proposals = $this->repo->paginate($filters, $perPage);
         return ProjectProposalResource::collection($proposals);
@@ -62,6 +70,12 @@ class ProjectProposalController extends Controller
      */
     public function show(ProjectProposal $proposal)
     {
+        if ($user = auth()->user()) {
+            $user->unreadNotifications()
+                ->where('data->proposal_id', $proposal->id)
+                ->update(['read_at' => now()]);
+        }
+
         return new ProjectProposalResource($proposal);
     }
 

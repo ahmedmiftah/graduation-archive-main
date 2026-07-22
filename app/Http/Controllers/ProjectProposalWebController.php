@@ -25,19 +25,27 @@ class ProjectProposalWebController extends Controller
     public function create()
     {
         $user = Auth::user();
-        $departmentId = $user->department_id;
+        $departmentId = $user->hasRole('super_admin') ? null : $user->department_id;
 
-        $specializations = $departmentId 
-            ? Specialization::where('department_id', $departmentId)->get(['id', 'name']) 
-            : [];
-            
-        $supervisors = $departmentId
-            ? User::role('supervisor')->where('department_id', $departmentId)->get(['id', 'name'])
-            : [];
+        $departmentsQuery = \App\Models\Department::orderBy('name');
+        if ($departmentId) {
+            $departmentsQuery->where('id', $departmentId);
+        }
+
+        $specializationsQuery = Specialization::orderBy('name');
+        if ($departmentId) {
+            $specializationsQuery->where('department_id', $departmentId);
+        }
+
+        $supervisorsQuery = User::role('supervisor')->orderBy('name');
+        if ($departmentId) {
+            $supervisorsQuery->where('department_id', $departmentId);
+        }
 
         return Inertia::render('Proposals/Create', [
-            'specializations' => $specializations,
-            'supervisors' => $supervisors,
+            'departments' => $departmentsQuery->get(['id', 'name']),
+            'specializations' => $specializationsQuery->get(['id', 'name', 'department_id']),
+            'supervisors' => $supervisorsQuery->get(['id', 'name', 'department_id']),
         ]);
     }
 
@@ -46,6 +54,12 @@ class ProjectProposalWebController extends Controller
      */
     public function show(ProjectProposal $proposal)
     {
+        if ($user = Auth::user()) {
+            $user->unreadNotifications()
+                ->where('data->proposal_id', $proposal->id)
+                ->update(['read_at' => now()]);
+        }
+
         return Inertia::render('Proposals/Show', [
             'proposalId' => $proposal->id
         ]);
@@ -57,20 +71,28 @@ class ProjectProposalWebController extends Controller
     public function edit(ProjectProposal $proposal)
     {
         $user = Auth::user();
-        $departmentId = $user->department_id ?? $proposal->department_id;
+        $departmentId = $user->hasRole('super_admin') ? null : ($user->department_id ?? $proposal->department_id);
 
-        $specializations = $departmentId 
-            ? Specialization::where('department_id', $departmentId)->get(['id', 'name']) 
-            : [];
-            
-        $supervisors = $departmentId
-            ? User::role('supervisor')->where('department_id', $departmentId)->get(['id', 'name'])
-            : [];
+        $departmentsQuery = \App\Models\Department::orderBy('name');
+        if ($departmentId) {
+            $departmentsQuery->where('id', $departmentId);
+        }
+
+        $specializationsQuery = Specialization::orderBy('name');
+        if ($departmentId) {
+            $specializationsQuery->where('department_id', $departmentId);
+        }
+
+        $supervisorsQuery = User::role('supervisor')->orderBy('name');
+        if ($departmentId) {
+            $supervisorsQuery->where('department_id', $departmentId);
+        }
 
         return Inertia::render('Proposals/Edit', [
             'proposalId' => $proposal->id,
-            'specializations' => $specializations,
-            'supervisors' => $supervisors,
+            'departments' => $departmentsQuery->get(['id', 'name']),
+            'specializations' => $specializationsQuery->get(['id', 'name', 'department_id']),
+            'supervisors' => $supervisorsQuery->get(['id', 'name', 'department_id']),
         ]);
     }
 }

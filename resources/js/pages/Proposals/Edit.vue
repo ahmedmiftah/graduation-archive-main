@@ -2,7 +2,7 @@
   <div class="p-6 max-w-4xl mx-auto">
     <h1 class="text-2xl font-bold text-gray-800 mb-6">تعديل مقترح المشروع</h1>
     <div v-if="proposal" class="bg-white p-6 rounded shadow">
-      <ProposalForm :proposal="proposal" :specializations="specializations" :supervisors="supervisors" @saved="onSaved" @cancel="onCancel" />
+      <ProposalForm :proposal="proposal" :departments="departments" :specializations="specializations" :supervisors="supervisors" @saved="onSaved" @cancel="onCancel" />
     </div>
     <div v-else class="text-center text-gray-500 py-10">
       جاري تحميل بيانات المقترح...
@@ -22,7 +22,8 @@ const props = defineProps({
     required: true
   },
   specializations: { type: Array, default: () => [] },
-  supervisors: { type: Array, default: () => [] }
+  supervisors: { type: Array, default: () => [] },
+  departments: { type: Array, default: () => [] },
 });
 
 const proposal = ref(null);

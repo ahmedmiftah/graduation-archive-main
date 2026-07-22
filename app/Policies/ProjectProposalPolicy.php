@@ -12,7 +12,7 @@ class ProjectProposalPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['super_admin', 'dept_manager', 'dept_staff']);
+        return $user->hasAnyRole(['super_admin', 'dept_manager', 'dept_staff', 'supervisor']);
     }
 
     /**
@@ -20,7 +20,15 @@ class ProjectProposalPolicy
      */
     public function view(User $user, ProjectProposal $proposal): bool
     {
-        return $this->viewAny($user);
+        if (!$this->viewAny($user)) {
+            return false;
+        }
+
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user->department_id === $proposal->department_id;
     }
 
     /**
@@ -28,7 +36,7 @@ class ProjectProposalPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['super_admin', 'dept_manager', 'dept_staff']);
+        return $user->hasAnyRole(['super_admin', 'dept_manager', 'dept_staff', 'supervisor']);
     }
 
     /**
@@ -36,7 +44,15 @@ class ProjectProposalPolicy
      */
     public function update(User $user, ProjectProposal $proposal): bool
     {
-        return $user->hasAnyRole(['super_admin', 'dept_manager', 'dept_staff']);
+        if (!$user->hasAnyRole(['super_admin', 'dept_manager', 'dept_staff', 'supervisor'])) {
+            return false;
+        }
+
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user->department_id === $proposal->department_id;
     }
 
     /**
@@ -44,7 +60,15 @@ class ProjectProposalPolicy
      */
     public function delete(User $user, ProjectProposal $proposal): bool
     {
-        return $user->hasAnyRole(['super_admin', 'dept_manager']); // staff cannot delete
+        if (!$user->hasAnyRole(['super_admin', 'dept_manager'])) { // staff/supervisor cannot delete
+            return false;
+        }
+
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
+        return $user->department_id === $proposal->department_id;
     }
 
     /**
@@ -52,8 +76,16 @@ class ProjectProposalPolicy
      */
     public function changeStatus(User $user, ProjectProposal $proposal): bool
     {
+        if ($user->hasRole('super_admin')) {
+            return true;
+        }
+
         // Only department-head (رئيس القسم) can change status & committee decision
-        return $user->hasRole('dept_manager');
+        if (!$user->hasRole('dept_manager')) {
+            return false;
+        }
+
+        return $user->department_id === $proposal->department_id;
     }
 }
 ?>

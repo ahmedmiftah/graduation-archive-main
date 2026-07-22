@@ -18,6 +18,7 @@ class UpdateProjectProposalRequest extends FormRequest
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'required', 'string'],
+            'department_id' => ['nullable', 'exists:departments,id'],
             'specialization_id' => ['sometimes', 'required', 'exists:specializations,id'],
             'academic_year' => ['sometimes', 'required', 'string', 'max:9'],
             'semester' => ['sometimes', 'required', Rule::in(['ربيع', 'خريف'])],

@@ -287,7 +287,7 @@ function statusLabel(name: string) {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-4 p-4" dir="rtl">
             <!-- ── Header ─────────────────────────────────────────── -->
-            <div class="flex items-center justify-between pl-20">
+            <div class="flex items-center justify-between">
                 <div class="flex items-center gap-3">
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">المشاريع</h1>
                     <span class="rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
@@ -297,7 +297,7 @@ function statusLabel(name: string) {
                 <a
                     v-if="canCreate"
                     :href="route('projects.create')"
-                    class="me-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                 >
                     + إضافة مشروع
                 </a>

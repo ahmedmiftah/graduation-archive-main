@@ -46,10 +46,27 @@ class ProjectController extends Controller
             abort(403);
         }
 
+        $departmentId = $user->hasRole('super_admin') ? null : $user->department_id;
+
+        $departmentsQuery = Department::orderBy('name');
+        if ($departmentId) {
+            $departmentsQuery->where('id', $departmentId);
+        }
+
+        $specializationsQuery = Specialization::orderBy('name');
+        if ($departmentId) {
+            $specializationsQuery->where('department_id', $departmentId);
+        }
+
+        $supervisorsQuery = User::role('supervisor')->orderBy('name');
+        if ($departmentId) {
+            $supervisorsQuery->where('department_id', $departmentId);
+        }
+
         return Inertia::render('Projects/Create', [
-            'departments'     => Department::orderBy('name')->get(['id', 'name']),
-            'specializations' => Specialization::orderBy('name')->get(['id', 'name', 'department_id']),
-            'supervisors'     => User::role('supervisor')->orderBy('name')->get(['id', 'name']),
+            'departments'     => $departmentsQuery->get(['id', 'name']),
+            'specializations' => $specializationsQuery->get(['id', 'name', 'department_id']),
+            'supervisors'     => $supervisorsQuery->get(['id', 'name']),
         ]);
     }
 
@@ -126,13 +143,27 @@ class ProjectController extends Controller
             'currentStatus',
         ])->where('is_deleted', false)->findOrFail($id);
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if ($user && !$user->hasRole('super_admin') && $user->department_id) {
+            if ($project->department_id !== $user->department_id) {
+                abort(403, 'Unauthorized action.');
+            }
+        }
+
         $project->increment('visit_count');
 
         $assignedIds        = $project->examiners->pluck('id');
-        $availableExaminers = Examiner::whereNotIn('id', $assignedIds)
+        
+        $availableExaminersQuery = Examiner::whereNotIn('id', $assignedIds)
             ->with('department:id,name')
-            ->orderBy('full_name')
-            ->get(['id', 'full_name', 'title', 'department_id']);
+            ->orderBy('full_name');
+
+        if ($user && !$user->hasRole('super_admin') && $user->department_id) {
+            $availableExaminersQuery->where('department_id', $user->department_id);
+        }
+
+        $availableExaminers = $availableExaminersQuery->get(['id', 'full_name', 'title', 'department_id']);
 
         return Inertia::render('Projects/Show', [
             'project'            => $project,
@@ -146,11 +177,30 @@ class ProjectController extends Controller
 
         $this->authorizeEdit($project);
 
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $departmentId = $user->hasRole('super_admin') ? null : $user->department_id;
+
+        $departmentsQuery = Department::orderBy('name');
+        if ($departmentId) {
+            $departmentsQuery->where('id', $departmentId);
+        }
+
+        $specializationsQuery = Specialization::orderBy('name');
+        if ($departmentId) {
+            $specializationsQuery->where('department_id', $departmentId);
+        }
+
+        $supervisorsQuery = User::role('supervisor')->orderBy('name');
+        if ($departmentId) {
+            $supervisorsQuery->where('department_id', $departmentId);
+        }
+
         return Inertia::render('Projects/Edit', [
             'project'         => $project->load(['students', 'documents']),
-            'departments'     => Department::orderBy('name')->get(['id', 'name']),
-            'specializations' => Specialization::orderBy('name')->get(['id', 'name', 'department_id']),
-            'supervisors'     => User::role('supervisor')->orderBy('name')->get(['id', 'name']),
+            'departments'     => $departmentsQuery->get(['id', 'name']),
+            'specializations' => $specializationsQuery->get(['id', 'name', 'department_id']),
+            'supervisors'     => $supervisorsQuery->get(['id', 'name']),
         ]);
     }
 

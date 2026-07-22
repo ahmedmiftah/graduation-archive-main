@@ -109,17 +109,31 @@ class SearchService
      */
     public function getFilterOptions(): array
     {
+        /** @var \App\Models\User|null $user */
+        $user = auth()->user();
+        $departmentId = ($user && !$user->hasRole('super_admin') && $user->department_id) 
+            ? $user->department_id 
+            : null;
+
+        $departmentsQuery = Department::with('specializations:id,name,department_id')
+            ->orderBy('name');
+        if ($departmentId) {
+            $departmentsQuery->where('id', $departmentId);
+        }
+
+        $supervisorsQuery = User::role('supervisor')
+            ->orderBy('name');
+        if ($departmentId) {
+            $supervisorsQuery->where('department_id', $departmentId);
+        }
+
         return [
-            'departments'    => Department::with('specializations:id,name,department_id')
-                                          ->orderBy('name')
-                                          ->get(['id', 'name']),
+            'departments'    => $departmentsQuery->get(['id', 'name']),
             'academic_years' => Project::where('is_deleted', false)
                                         ->distinct()
                                         ->orderByDesc('academic_year')
                                         ->pluck('academic_year'),
-            'supervisors'    => User::role('supervisor')
-                                    ->orderBy('name')
-                                    ->get(['id', 'name']),
+            'supervisors'    => $supervisorsQuery->get(['id', 'name']),
         ];
     }
 }

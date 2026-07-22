@@ -111,7 +111,7 @@ Route::middleware(['auth', 'role:super_admin,dept_manager'])->prefix('api')->nam
 });
 
 // Proposals API Routes
-Route::middleware(['auth', 'role:super_admin,dept_manager,dept_staff'])->prefix('api')->name('api.proposals.')->group(function () {
+Route::middleware(['auth', 'role:super_admin,dept_manager,dept_staff,supervisor'])->prefix('api')->name('api.proposals.')->group(function () {
     Route::get('proposals', [ProjectProposalController::class, 'index'])->name('index');
     Route::post('proposals', [ProjectProposalController::class, 'store'])->name('store');
     Route::get('proposals/{proposal}', [ProjectProposalController::class, 'show'])->name('show');
@@ -121,7 +121,7 @@ Route::middleware(['auth', 'role:super_admin,dept_manager,dept_staff'])->prefix(
 });
 
 // Proposals Web Routes (Inertia)
-Route::middleware(['auth', 'role:super_admin,dept_manager,dept_staff'])->prefix('proposals')->name('proposals.')->group(function () {
+Route::middleware(['auth', 'role:super_admin,dept_manager,dept_staff,supervisor'])->prefix('proposals')->name('proposals.')->group(function () {
     Route::get('/', [ProjectProposalWebController::class, 'index'])->name('index');
     Route::get('/create', [ProjectProposalWebController::class, 'create'])->name('create');
     Route::get('/{proposal}', [ProjectProposalWebController::class, 'show'])->name('show');

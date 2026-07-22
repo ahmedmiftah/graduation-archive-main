@@ -27,12 +27,33 @@
         <input v-model="form.academic_year" type="text" placeholder="مثال: 2024" required class="w-full border rounded p-2 focus:ring focus:border-blue-300" />
       </div>
 
+      <!-- Department -->
+      <div>
+        <label class="block mb-1 text-sm font-medium text-gray-700">القسم *</label>
+        <select 
+          v-model="form.department_id" 
+          required 
+          class="w-full border rounded p-2 focus:ring focus:border-blue-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          :disabled="!!authUser?.department_id && !isSuperAdmin"
+        >
+          <option value="" disabled>اختر القسم</option>
+          <option v-for="dept in departments" :key="dept.id" :value="dept.id">
+            {{ dept.name }}
+          </option>
+        </select>
+      </div>
+
       <!-- Specialization -->
       <div>
         <label class="block mb-1 text-sm font-medium text-gray-700">التخصص *</label>
-        <select v-model="form.specialization_id" required class="w-full border rounded p-2 focus:ring focus:border-blue-300">
-          <option value="" disabled>اختر التخصص</option>
-          <option v-for="spec in specializations" :key="spec.id" :value="spec.id">
+        <select 
+          v-model="form.specialization_id" 
+          required 
+          class="w-full border rounded p-2 focus:ring focus:border-blue-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          :disabled="!form.department_id"
+        >
+          <option value="" disabled>{{ form.department_id ? 'اختر التخصص' : 'اختر القسم أولاً' }}</option>
+          <option v-for="spec in filteredSpecializations" :key="spec.id" :value="spec.id">
             {{ spec.name }}
           </option>
         </select>
@@ -41,9 +62,13 @@
       <!-- Supervisor -->
       <div>
         <label class="block mb-1 text-sm font-medium text-gray-700">المشرف (اختياري)</label>
-        <select v-model="form.supervisor_id" class="w-full border rounded p-2 focus:ring focus:border-blue-300">
+        <select 
+          v-model="form.supervisor_id" 
+          class="w-full border rounded p-2 focus:ring focus:border-blue-300 disabled:bg-gray-100 disabled:cursor-not-allowed"
+          :disabled="!form.department_id"
+        >
           <option value="">بدون مشرف مبدئي</option>
-          <option v-for="sup in supervisors" :key="sup.id" :value="sup.id">
+          <option v-for="sup in filteredSupervisors" :key="sup.id" :value="sup.id">
             {{ sup.name }}
           </option>
         </select>
@@ -125,13 +150,17 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import axios from 'axios';
 
 const props = defineProps({
   proposal: {
     type: Object,
     default: null
+  },
+  departments: {
+    type: Array,
+    default: () => []
   },
   specializations: {
     type: Array,
@@ -152,6 +181,7 @@ const emit = defineEmits(['saved', 'cancel']);
 const form = ref({
   title: '',
   description: '',
+  department_id: '',
   specialization_id: '',
   semester: '',
   academic_year: '',
@@ -159,6 +189,31 @@ const form = ref({
   supervisor_id: '',
   status: 'new',
   pdf_file: null,
+});
+
+import { usePage } from '@inertiajs/vue3';
+const page = usePage();
+const authUser = computed(() => page.props.auth?.user);
+
+const isSuperAdmin = computed(() => {
+  return authUser.value?.role === 'super_admin';
+});
+
+const filteredSpecializations = computed(() => {
+  if (!form.value.department_id) return [];
+  return props.specializations.filter(s => s.department_id === form.value.department_id);
+});
+
+const filteredSupervisors = computed(() => {
+  if (!form.value.department_id) return [];
+  return props.supervisors.filter(s => s.department_id === form.value.department_id);
+});
+
+watch(() => form.value.department_id, (newVal, oldVal) => {
+  if (oldVal) {
+    form.value.specialization_id = '';
+    form.value.supervisor_id = '';
+  }
 });
 
 const studentsList = ref([]);
@@ -173,6 +228,7 @@ onMounted(() => {
     form.value = {
       title: props.proposal.title || '',
       description: props.proposal.description || '',
+      department_id: props.proposal.department_id || (props.proposal.specialization?.department_id) || '',
       specialization_id: props.proposal.specialization?.id || '',
       semester: props.proposal.semester || '',
       academic_year: props.proposal.academic_year || '',
@@ -188,6 +244,11 @@ onMounted(() => {
         name: s.name || '',
         registration_number: s.registration_number || ''
       }));
+    }
+  } else {
+    // New proposal: default department_id if not super_admin
+    if (authUser.value?.department_id) {
+      form.value.department_id = authUser.value.department_id;
     }
   }
 });

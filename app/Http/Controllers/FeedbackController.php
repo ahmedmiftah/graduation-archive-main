@@ -40,6 +40,12 @@ class FeedbackController extends Controller
 
         $this->feedbackService->markAsRead($feedback, $request->user());
 
+        if ($user = $request->user()) {
+            $user->unreadNotifications()
+                ->where('data->feedback_id', $feedbackId)
+                ->update(['read_at' => now()]);
+        }
+
         return Inertia::render('Feedback/Show', ['feedback' => $feedback]);
     }
 }
