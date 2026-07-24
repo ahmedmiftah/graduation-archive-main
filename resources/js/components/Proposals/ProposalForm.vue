@@ -201,12 +201,12 @@ const isSuperAdmin = computed(() => {
 
 const filteredSpecializations = computed(() => {
   if (!form.value.department_id) return [];
-  return props.specializations.filter(s => s.department_id === form.value.department_id);
+  return props.specializations.filter(s => Number(s.department_id) === Number(form.value.department_id));
 });
 
 const filteredSupervisors = computed(() => {
   if (!form.value.department_id) return [];
-  return props.supervisors.filter(s => s.department_id === form.value.department_id);
+  return props.supervisors.filter(s => Number(s.department_id) === Number(form.value.department_id));
 });
 
 watch(() => form.value.department_id, (newVal, oldVal) => {

@@ -149,7 +149,7 @@ const selectClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm 
                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">الحالة</label>
                 <select v-model="local.status" :class="selectClass">
                     <option value="">كل المشاريع</option>
-                    <option value="active">المؤرشفة فقط</option>
+                    <option value="active">المنجزة فقط</option>
                 </select>
             </div>
 

@@ -128,7 +128,7 @@ function resetFilters() {
 </script>
 
 <template>
-    <Head title="تصفح المشاريع المؤرشفة — كلية التقنية الإلكترونية" />
+    <Head title="تصفح المشاريع المنجزة — كلية التقنية الإلكترونية" />
 
     <div class="min-h-screen bg-background font-body text-text-dark" dir="rtl">
         <!-- HEADER -->
@@ -149,7 +149,7 @@ function resetFilters() {
 
         <main class="mx-auto max-w-6xl px-6 py-8">
             <!-- PAGE TITLE -->
-            <h1 class="mb-6 font-display text-2xl font-bold text-text-dark">المشاريع المؤرشفة</h1>
+            <h1 class="mb-6 font-display text-2xl font-bold text-text-dark">المشاريع المنجزة</h1>
 
             <!-- SEARCH & FILTER BAR -->
             <div class="mb-6 rounded-xl border border-border bg-surface p-4">
@@ -225,7 +225,7 @@ function resetFilters() {
             </div>
 
             <!-- RESULTS INFO -->
-            <p class="mb-4 text-sm text-text-muted">عرض {{ projects.data.length }} من أصل {{ projects.total }} مشروع مؤرشف</p>
+            <p class="mb-4 text-sm text-text-muted">عرض {{ projects.data.length }} من أصل {{ projects.total }} مشروع منجز</p>
 
             <!-- PROJECTS GRID -->
             <div v-if="projects.data.length > 0" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

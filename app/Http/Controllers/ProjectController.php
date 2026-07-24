@@ -66,7 +66,7 @@ class ProjectController extends Controller
         return Inertia::render('Projects/Create', [
             'departments'     => $departmentsQuery->get(['id', 'name']),
             'specializations' => $specializationsQuery->get(['id', 'name', 'department_id']),
-            'supervisors'     => $supervisorsQuery->get(['id', 'name']),
+            'supervisors'     => $supervisorsQuery->get(['id', 'name', 'department_id']),
         ]);
     }
 
@@ -83,15 +83,16 @@ class ProjectController extends Controller
 
         /** @var \App\Models\User $user */
         $user     = Auth::user();
-        $statusId = $user->hasAnyRole(['dept_manager', 'super_admin'])
+        $statusId = $data['current_status_id'] ?? ($user->hasAnyRole(['dept_manager', 'super_admin'])
             ? self::STATUS_ARCHIVED
-            : self::STATUS_PENDING;
+            : self::STATUS_PENDING);
 
         $project = Project::create([
             'project_title'     => $data['project_title'],
             'description'       => $data['description'],
             'degree_level'      => $data['degree_level'],
             'academic_year'     => $data['academic_year'],
+            'semester'          => $data['semester'],
             'department_id'     => $data['department_id'],
             'specialization_id' => $data['specialization_id'],
             'supervisor_id'     => $data['supervisor_id'],
@@ -200,7 +201,7 @@ class ProjectController extends Controller
             'project'         => $project->load(['students', 'documents']),
             'departments'     => $departmentsQuery->get(['id', 'name']),
             'specializations' => $specializationsQuery->get(['id', 'name', 'department_id']),
-            'supervisors'     => $supervisorsQuery->get(['id', 'name']),
+            'supervisors'     => $supervisorsQuery->get(['id', 'name', 'department_id']),
         ]);
     }
 
@@ -223,7 +224,7 @@ class ProjectController extends Controller
             $project->documents()->create([
                 'document_type' => 'final_report',
                 'file_path'     => $pdfPath,
-                'is_final'      => $project->current_status_id === self::STATUS_ARCHIVED,
+                'is_final'      => ($data['current_status_id'] ?? $project->current_status_id) === self::STATUS_ARCHIVED,
             ]);
         }
 
@@ -232,9 +233,11 @@ class ProjectController extends Controller
             'description'       => $data['description'],
             'degree_level'      => $data['degree_level'],
             'academic_year'     => $data['academic_year'],
+            'semester'          => $data['semester'],
             'department_id'     => $data['department_id'],
             'specialization_id' => $data['specialization_id'],
             'supervisor_id'     => $data['supervisor_id'],
+            'current_status_id' => $data['current_status_id'] ?? $project->current_status_id,
             'draft_file_path'   => $pdfPath,
         ]);
 

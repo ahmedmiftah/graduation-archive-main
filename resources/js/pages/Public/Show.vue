@@ -126,7 +126,7 @@ function closeFeedbackModal() {
                         {{ project.project_title }}
                     </h1>
                     <div class="flex shrink-0 items-center gap-3">
-                        <span class="inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">مؤرشف</span>
+                        <span class="inline-block rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">منجز</span>
                         <span class="inline-flex items-center gap-1 text-sm text-text-muted">
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"

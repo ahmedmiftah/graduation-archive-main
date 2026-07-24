@@ -16,6 +16,7 @@ class Project extends Model
         'project_title',
         'description',
         'academic_year',
+        'semester',
         'department_id',
         'specialization_id',
         'supervisor_id',

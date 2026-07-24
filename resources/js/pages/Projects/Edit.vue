@@ -7,7 +7,7 @@ import { usePage } from '@inertiajs/vue3';
 
 interface Department    { id: number; name: string }
 interface Specialization { id: number; name: string; department_id: number }
-interface Supervisor    { id: number; name: string }
+interface Supervisor    { id: number; name: string; department_id: number }
 interface ProjectStudent { id: number; full_name: string; registration_number: string }
 
 interface Project {
@@ -46,6 +46,7 @@ const form = useForm({
     department_id:     props.project.department_id as number | null,
     specialization_id: props.project.specialization_id as number | null,
     supervisor_id:     props.project.supervisor_id as number | null,
+    current_status_id: props.project.current_status_id as number | null,
     pdf_file:          null as File | null,
     students:          props.project.students.map(s => ({
         full_name:           s.full_name,
@@ -65,12 +66,21 @@ const filteredDepartments = computed(() => {
 
 const filteredSpecializations = computed(() =>
     form.department_id
-        ? props.specializations.filter(s => s.department_id === form.department_id)
+        ? props.specializations.filter(s => Number(s.department_id) === Number(form.department_id))
+        : []
+);
+
+const filteredSupervisors = computed(() =>
+    form.department_id
+        ? props.supervisors.filter(s => Number(s.department_id) === Number(form.department_id))
         : []
 );
 
 watch(() => form.department_id, (newVal, oldVal) => {
-    if (oldVal !== null && newVal !== oldVal) form.specialization_id = null;
+    if (oldVal !== null && newVal !== oldVal) {
+        form.specialization_id = null;
+        form.supervisor_id = null;
+    }
 });
 
 // If editing user is restricted to a department, ensure it's selected. 
@@ -92,7 +102,10 @@ function onFileChange(e: Event) {
 }
 
 function submit() {
-    form.put(route('projects.update', [props.project.id]), { forceFormData: true });
+    form.transform((data) => ({
+        ...data,
+        _method: 'PUT',
+    })).post(route('projects.update', [props.project.id]));
 }
 
 const currentFileName = computed(() => {
@@ -171,6 +184,26 @@ const currentFileName = computed(() => {
                         <p v-if="form.errors.degree_level" class="mt-1 text-xs text-red-600">{{ form.errors.degree_level }}</p>
                     </div>
 
+                    <!-- Project Status -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            حالة المشروع <span class="text-red-500">*</span>
+                        </label>
+                        <select
+                            v-model="form.current_status_id"
+                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                            :class="{ 'border-red-500': form.errors.current_status_id }"
+                        >
+                            <option :value="1">منجز</option>
+                            <option :value="5">تحت التنفيذ</option>
+                            <option :value="10">منقطع</option>
+                            <option v-if="![1, 5, 10].includes(project.current_status_id)" :value="project.current_status_id">
+                                {{ project.current_status?.status_name === 'proposal_submitted' ? 'في انتظار الموافقة' : project.current_status?.status_name }}
+                            </option>
+                        </select>
+                        <p v-if="form.errors.current_status_id" class="mt-1 text-xs text-red-600">{{ form.errors.current_status_id }}</p>
+                    </div>
+
                     <!-- Department + Specialization -->
                     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         <div>
@@ -213,11 +246,12 @@ const currentFileName = computed(() => {
                         </label>
                         <select
                             v-model="form.supervisor_id"
-                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                            :disabled="!form.department_id"
+                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:disabled:bg-gray-800"
                             :class="{ 'border-red-500': form.errors.supervisor_id }"
                         >
-                            <option :value="null">اختر المشرف</option>
-                            <option v-for="sup in supervisors" :key="sup.id" :value="sup.id">{{ sup.name }}</option>
+                            <option :value="null">{{ form.department_id ? 'اختر المشرف' : 'اختر القسم أولاً' }}</option>
+                            <option v-for="sup in filteredSupervisors" :key="sup.id" :value="sup.id">{{ sup.name }}</option>
                         </select>
                         <p v-if="form.errors.supervisor_id" class="mt-1 text-xs text-red-600">{{ form.errors.supervisor_id }}</p>
                     </div>

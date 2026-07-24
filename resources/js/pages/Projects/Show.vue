@@ -123,16 +123,16 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 const STATUS_LABELS: Record<string, string> = {
-    archived:            'مؤرشف',
+    archived:            'منجز',
     proposal_submitted:  'في انتظار الموافقة',
     supervisor_approved: 'موافقة المشرف',
     hod_approved:        'موافقة رئيس القسم',
-    in_progress:         'قيد التنفيذ',
+    in_progress:         'تحت التنفيذ',
     ready_for_defense:   'جاهز للمناقشة',
     under_defense:       'تحت المناقشة',
     revisions_required:  'يحتاج تعديلات',
     rejected:            'مرفوض',
-    cancelled:           'ملغي',
+    cancelled:           'منقطع',
 };
 
 function statusColor(name: string) {
