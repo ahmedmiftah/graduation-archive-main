@@ -24,13 +24,7 @@ defineEmits<{
                 <div class="relative z-10 w-full max-w-lg rounded-xl bg-white shadow-xl dark:bg-gray-800">
                     <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ title }}</h3>
-                        <button
-                            type="button"
-                            class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                            @click="$emit('close')"
-                        >
-                            ✕
-                        </button>
+                        <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" @click="$emit('close')">✕</button>
                     </div>
                     <div class="px-6 py-4">
                         <slot />

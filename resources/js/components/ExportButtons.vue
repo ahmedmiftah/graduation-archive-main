@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { FileDown, FileSpreadsheet, Printer } from 'lucide-vue-next'
+import { FileDown, FileSpreadsheet, Printer } from 'lucide-vue-next';
 
 const props = defineProps<{
-    pdfUrl: string
-    excelUrl: string
-    title?: string
-    subtitle?: string
-}>()
+    pdfUrl: string;
+    excelUrl: string;
+    title?: string;
+    subtitle?: string;
+}>();
 
 function printReport() {
-    window.print()
+    window.print();
 }
 </script>
 
@@ -40,7 +40,7 @@ function printReport() {
             </a>
         </div>
 
-        <div class="hidden print:block print:mb-6 print:border-b print:border-slate-200 print:pb-4">
+        <div class="hidden print:mb-6 print:block print:border-b print:border-slate-200 print:pb-4">
             <div class="flex justify-center">
                 <img src="/images/logo.png" alt="شعار الكلية" class="h-14 w-auto" />
             </div>

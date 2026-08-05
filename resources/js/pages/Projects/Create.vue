@@ -1,39 +1,52 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
-import { usePage } from '@inertiajs/vue3';
 
-interface Department    { id: number; name: string }
-interface Specialization { id: number; name: string; department_id: number }
-interface Supervisor    { id: number; name: string; department_id: number }
+interface Department {
+    id: number;
+    name: string;
+}
+interface Specialization {
+    id: number;
+    name: string;
+    department_id: number;
+}
+interface Supervisor {
+    id: number;
+    name: string;
+    department_id: number;
+}
 
-interface Student { full_name: string; registration_number: string }
+interface Student {
+    full_name: string;
+    registration_number: string;
+}
 
 const props = defineProps<{
-    departments:     Department[];
+    departments: Department[];
     specializations: Specialization[];
-    supervisors:     Supervisor[];
+    supervisors: Supervisor[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'لوحة التحكم', href: '/dashboard' },
-    { title: 'المشاريع',    href: '/projects' },
+    { title: 'المشاريع', href: '/projects' },
     { title: 'إضافة مشروع', href: '/projects/create' },
 ];
 
 const form = useForm({
-    project_title:     '',
-    description:       '',
-    academic_year:     '',
-    degree_level:      'bachelor',
-    department_id:     null as number | null,
+    project_title: '',
+    description: '',
+    academic_year: '',
+    degree_level: 'bachelor',
+    department_id: null as number | null,
     specialization_id: null as number | null,
-    supervisor_id:     null as number | null,
+    supervisor_id: null as number | null,
     current_status_id: 1 as number | null,
-    pdf_file:          null as File | null,
-    students:          [{ full_name: '', registration_number: '' }] as Student[],
+    pdf_file: null as File | null,
+    students: [{ full_name: '', registration_number: '' }] as Student[],
 });
 
 const page = usePage();
@@ -43,25 +56,24 @@ const filteredDepartments = computed(() => {
     if (authUser.value?.role === 'super_admin' || !authUser.value?.department_id) {
         return props.departments;
     }
-    return props.departments.filter(d => d.id === authUser.value?.department_id);
+    return props.departments.filter((d) => d.id === authUser.value?.department_id);
 });
 
 const filteredSpecializations = computed(() =>
-    form.department_id
-        ? props.specializations.filter(s => Number(s.department_id) === Number(form.department_id))
-        : []
+    form.department_id ? props.specializations.filter((s) => Number(s.department_id) === Number(form.department_id)) : [],
 );
 
 const filteredSupervisors = computed(() =>
-    form.department_id
-        ? props.supervisors.filter(s => Number(s.department_id) === Number(form.department_id))
-        : []
+    form.department_id ? props.supervisors.filter((s) => Number(s.department_id) === Number(form.department_id)) : [],
 );
 
-watch(() => form.department_id, () => {
-    form.specialization_id = null;
-    form.supervisor_id = null;
-});
+watch(
+    () => form.department_id,
+    () => {
+        form.specialization_id = null;
+        form.supervisor_id = null;
+    },
+);
 
 if (authUser.value?.department_id) {
     form.department_id = authUser.value.department_id;
@@ -92,7 +104,6 @@ function submit() {
 
             <div class="max-w-3xl rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
                 <form @submit.prevent="submit" class="space-y-6">
-
                     <!-- Title -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -110,9 +121,7 @@ function submit() {
 
                     <!-- Description -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            الوصف <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"> الوصف <span class="text-red-500">*</span> </label>
                         <textarea
                             v-model="form.description"
                             rows="4"
@@ -181,7 +190,7 @@ function submit() {
                             <select
                                 v-model="form.department_id"
                                 :disabled="!!authUser?.department_id && authUser?.role !== 'super_admin'"
-                                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:disabled:bg-gray-800"
                                 :class="{ 'border-red-500': form.errors.department_id }"
                             >
                                 <option :value="null">اختر القسم</option>
@@ -209,9 +218,7 @@ function submit() {
 
                     <!-- Supervisor -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            المشرف <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"> المشرف <span class="text-red-500">*</span> </label>
                         <select
                             v-model="form.supervisor_id"
                             :disabled="!form.department_id"
@@ -264,10 +271,10 @@ function submit() {
                                             v-model="student.full_name"
                                             type="text"
                                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                                            :class="{ 'border-red-500': (form.errors as Record<string,string>)[`students.${idx}.full_name`] }"
+                                            :class="{ 'border-red-500': form.errors[`students.${idx}.full_name`] }"
                                         />
-                                        <p v-if="(form.errors as Record<string,string>)[`students.${idx}.full_name`]" class="mt-1 text-xs text-red-600">
-                                            {{ (form.errors as Record<string,string>)[`students.${idx}.full_name`] }}
+                                        <p v-if="form.errors[`students.${idx}.full_name`]" class="mt-1 text-xs text-red-600">
+                                            {{ form.errors[`students.${idx}.full_name`] }}
                                         </p>
                                     </div>
                                     <div>
@@ -276,10 +283,10 @@ function submit() {
                                             v-model="student.registration_number"
                                             type="text"
                                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                                            :class="{ 'border-red-500': (form.errors as Record<string,string>)[`students.${idx}.registration_number`] }"
+                                            :class="{ 'border-red-500': form.errors[`students.${idx}.registration_number`] }"
                                         />
-                                        <p v-if="(form.errors as Record<string,string>)[`students.${idx}.registration_number`]" class="mt-1 text-xs text-red-600">
-                                            {{ (form.errors as Record<string,string>)[`students.${idx}.registration_number`] }}
+                                        <p v-if="form.errors[`students.${idx}.registration_number`]" class="mt-1 text-xs text-red-600">
+                                            {{ form.errors[`students.${idx}.registration_number`] }}
                                         </p>
                                     </div>
                                 </div>
@@ -289,9 +296,7 @@ function submit() {
 
                     <!-- PDF Upload -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            ملف المشروع (PDF)
-                        </label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"> ملف المشروع (PDF) </label>
                         <input
                             type="file"
                             accept=".pdf"
@@ -328,7 +333,6 @@ function submit() {
                             إلغاء
                         </a>
                     </div>
-
                 </form>
             </div>
         </div>

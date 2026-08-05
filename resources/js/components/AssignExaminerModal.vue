@@ -2,7 +2,10 @@
 import Modal from '@/components/Modal.vue';
 import { useForm } from '@inertiajs/vue3';
 
-interface Department { id: number; name: string }
+interface Department {
+    id: number;
+    name: string;
+}
 interface Examiner {
     id: number;
     full_name: string;
@@ -55,7 +58,8 @@ function cancel() {
                 >
                     <option value="">-- اختر ممتحناً --</option>
                     <option v-for="examiner in availableExaminers" :key="examiner.id" :value="examiner.id">
-                        {{ examiner.full_name }}{{ examiner.title ? ' — ' + examiner.title : '' }}{{ examiner.department ? ' (' + examiner.department.name + ')' : '' }}
+                        {{ examiner.full_name }}{{ examiner.title ? ' — ' + examiner.title : ''
+                        }}{{ examiner.department ? ' (' + examiner.department.name + ')' : '' }}
                     </option>
                 </select>
                 <p v-if="form.errors.examiner_id" class="mt-1 text-xs text-red-600">{{ form.errors.examiner_id }}</p>

@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
-import { usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
-import { Link } from '@inertiajs/vue3';
 import type { SharedData } from '@/types';
+import { Link, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 const page = usePage<SharedData>();
 const feedback = computed(() => page.props.feedback);
@@ -18,7 +17,11 @@ const filters = computed(() => page.props.filters ?? {});
                     <h1 class="text-2xl font-semibold text-slate-900">لوحة الملاحظات</h1>
                     <p class="mt-1 text-sm text-slate-500">عرض جميع ملاحظات الزوار والإشعارات غير المقروءة.</p>
                 </div>
-                <Link href="/feedback" class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50">تحديث</Link>
+                <Link
+                    href="/feedback"
+                    class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm hover:bg-slate-50"
+                    >تحديث</Link
+                >
             </div>
 
             <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -54,12 +57,14 @@ const filters = computed(() => page.props.filters ?? {});
                             v-if="feedback.prev_page_url"
                             :href="feedback.prev_page_url"
                             class="rounded px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100"
-                        >السابق</Link>
+                            >السابق</Link
+                        >
                         <Link
                             v-if="feedback.next_page_url"
                             :href="feedback.next_page_url"
                             class="rounded px-3 py-1 text-sm font-medium text-slate-700 hover:bg-slate-100"
-                        >التالي</Link>
+                            >التالي</Link
+                        >
                     </div>
                 </div>
             </div>

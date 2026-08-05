@@ -4,7 +4,7 @@ import NavUser from '@/components/NavUser.vue';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BarChart2, Bell, BookOpen, Building2, FolderOpen, LayoutGrid, Search, Upload, UserCheck, Users, FileText } from 'lucide-vue-next';
+import { BarChart2, Bell, BookOpen, Building2, FileText, FolderOpen, LayoutGrid, Search, Upload, UserCheck, Users } from 'lucide-vue-next';
 import { computed } from 'vue';
 import Logo from './Brand/Logo.vue';
 
@@ -22,7 +22,7 @@ const navByRole = computed(() => {
                 { title: 'المقترحات', href: '/proposals', icon: FileText },
                 { title: 'الممتحنون', href: '/examiners', icon: UserCheck },
                 { title: 'الإشعارات', href: '/feedback', icon: Bell },
-                
+
                 { title: 'التقارير', href: '/reports/department', icon: BarChart2 },
                 { title: 'استيراد', href: '/import', icon: Upload },
                 { title: 'تصفح المشاريع', href: '/browse', icon: BookOpen },
@@ -36,7 +36,7 @@ const navByRole = computed(() => {
                 { title: 'الممتحنون', href: '/examiners', icon: UserCheck },
                 { title: 'الإشعارات', href: '/feedback', icon: Bell },
                 { title: 'البحث', href: '/search', icon: Search },
-                
+
                 { title: 'التقارير', href: '/reports/department', icon: BarChart2 },
                 { title: 'تصفح المشاريع', href: '/browse', icon: BookOpen },
             ];
@@ -45,7 +45,7 @@ const navByRole = computed(() => {
                 { title: 'لوحة التحكم', href: '/dashboard', icon: LayoutGrid },
                 { title: 'المشاريع', href: '/projects', icon: FolderOpen },
                 { title: 'المقترحات', href: '/proposals', icon: FileText },
-                
+
                 { title: 'البحث', href: '/search', icon: Search },
                 { title: 'تصفح المشاريع', href: '/browse', icon: BookOpen },
             ];

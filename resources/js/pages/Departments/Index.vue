@@ -10,10 +10,8 @@ const page = usePage<SharedData>();
 const flash = computed(() => page.props.flash ?? {});
 const authUser = computed(() => page.props.auth.user);
 const isSuperAdmin = computed(() => authUser.value?.role === 'super_admin');
-const canEditDepartment = (dept: Department) =>
-    isSuperAdmin.value || authUser.value?.department_id === dept.id;
-const canManageSpecs = (dept: Department) =>
-    isSuperAdmin.value || authUser.value?.department_id === dept.id;
+const canEditDepartment = (dept: Department) => isSuperAdmin.value || authUser.value?.department_id === dept.id;
+const canManageSpecs = (dept: Department) => isSuperAdmin.value || authUser.value?.department_id === dept.id;
 
 interface Specialization {
     id: number;
@@ -38,7 +36,7 @@ const filteredDepartments = computed(() => {
     if (isSuperAdmin.value || !authUser.value?.department_id) {
         return props.departments;
     }
-    return props.departments.filter(d => d.id === authUser.value?.department_id);
+    return props.departments.filter((d) => d.id === authUser.value?.department_id);
 });
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -57,7 +55,10 @@ function openAddDept() {
 
 function submitDept() {
     deptForm.post(route('departments.store'), {
-        onSuccess: () => { showDeptModal.value = false; deptForm.reset(); },
+        onSuccess: () => {
+            showDeptModal.value = false;
+            deptForm.reset();
+        },
     });
 }
 
@@ -93,11 +94,17 @@ function openEditSpec(spec: Specialization) {
 function submitSpec() {
     if (editingSpec.value) {
         specForm.put(route('specializations.update', [editingSpec.value.id]), {
-            onSuccess: () => { showSpecModal.value = false; specForm.reset(); },
+            onSuccess: () => {
+                showSpecModal.value = false;
+                specForm.reset();
+            },
         });
     } else {
         specForm.post(route('specializations.store'), {
-            onSuccess: () => { showSpecModal.value = false; specForm.reset(); },
+            onSuccess: () => {
+                showSpecModal.value = false;
+                specForm.reset();
+            },
         });
     }
 }
@@ -143,16 +150,10 @@ function toggleExpand(id: number) {
             </div>
 
             <!-- Flash messages -->
-            <div
-                v-if="flash.success"
-                class="rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400"
-            >
+            <div v-if="flash.success" class="rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
                 {{ flash.success }}
             </div>
-            <div
-                v-if="flash.error"
-                class="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"
-            >
+            <div v-if="flash.error" class="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
                 {{ flash.error }}
             </div>
 
@@ -172,11 +173,7 @@ function toggleExpand(id: number) {
                         <template v-for="dept in filteredDepartments" :key="dept.id">
                             <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
                                 <td class="px-4 py-3">
-                                    <button
-                                        type="button"
-                                        class="text-gray-400 hover:text-gray-600"
-                                        @click="toggleExpand(dept.id)"
-                                    >
+                                    <button type="button" class="text-gray-400 hover:text-gray-600" @click="toggleExpand(dept.id)">
                                         {{ expandedDepts.has(dept.id) ? '▲' : '▼' }}
                                     </button>
                                 </td>

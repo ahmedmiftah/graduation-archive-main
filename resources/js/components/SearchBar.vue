@@ -9,8 +9,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
     'update:modelValue': [value: string];
-    'search': [value: string];
-    'select': [value: string];
+    search: [value: string];
+    select: [value: string];
 }>();
 
 const showDropdown = ref(false);
@@ -50,23 +50,28 @@ function onFocus() {
 }
 
 function onBlur() {
-    setTimeout(() => { showDropdown.value = false; }, 200);
+    setTimeout(() => {
+        showDropdown.value = false;
+    }, 200);
 }
 
-watch(() => props.suggestions, (val) => {
-    if (val && val.length > 0) showDropdown.value = true;
-});
+watch(
+    () => props.suggestions,
+    (val) => {
+        if (val && val.length > 0) showDropdown.value = true;
+    },
+);
 </script>
 
 <template>
     <div class="relative w-full" dir="rtl">
         <div class="relative flex items-center">
-            <span class="pointer-events-none absolute right-3 text-gray-400 text-sm">🔍</span>
+            <span class="pointer-events-none absolute right-3 text-sm text-gray-400">🔍</span>
             <input
                 :value="modelValue"
                 :placeholder="placeholder ?? 'بحث...'"
                 type="text"
-                class="w-full rounded-lg border border-gray-300 py-2 pr-9 pl-9 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                class="w-full rounded-lg border border-gray-300 py-2 pl-9 pr-9 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                 @input="onInput"
                 @keydown.enter.prevent="onEnter"
                 @focus="onFocus"

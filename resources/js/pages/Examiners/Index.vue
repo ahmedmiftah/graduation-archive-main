@@ -6,7 +6,7 @@ import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
-const page  = usePage<SharedData>();
+const page = usePage<SharedData>();
 const flash = computed(() => page.props.flash ?? {});
 
 const userDeptId = computed(() => page.props.auth?.user?.department_id ?? null);
@@ -42,7 +42,7 @@ const selectedDept = ref<number | ''>(userDeptId.value ?? props.filters.departme
 
 const filteredExaminers = computed(() => {
     if (!userDeptId.value) return props.examiners; // If no department (e.g., super admin), show all or based on their logic
-    return props.examiners.filter(ex => ex.department_id === userDeptId.value);
+    return props.examiners.filter((ex) => ex.department_id === userDeptId.value);
 });
 
 function applyFilter() {
@@ -51,12 +51,12 @@ function applyFilter() {
 }
 
 // ── Add / Edit modal ──────────────────────────────────────────────
-const showModal       = ref(false);
+const showModal = ref(false);
 const editingExaminer = ref<Examiner | null>(null);
 
 const form = useForm({
-    full_name:     '',
-    title:         '',
+    full_name: '',
+    title: '',
     department_id: 0 as number,
 });
 
@@ -68,15 +68,18 @@ function openAdd() {
 
 function openEdit(examiner: Examiner) {
     editingExaminer.value = examiner;
-    form.full_name     = examiner.full_name;
-    form.title         = examiner.title;
+    form.full_name = examiner.full_name;
+    form.title = examiner.title;
     form.department_id = examiner.department_id;
-    showModal.value    = true;
+    showModal.value = true;
 }
 
 function submitForm() {
     const options = {
-        onSuccess: () => { showModal.value = false; form.reset(); },
+        onSuccess: () => {
+            showModal.value = false;
+            form.reset();
+        },
     };
     if (editingExaminer.value) {
         form.put(route('examiners.update', [editingExaminer.value.id]), options);
@@ -100,30 +103,19 @@ function deleteExaminer() {
     <Head title="الممتحنون" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 p-4" dir="rtl">
-
             <!-- Header -->
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">إدارة الممتحنين</h1>
-                <button
-                    type="button"
-                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                    @click="openAdd"
-                >
+                <button type="button" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700" @click="openAdd">
                     + إضافة ممتحن
                 </button>
             </div>
 
             <!-- Flash messages -->
-            <div
-                v-if="flash.success"
-                class="rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400"
-            >
+            <div v-if="flash.success" class="rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
                 {{ flash.success }}
             </div>
-            <div
-                v-if="flash.error"
-                class="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"
-            >
+            <div v-if="flash.error" class="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
                 {{ flash.error }}
             </div>
 
@@ -163,7 +155,9 @@ function deleteExaminer() {
                                 {{ examiner.department?.name ?? '—' }}
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                <span class="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400">
+                                <span
+                                    class="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400"
+                                >
                                     {{ examiner.projects_count }}
                                 </span>
                             </td>
@@ -194,15 +188,10 @@ function deleteExaminer() {
                     </tbody>
                 </table>
             </div>
-
         </div>
 
         <!-- Add / Edit Modal -->
-        <Modal
-            :show="showModal"
-            :title="editingExaminer ? 'تعديل بيانات الممتحن' : 'إضافة ممتحن جديد'"
-            @close="showModal = false"
-        >
+        <Modal :show="showModal" :title="editingExaminer ? 'تعديل بيانات الممتحن' : 'إضافة ممتحن جديد'" @close="showModal = false">
             <form id="examiner-form" class="space-y-4" @submit.prevent="submitForm">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">الاسم الكامل</label>
@@ -265,11 +254,6 @@ function deleteExaminer() {
         </Modal>
 
         <!-- Confirm delete -->
-        <ConfirmDelete
-            :show="!!confirmDelete"
-            :item-name="confirmDelete?.full_name"
-            @confirmed="deleteExaminer"
-            @cancelled="confirmDelete = null"
-        />
+        <ConfirmDelete :show="!!confirmDelete" :item-name="confirmDelete?.full_name" @confirmed="deleteExaminer" @cancelled="confirmDelete = null" />
     </AppLayout>
 </template>

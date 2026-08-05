@@ -1,31 +1,45 @@
 <template>
-  <div class="p-6 max-w-4xl mx-auto">
-    <h1 class="text-2xl font-bold text-gray-800 mb-6">إنشاء مقترح جديد</h1>
-    <Link :href="route('proposals.index')" class="text-gray-600 hover:underline mb-4 inline-block">العودة للقائمة</Link>
-    <div class="bg-white p-6 rounded shadow">
-      <ProposalForm :departments="departments" :specializations="specializations" :supervisors="supervisors" @saved="onSaved" @cancel="onCancel" />
-    </div>
-  </div>
+    <Head title="إنشاء مقترح جديد" />
+    <AppLayout :breadcrumbs="breadcrumbs">
+        <div class="mx-auto max-w-4xl p-6" dir="rtl">
+            <h1 class="mb-6 text-2xl font-bold text-gray-800">إنشاء مقترح جديد</h1>
+            <div class="rounded bg-white p-6 shadow">
+                <ProposalForm
+                    :departments="departments"
+                    :specializations="specializations"
+                    :supervisors="supervisors"
+                    @saved="onSaved"
+                    @cancel="onCancel"
+                />
+            </div>
+        </div>
+    </AppLayout>
 </template>
 
 <script setup>
-import { router } from '@inertiajs/vue3';
-import { Link } from '@inertiajs/vue3';
+import AppLayout from '@/layouts/AppLayout.vue';
+import { Head, router } from '@inertiajs/vue3';
 import ProposalForm from '../../components/Proposals/ProposalForm.vue';
 
+const breadcrumbs = [
+    { title: 'لوحة التحكم', href: '/dashboard' },
+    { title: 'المقترحات', href: '/proposals' },
+    { title: 'إنشاء مقترح جديد', href: '/proposals/create' },
+];
+
 const props = defineProps({
-  departments: { type: Array, default: () => [] },
-  specializations: { type: Array, default: () => [] },
-  supervisors: { type: Array, default: () => [] },
+    departments: { type: Array, default: () => [] },
+    specializations: { type: Array, default: () => [] },
+    supervisors: { type: Array, default: () => [] },
 });
 
 const onSaved = () => {
-  router.visit(route('proposals.index'), {
-    onSuccess: () => alert('تم إنشاء المقترح بنجاح')
-  });
+    router.visit(route('proposals.index'), {
+        onSuccess: () => alert('تم إنشاء المقترح بنجاح'),
+    });
 };
 
 const onCancel = () => {
-  router.visit(route('proposals.index'));
+    router.visit(route('proposals.index'));
 };
 </script>

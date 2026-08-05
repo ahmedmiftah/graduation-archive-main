@@ -285,10 +285,10 @@ function statusLabel(name: string) {
 <template>
     <Head title="المشاريع" />
     <AppLayout :breadcrumbs="breadcrumbs">
-        <div class="flex h-full flex-1 flex-col gap-4 p-4" dir="rtl">
+        <div class="flex h-full min-w-0 flex-1 flex-col gap-4 p-4" dir="rtl">
             <!-- ── Header ─────────────────────────────────────────── -->
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
+                <div class="flex items-center gap-4">
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">المشاريع</h1>
                     <span class="rounded-full bg-gray-100 px-2.5 py-0.5 text-sm font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-400">
                         {{ projects.total }}
@@ -297,7 +297,7 @@ function statusLabel(name: string) {
                 <a
                     v-if="canCreate"
                     :href="route('projects.create')"
-                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    class="shrink-0 whitespace-nowrap rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                 >
                     + إضافة مشروع
                 </a>
@@ -373,7 +373,6 @@ function statusLabel(name: string) {
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">المشرف</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">السنة</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">الحالة</th>
-                            <th class="px-4 py-3 text-center text-sm font-semibold text-gray-700 dark:text-gray-300">الطلاب</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">إجراءات</th>
                         </tr>
                     </thead>
@@ -421,9 +420,6 @@ function statusLabel(name: string) {
                                     {{ statusLabel(project.current_status.status_name) }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-center text-sm text-gray-600 dark:text-gray-400">
-                                {{ project.students_count }}
-                            </td>
                             <td class="px-4 py-3">
                                 <div class="flex flex-wrap gap-1">
                                     <a
@@ -459,7 +455,7 @@ function statusLabel(name: string) {
                             </td>
                         </tr>
                         <tr v-if="projects.data.length === 0">
-                            <td colspan="9" class="px-4 py-10 text-center text-sm text-gray-500">لا توجد مشاريع مطابقة للبحث</td>
+                            <td colspan="8" class="px-4 py-10 text-center text-sm text-gray-500">لا توجد مشاريع مطابقة للبحث</td>
                         </tr>
                     </tbody>
                 </table>

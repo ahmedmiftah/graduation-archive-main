@@ -26,8 +26,8 @@ const emit = defineEmits<{
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">تأكيد الحذف</h3>
                     <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
                         هل أنت متأكد من حذف
-                        <span v-if="itemName" class="font-medium text-gray-900 dark:text-gray-100">{{ itemName }}</span>؟
-                        لا يمكن التراجع عن هذه العملية.
+                        <span v-if="itemName" class="font-medium text-gray-900 dark:text-gray-100">{{ itemName }}</span
+                        >؟ لا يمكن التراجع عن هذه العملية.
                     </p>
                     <div class="mt-6 flex justify-end gap-3">
                         <button

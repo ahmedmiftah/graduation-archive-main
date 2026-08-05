@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import type { BreadcrumbItemType, SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
 import { Bell } from 'lucide-vue-next';
-import type { BreadcrumbItemType, SharedData } from '@/types';
 import { computed } from 'vue';
 
 const props = defineProps<{

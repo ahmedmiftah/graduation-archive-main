@@ -7,12 +7,34 @@ import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
-interface Department     { id: number; name: string }
-interface Specialization { id: number; name: string }
-interface Supervisor     { id: number; name: string }
-interface ProjectStatus  { id: number; status_name: string }
-interface ProjectStudent { id: number; full_name: string; registration_number: string; status: string }
-interface ProjectDocument { id: number; file_path: string; document_type: string; is_final: boolean }
+interface Department {
+    id: number;
+    name: string;
+}
+interface Specialization {
+    id: number;
+    name: string;
+}
+interface Supervisor {
+    id: number;
+    name: string;
+}
+interface ProjectStatus {
+    id: number;
+    status_name: string;
+}
+interface ProjectStudent {
+    id: number;
+    full_name: string;
+    registration_number: string;
+    status: string;
+}
+interface ProjectDocument {
+    id: number;
+    file_path: string;
+    document_type: string;
+    is_final: boolean;
+}
 interface Examiner {
     id: number;
     full_name: string;
@@ -49,23 +71,22 @@ const props = defineProps<{
     availableExaminers: Examiner[];
 }>();
 
-const page     = usePage<SharedData>();
-const flash    = computed(() => page.props.flash ?? {});
+const page = usePage<SharedData>();
+const flash = computed(() => page.props.flash ?? {});
 const userRole = computed(() => (page.props.auth.user as { role?: string }).role ?? '');
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'لوحة التحكم', href: '/dashboard' },
-    { title: 'المشاريع',    href: '/projects' },
+    { title: 'المشاريع', href: '/projects' },
     { title: props.project.project_title, href: '#' },
 ];
 
 // ── Permissions ───────────────────────────────────────────────────
-const canEdit   = computed(() => ['dept_staff', 'dept_manager', 'super_admin'].includes(userRole.value));
+const canEdit = computed(() => ['dept_staff', 'dept_manager', 'super_admin'].includes(userRole.value));
 const canDelete = computed(() => ['dept_manager', 'super_admin'].includes(userRole.value));
 const canManage = computed(() => ['dept_manager', 'super_admin'].includes(userRole.value));
-const canApprove = computed(() =>
-    ['dept_manager', 'super_admin'].includes(userRole.value)
-    && props.project.current_status?.status_name === 'proposal_submitted'
+const canApprove = computed(
+    () => ['dept_manager', 'super_admin'].includes(userRole.value) && props.project.current_status?.status_name === 'proposal_submitted',
 );
 
 // ── Project actions ────────────────────────────────────────────────
@@ -82,7 +103,7 @@ function approveProject() {
 }
 
 // ── Examiner assign / remove ───────────────────────────────────────
-const showAssignModal       = ref(false);
+const showAssignModal = ref(false);
 const confirmRemoveExaminer = ref<Examiner | null>(null);
 
 function removeExaminer() {
@@ -94,7 +115,7 @@ function removeExaminer() {
 
 // ── Evaluation helpers ─────────────────────────────────────────────
 function evaluationFor(examinerId: number): Evaluation | null {
-    return props.project.evaluations.find(e => e.examiner_id === examinerId) ?? null;
+    return props.project.evaluations.find((e) => e.examiner_id === examinerId) ?? null;
 }
 
 // ── Score helpers ──────────────────────────────────────────────────
@@ -110,29 +131,29 @@ const scoreIsPass = computed(() => finalScore.value !== null && finalScore.value
 
 // ── Status helpers ─────────────────────────────────────────────────
 const STATUS_COLORS: Record<string, string> = {
-    archived:            'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
-    proposal_submitted:  'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
+    archived: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
+    proposal_submitted: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
     supervisor_approved: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-    hod_approved:        'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-    in_progress:         'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400',
-    ready_for_defense:   'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
-    under_defense:       'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
-    revisions_required:  'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
-    rejected:            'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
-    cancelled:           'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+    hod_approved: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
+    in_progress: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400',
+    ready_for_defense: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
+    under_defense: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
+    revisions_required: 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
+    rejected: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
+    cancelled: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
 };
 
 const STATUS_LABELS: Record<string, string> = {
-    archived:            'منجز',
-    proposal_submitted:  'في انتظار الموافقة',
+    archived: 'منجز',
+    proposal_submitted: 'في انتظار الموافقة',
     supervisor_approved: 'موافقة المشرف',
-    hod_approved:        'موافقة رئيس القسم',
-    in_progress:         'تحت التنفيذ',
-    ready_for_defense:   'جاهز للمناقشة',
-    under_defense:       'تحت المناقشة',
-    revisions_required:  'يحتاج تعديلات',
-    rejected:            'مرفوض',
-    cancelled:           'منقطع',
+    hod_approved: 'موافقة رئيس القسم',
+    in_progress: 'تحت التنفيذ',
+    ready_for_defense: 'جاهز للمناقشة',
+    under_defense: 'تحت المناقشة',
+    revisions_required: 'يحتاج تعديلات',
+    rejected: 'مرفوض',
+    cancelled: 'منقطع',
 };
 
 function statusColor(name: string) {
@@ -143,16 +164,12 @@ function statusLabel(name: string) {
     return STATUS_LABELS[name] ?? name;
 }
 
-const pdfUrl = computed(() =>
-    props.project.draft_file_path ? `/storage/${props.project.draft_file_path}` : null
-);
+const pdfUrl = computed(() => (props.project.draft_file_path ? `/storage/${props.project.draft_file_path}` : null));
 
-const pdfFileName = computed(() =>
-    props.project.draft_file_path?.split('/').pop() ?? null
-);
+const pdfFileName = computed(() => props.project.draft_file_path?.split('/').pop() ?? null);
 
 const studentStatusLabel: Record<string, string> = {
-    active:    'نشط',
+    active: 'نشط',
     withdrawn: 'منسحب',
     completed: 'مكتمل',
 };
@@ -162,18 +179,11 @@ const studentStatusLabel: Record<string, string> = {
     <Head :title="project.project_title" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 p-4" dir="rtl">
-
             <!-- Flash messages -->
-            <div
-                v-if="flash.success"
-                class="rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400"
-            >
+            <div v-if="flash.success" class="rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
                 {{ flash.success }}
             </div>
-            <div
-                v-if="flash.error"
-                class="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"
-            >
+            <div v-if="flash.error" class="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
                 {{ flash.error }}
             </div>
 
@@ -227,10 +237,8 @@ const studentStatusLabel: Record<string, string> = {
             </div>
 
             <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
-
                 <!-- Main column -->
                 <div class="space-y-6 lg:col-span-2">
-
                     <!-- Description -->
                     <div class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
                         <h2 class="mb-3 text-base font-semibold text-gray-800 dark:text-gray-200">الوصف</h2>
@@ -297,7 +305,9 @@ const studentStatusLabel: Record<string, string> = {
                             >
                                 <div class="flex items-start justify-between gap-3">
                                     <div class="flex items-center gap-3">
-                                        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400">
+                                        <div
+                                            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
+                                        >
                                             <span class="text-sm font-bold">{{ examiner.full_name.charAt(0) }}</span>
                                         </div>
                                         <div>
@@ -317,10 +327,7 @@ const studentStatusLabel: Record<string, string> = {
                                 </div>
 
                                 <!-- Evaluation notes for this examiner -->
-                                <div
-                                    v-if="evaluationFor(examiner.id)"
-                                    class="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700"
-                                >
+                                <div v-if="evaluationFor(examiner.id)" class="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
                                     <p class="mb-1 text-xs font-medium text-gray-400">ملاحظات التقييم</p>
                                     <p class="text-sm text-gray-700 dark:text-gray-300">
                                         {{ evaluationFor(examiner.id)!.notes }}
@@ -330,12 +337,10 @@ const studentStatusLabel: Record<string, string> = {
                         </div>
                         <p v-else class="text-sm text-gray-500">لم يتم تعيين ممتحنين بعد</p>
                     </div>
-
                 </div>
 
                 <!-- Sidebar -->
                 <div class="space-y-5">
-
                     <!-- Meta info -->
                     <div class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
                         <h2 class="mb-4 text-base font-semibold text-gray-800 dark:text-gray-200">تفاصيل المشروع</h2>
@@ -372,11 +377,7 @@ const studentStatusLabel: Record<string, string> = {
                         <h2 class="mb-4 text-base font-semibold text-gray-800 dark:text-gray-200">الدرجة النهائية</h2>
 
                         <!-- Manager view: full ScoreInput (display + input form) -->
-                        <ScoreInput
-                            v-if="canManage"
-                            :project-id="project.id"
-                            :current-score="project.final_score"
-                        />
+                        <ScoreInput v-if="canManage" :project-id="project.id" :current-score="project.final_score" />
 
                         <!-- Non-manager view: read-only display -->
                         <template v-else>
@@ -419,7 +420,6 @@ const studentStatusLabel: Record<string, string> = {
                         </div>
                         <p v-else class="text-sm text-gray-500">لا يوجد ملف مرفق</p>
                     </div>
-
                 </div>
             </div>
         </div>

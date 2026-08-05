@@ -7,11 +7,27 @@ import { computed, ref } from 'vue';
 
 // ── Types ────────────────────────────────────────────────────────────
 
-interface Department     { id: number; name: string }
-interface Specialization { id: number; name: string; department_id: number }
-interface Supervisor     { id: number; name: string }
-interface ProjectStatus  { id: number; status_name: string }
-interface Student        { id: number; full_name: string }
+interface Department {
+    id: number;
+    name: string;
+}
+interface Specialization {
+    id: number;
+    name: string;
+    department_id: number;
+}
+interface Supervisor {
+    id: number;
+    name: string;
+}
+interface ProjectStatus {
+    id: number;
+    status_name: string;
+}
+interface Student {
+    id: number;
+    full_name: string;
+}
 
 interface Project {
     id: number;
@@ -26,7 +42,11 @@ interface Project {
     students_count: number;
 }
 
-interface PaginationLink { url: string | null; label: string; active: boolean }
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
 
 interface PaginatedProjects {
     data: Project[];
@@ -68,10 +88,13 @@ const searchQuery = ref(props.filters.search ?? '');
 const suggestions = ref<string[]>([]);
 
 async function loadSuggestions(q: string) {
-    if (q.length < 2) { suggestions.value = []; return; }
+    if (q.length < 2) {
+        suggestions.value = [];
+        return;
+    }
     try {
         const res = await fetch(route('search.suggestions') + '?q=' + encodeURIComponent(q));
-        suggestions.value = await res.json() as string[];
+        suggestions.value = (await res.json()) as string[];
     } catch {
         suggestions.value = [];
     }
@@ -109,10 +132,7 @@ const grouped = computed(() => {
 // ── Text highlight ────────────────────────────────────────────────────
 
 function escapeHtml(text: string): string {
-    return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 function highlight(text: string): string {
@@ -120,10 +140,7 @@ function highlight(text: string): string {
     const q = searchQuery.value.trim();
     if (!q) return safeText;
     const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return safeText.replace(
-        new RegExp(`(${escaped})`, 'gi'),
-        '<strong class="font-bold text-blue-600 dark:text-blue-400">$1</strong>',
-    );
+    return safeText.replace(new RegExp(`(${escaped})`, 'gi'), '<strong class="font-bold text-blue-600 dark:text-blue-400">$1</strong>');
 }
 </script>
 
@@ -131,7 +148,6 @@ function highlight(text: string): string {
     <Head title="البحث" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 p-4" dir="rtl">
-
             <!-- ── Search hero ────────────────────────────────────── -->
             <div class="flex flex-col gap-3">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">البحث في المشاريع</h1>
@@ -160,16 +176,11 @@ function highlight(text: string): string {
                 </div>
             </template>
 
-            <p v-else class="text-sm text-gray-500 dark:text-gray-400">
-                اكتب كلمة بحث للعثور على المشاريع
-            </p>
+            <p v-else class="text-sm text-gray-500 dark:text-gray-400">اكتب كلمة بحث للعثور على المشاريع</p>
 
             <!-- ── Results grouped by department ─────────────────── -->
             <div v-if="projects.total > 0" class="flex flex-col gap-8">
-                <section
-                    v-for="[deptName, deptProjects] in grouped"
-                    :key="deptName"
-                >
+                <section v-for="[deptName, deptProjects] in grouped" :key="deptName">
                     <!-- Department header -->
                     <div class="mb-3 flex items-center gap-3">
                         <h2 class="text-base font-semibold text-gray-800 dark:text-gray-200">
@@ -190,22 +201,13 @@ function highlight(text: string): string {
                             class="block rounded-lg border border-gray-200 bg-white p-4 transition hover:border-blue-300 hover:shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:hover:border-blue-700"
                         >
                             <!-- Title with highlight -->
-                            <p
-                                class="text-sm font-semibold text-blue-600 dark:text-blue-400"
-                                v-html="highlight(project.project_title)"
-                            />
+                            <p class="text-sm font-semibold text-blue-600 dark:text-blue-400" v-html="highlight(project.project_title)" />
 
                             <!-- Meta row -->
                             <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
-                                <span v-if="project.specialization">
-                                    📚 {{ project.specialization.name }}
-                                </span>
-                                <span v-if="project.academic_year">
-                                    📅 {{ project.academic_year }}
-                                </span>
-                                <span v-if="project.supervisor">
-                                    👤 {{ project.supervisor.name }}
-                                </span>
+                                <span v-if="project.specialization"> 📚 {{ project.specialization.name }} </span>
+                                <span v-if="project.academic_year"> 📅 {{ project.academic_year }} </span>
+                                <span v-if="project.supervisor"> 👤 {{ project.supervisor.name }} </span>
                             </div>
 
                             <!-- Students -->
@@ -232,9 +234,7 @@ function highlight(text: string): string {
 
             <!-- ── Pagination ─────────────────────────────────────── -->
             <div v-if="projects.last_page > 1" class="flex items-center justify-between text-sm">
-                <p class="text-gray-600 dark:text-gray-400">
-                    صفحة {{ projects.current_page }} من {{ projects.last_page }}
-                </p>
+                <p class="text-gray-600 dark:text-gray-400">صفحة {{ projects.current_page }} من {{ projects.last_page }}</p>
                 <div class="flex gap-1">
                     <template v-for="link in projects.links" :key="link.label">
                         <button
@@ -257,7 +257,6 @@ function highlight(text: string): string {
                     </template>
                 </div>
             </div>
-
         </div>
     </AppLayout>
 </template>

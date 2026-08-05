@@ -1,14 +1,28 @@
 <script setup lang="ts">
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
-import { usePage } from '@inertiajs/vue3';
 
-interface Department    { id: number; name: string }
-interface Specialization { id: number; name: string; department_id: number }
-interface Supervisor    { id: number; name: string; department_id: number }
-interface ProjectStudent { id: number; full_name: string; registration_number: string }
+interface Department {
+    id: number;
+    name: string;
+}
+interface Specialization {
+    id: number;
+    name: string;
+    department_id: number;
+}
+interface Supervisor {
+    id: number;
+    name: string;
+    department_id: number;
+}
+interface ProjectStudent {
+    id: number;
+    full_name: string;
+    registration_number: string;
+}
 
 interface Project {
     id: number;
@@ -23,33 +37,36 @@ interface Project {
     students: ProjectStudent[];
 }
 
-interface Student { full_name: string; registration_number: string }
+interface Student {
+    full_name: string;
+    registration_number: string;
+}
 
 const props = defineProps<{
-    project:         Project;
-    departments:     Department[];
+    project: Project;
+    departments: Department[];
     specializations: Specialization[];
-    supervisors:     Supervisor[];
+    supervisors: Supervisor[];
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'لوحة التحكم', href: '/dashboard' },
-    { title: 'المشاريع',    href: '/projects' },
+    { title: 'المشاريع', href: '/projects' },
     { title: 'تعديل المشروع', href: '#' },
 ];
 
 const form = useForm({
-    project_title:     props.project.project_title,
-    description:       props.project.description,
-    academic_year:     props.project.academic_year,
-    degree_level:      props.project.degree_level ?? 'bachelor',
-    department_id:     props.project.department_id as number | null,
+    project_title: props.project.project_title,
+    description: props.project.description,
+    academic_year: props.project.academic_year,
+    degree_level: props.project.degree_level ?? 'bachelor',
+    department_id: props.project.department_id as number | null,
     specialization_id: props.project.specialization_id as number | null,
-    supervisor_id:     props.project.supervisor_id as number | null,
+    supervisor_id: props.project.supervisor_id as number | null,
     current_status_id: props.project.current_status_id as number | null,
-    pdf_file:          null as File | null,
-    students:          props.project.students.map(s => ({
-        full_name:           s.full_name,
+    pdf_file: null as File | null,
+    students: props.project.students.map((s) => ({
+        full_name: s.full_name,
         registration_number: s.registration_number,
     })) as Student[],
 });
@@ -61,29 +78,28 @@ const filteredDepartments = computed(() => {
     if (authUser.value?.role === 'super_admin' || !authUser.value?.department_id) {
         return props.departments;
     }
-    return props.departments.filter(d => d.id === authUser.value?.department_id);
+    return props.departments.filter((d) => d.id === authUser.value?.department_id);
 });
 
 const filteredSpecializations = computed(() =>
-    form.department_id
-        ? props.specializations.filter(s => Number(s.department_id) === Number(form.department_id))
-        : []
+    form.department_id ? props.specializations.filter((s) => Number(s.department_id) === Number(form.department_id)) : [],
 );
 
 const filteredSupervisors = computed(() =>
-    form.department_id
-        ? props.supervisors.filter(s => Number(s.department_id) === Number(form.department_id))
-        : []
+    form.department_id ? props.supervisors.filter((s) => Number(s.department_id) === Number(form.department_id)) : [],
 );
 
-watch(() => form.department_id, (newVal, oldVal) => {
-    if (oldVal !== null && newVal !== oldVal) {
-        form.specialization_id = null;
-        form.supervisor_id = null;
-    }
-});
+watch(
+    () => form.department_id,
+    (newVal, oldVal) => {
+        if (oldVal !== null && newVal !== oldVal) {
+            form.specialization_id = null;
+            form.supervisor_id = null;
+        }
+    },
+);
 
-// If editing user is restricted to a department, ensure it's selected. 
+// If editing user is restricted to a department, ensure it's selected.
 // (The project may already have it set, but just in case)
 if (authUser.value?.department_id && form.department_id !== authUser.value.department_id) {
     form.department_id = authUser.value.department_id;
@@ -122,7 +138,6 @@ const currentFileName = computed(() => {
 
             <div class="max-w-3xl rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
                 <form @submit.prevent="submit" class="space-y-6">
-
                     <!-- Title -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -140,9 +155,7 @@ const currentFileName = computed(() => {
 
                     <!-- Description -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            الوصف <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"> الوصف <span class="text-red-500">*</span> </label>
                         <textarea
                             v-model="form.description"
                             rows="4"
@@ -198,7 +211,11 @@ const currentFileName = computed(() => {
                             <option :value="5">تحت التنفيذ</option>
                             <option :value="10">منقطع</option>
                             <option v-if="![1, 5, 10].includes(project.current_status_id)" :value="project.current_status_id">
-                                {{ project.current_status?.status_name === 'proposal_submitted' ? 'في انتظار الموافقة' : project.current_status?.status_name }}
+                                {{
+                                    project.current_status?.status_name === 'proposal_submitted'
+                                        ? 'في انتظار الموافقة'
+                                        : project.current_status?.status_name
+                                }}
                             </option>
                         </select>
                         <p v-if="form.errors.current_status_id" class="mt-1 text-xs text-red-600">{{ form.errors.current_status_id }}</p>
@@ -213,7 +230,7 @@ const currentFileName = computed(() => {
                             <select
                                 v-model="form.department_id"
                                 :disabled="!!authUser?.department_id && authUser?.role !== 'super_admin'"
-                                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 disabled:cursor-not-allowed disabled:bg-gray-100 dark:disabled:bg-gray-800"
+                                class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:disabled:bg-gray-800"
                                 :class="{ 'border-red-500': form.errors.department_id }"
                             >
                                 <option :value="null">اختر القسم</option>
@@ -241,9 +258,7 @@ const currentFileName = computed(() => {
 
                     <!-- Supervisor -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            المشرف <span class="text-red-500">*</span>
-                        </label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"> المشرف <span class="text-red-500">*</span> </label>
                         <select
                             v-model="form.supervisor_id"
                             :disabled="!form.department_id"
@@ -296,10 +311,10 @@ const currentFileName = computed(() => {
                                             v-model="student.full_name"
                                             type="text"
                                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                                            :class="{ 'border-red-500': (form.errors as Record<string,string>)[`students.${idx}.full_name`] }"
+                                            :class="{ 'border-red-500': form.errors[`students.${idx}.full_name`] }"
                                         />
-                                        <p v-if="(form.errors as Record<string,string>)[`students.${idx}.full_name`]" class="mt-1 text-xs text-red-600">
-                                            {{ (form.errors as Record<string,string>)[`students.${idx}.full_name`] }}
+                                        <p v-if="form.errors[`students.${idx}.full_name`]" class="mt-1 text-xs text-red-600">
+                                            {{ form.errors[`students.${idx}.full_name`] }}
                                         </p>
                                     </div>
                                     <div>
@@ -308,10 +323,10 @@ const currentFileName = computed(() => {
                                             v-model="student.registration_number"
                                             type="text"
                                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                                            :class="{ 'border-red-500': (form.errors as Record<string,string>)[`students.${idx}.registration_number`] }"
+                                            :class="{ 'border-red-500': form.errors[`students.${idx}.registration_number`] }"
                                         />
-                                        <p v-if="(form.errors as Record<string,string>)[`students.${idx}.registration_number`]" class="mt-1 text-xs text-red-600">
-                                            {{ (form.errors as Record<string,string>)[`students.${idx}.registration_number`] }}
+                                        <p v-if="form.errors[`students.${idx}.registration_number`]" class="mt-1 text-xs text-red-600">
+                                            {{ form.errors[`students.${idx}.registration_number`] }}
                                         </p>
                                     </div>
                                 </div>
@@ -321,9 +336,7 @@ const currentFileName = computed(() => {
 
                     <!-- PDF Upload -->
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            ملف المشروع (PDF)
-                        </label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"> ملف المشروع (PDF) </label>
 
                         <!-- Current file -->
                         <div
@@ -331,7 +344,7 @@ const currentFileName = computed(() => {
                             class="mt-1 flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-700/50"
                         >
                             <span class="text-lg">📄</span>
-                            <div class="flex-1 min-w-0">
+                            <div class="min-w-0 flex-1">
                                 <p class="truncate text-sm text-gray-700 dark:text-gray-300">{{ currentFileName }}</p>
                                 <p class="text-xs text-gray-500">الملف الحالي</p>
                             </div>
@@ -385,7 +398,6 @@ const currentFileName = computed(() => {
                             إلغاء
                         </a>
                     </div>
-
                 </form>
             </div>
         </div>

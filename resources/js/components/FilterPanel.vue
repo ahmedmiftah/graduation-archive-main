@@ -1,27 +1,38 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
 
-interface Specialization { id: number; name: string; department_id: number }
-interface Department    { id: number; name: string; specializations?: Specialization[] }
-interface Supervisor    { id: number; name: string }
+interface Specialization {
+    id: number;
+    name: string;
+    department_id: number;
+}
+interface Department {
+    id: number;
+    name: string;
+    specializations?: Specialization[];
+}
+interface Supervisor {
+    id: number;
+    name: string;
+}
 
 export interface FilterValues {
-    department_id:    string | number;
+    department_id: string | number;
     specialization_id: string | number;
-    academic_year:    string;
-    supervisor_id:    string | number;
-    degree_level:     string;
-    sort:             string;
-    status:           string;
+    academic_year: string;
+    supervisor_id: string | number;
+    degree_level: string;
+    sort: string;
+    status: string;
 }
 
 const props = defineProps<{
-    departments:    Department[];
+    departments: Department[];
     specializations: Specialization[];
-    years:          string[];
-    supervisors:    Supervisor[];
-    modelValue:     FilterValues;
+    years: string[];
+    supervisors: Supervisor[];
+    modelValue: FilterValues;
 }>();
 
 const emit = defineEmits<{
@@ -38,7 +49,7 @@ const filteredDepartments = computed(() => {
     if (authUser.value?.role === 'super_admin' || !authUser.value?.department_id) {
         return props.departments;
     }
-    return props.departments.filter(d => d.id === authUser.value?.department_id);
+    return props.departments.filter((d) => d.id === authUser.value?.department_id);
 });
 
 // Force department to user's department if applicable
@@ -49,38 +60,68 @@ if (authUser.value?.department_id) {
 // Specializations matching the selected department
 const filteredSpecs = computed(() => {
     if (!local.value.department_id) return props.specializations;
-    return props.specializations.filter(s => s.department_id == local.value.department_id);
+    return props.specializations.filter((s) => s.department_id == local.value.department_id);
 });
 
 // Number of active non-sort filters
-const activeCount = computed(() =>
-    [local.value.department_id, local.value.specialization_id, local.value.academic_year, local.value.supervisor_id, local.value.degree_level, local.value.status]
-        .filter(v => v !== '' && v != null).length,
+const activeCount = computed(
+    () =>
+        [
+            local.value.department_id,
+            local.value.specialization_id,
+            local.value.academic_year,
+            local.value.supervisor_id,
+            local.value.degree_level,
+            local.value.status,
+        ].filter((v) => v !== '' && v != null).length,
 );
 
 // When department changes, clear specialization and emit
-watch(() => local.value.department_id, () => {
-    local.value.specialization_id = '';
-    emit('filter-changed', { ...local.value });
-});
+watch(
+    () => local.value.department_id,
+    () => {
+        local.value.specialization_id = '';
+        emit('filter-changed', { ...local.value });
+    },
+);
 
 // All other filter changes emit immediately
 watch(
-    () => [local.value.specialization_id, local.value.academic_year, local.value.supervisor_id, local.value.degree_level, local.value.sort, local.value.status],
+    () => [
+        local.value.specialization_id,
+        local.value.academic_year,
+        local.value.supervisor_id,
+        local.value.degree_level,
+        local.value.sort,
+        local.value.status,
+    ],
     () => emit('filter-changed', { ...local.value }),
 );
 
 // Sync if parent resets modelValue externally
-watch(() => props.modelValue, (val) => {
-    local.value = { ...val };
-}, { deep: true });
+watch(
+    () => props.modelValue,
+    (val) => {
+        local.value = { ...val };
+    },
+    { deep: true },
+);
 
 function reset() {
-    local.value = { department_id: '', specialization_id: '', academic_year: '', supervisor_id: '', degree_level: '', sort: 'created_at', status: '' };
+    local.value = {
+        department_id: '',
+        specialization_id: '',
+        academic_year: '',
+        supervisor_id: '',
+        degree_level: '',
+        sort: 'created_at',
+        status: '',
+    };
     emit('filter-changed', { ...local.value });
 }
 
-const selectClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100';
+const selectClass =
+    'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100';
 </script>
 
 <template>
@@ -93,10 +134,7 @@ const selectClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm 
         >
             <span class="flex items-center gap-2">
                 <span>الفلاتر المتقدمة</span>
-                <span
-                    v-if="activeCount > 0"
-                    class="rounded-full bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white"
-                >
+                <span v-if="activeCount > 0" class="rounded-full bg-blue-600 px-2 py-0.5 text-xs font-semibold text-white">
                     {{ activeCount }}
                 </span>
             </span>
@@ -108,11 +146,7 @@ const selectClass = 'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm 
             <!-- Department -->
             <div class="flex flex-col gap-1">
                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">القسم</label>
-                <select 
-                    v-model="local.department_id" 
-                    :class="selectClass"
-                    :disabled="!!authUser?.department_id && authUser?.role !== 'super_admin'"
-                >
+                <select v-model="local.department_id" :class="selectClass" :disabled="!!authUser?.department_id && authUser?.role !== 'super_admin'">
                     <option value="">كل الأقسام</option>
                     <option v-for="d in filteredDepartments" :key="d.id" :value="d.id">{{ d.name }}</option>
                 </select>

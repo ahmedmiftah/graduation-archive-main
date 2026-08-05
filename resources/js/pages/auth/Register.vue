@@ -30,13 +30,32 @@ const submit = () => {
             <div class="grid gap-6">
                 <div class="grid gap-2">
                     <Label for="name">الاسم الكامل</Label>
-                    <Input id="name" type="text" required autofocus tabindex="1" autocomplete="name" v-model="form.name" placeholder="الاسم الكامل" class="text-right" />
+                    <Input
+                        id="name"
+                        type="text"
+                        required
+                        autofocus
+                        tabindex="1"
+                        autocomplete="name"
+                        v-model="form.name"
+                        placeholder="الاسم الكامل"
+                        class="text-right"
+                    />
                     <InputError :message="form.errors.name" />
                 </div>
 
                 <div class="grid gap-2">
                     <Label for="email">البريد الإلكتروني</Label>
-                    <Input id="email" type="email" required tabindex="2" autocomplete="email" v-model="form.email" placeholder="البريد الإلكتروني" class="text-right" />
+                    <Input
+                        id="email"
+                        type="email"
+                        required
+                        tabindex="2"
+                        autocomplete="email"
+                        v-model="form.email"
+                        placeholder="البريد الإلكتروني"
+                        class="text-right"
+                    />
                     <InputError :message="form.errors.email" />
                 </div>
 

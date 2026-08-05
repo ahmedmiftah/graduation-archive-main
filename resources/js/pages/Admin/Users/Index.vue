@@ -7,8 +7,13 @@ import { Head, router, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 // ── Types ─────────────────────────────────────────────────────────────
-interface Department { id: number; name: string }
-interface UserRole   { name: string }
+interface Department {
+    id: number;
+    name: string;
+}
+interface UserRole {
+    name: string;
+}
 
 interface UserItem {
     id: number;
@@ -22,7 +27,11 @@ interface UserItem {
     created_at: string;
 }
 
-interface PaginationLink { url: string | null; label: string; active: boolean }
+interface PaginationLink {
+    url: string | null;
+    label: string;
+    active: boolean;
+}
 
 interface PaginatedUsers {
     data: UserItem[];
@@ -49,7 +58,7 @@ const props = defineProps<{
 }>();
 
 // ── Page setup ─────────────────────────────────────────────────────────
-const page  = usePage<SharedData>();
+const page = usePage<SharedData>();
 const flash = computed(() => page.props.flash ?? {});
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -59,39 +68,38 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 // ── Role labels + badge colours ────────────────────────────────────────
 const roleLabels: Record<string, string> = {
-    super_admin:  'مدير النظام',
+    super_admin: 'مدير النظام',
     dept_manager: 'مدير القسم',
-    supervisor:   'مشرف',
-    dept_staff:   'موظف القسم',
-    viewer:       'مشاهد',
+    supervisor: 'مشرف',
+    dept_staff: 'موظف القسم',
+    viewer: 'مشاهد',
 };
 
 const roleBadgeClass: Record<string, string> = {
-    super_admin:  'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
+    super_admin: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
     dept_manager: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-    supervisor:   'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
-    dept_staff:   'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
-    viewer:       'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
+    supervisor: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
+    dept_staff: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
+    viewer: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
 };
 
 // ── Row number ─────────────────────────────────────────────────────────
-const rowNumber = (idx: number) =>
-    (props.users.meta.current_page - 1) * props.users.meta.per_page + idx + 1;
+const rowNumber = (idx: number) => (props.users.meta.current_page - 1) * props.users.meta.per_page + idx + 1;
 
 // ── Filters ────────────────────────────────────────────────────────────
-const search         = ref(props.filters.search ?? '');
-const selectedRole   = ref(props.filters.role ?? '');
-const selectedDept   = ref(props.filters.department_id ?? '');
+const search = ref(props.filters.search ?? '');
+const selectedRole = ref(props.filters.role ?? '');
+const selectedDept = ref(props.filters.department_id ?? '');
 const selectedActive = ref(props.filters.is_active ?? '');
 
 let searchTimer: ReturnType<typeof setTimeout>;
 
 function applyFilters() {
     const params: Record<string, string> = {};
-    if (search.value)               params.search        = search.value;
-    if (selectedRole.value)         params.role          = selectedRole.value;
-    if (selectedDept.value)         params.department_id = selectedDept.value;
-    if (selectedActive.value !== '') params.is_active    = selectedActive.value;
+    if (search.value) params.search = search.value;
+    if (selectedRole.value) params.role = selectedRole.value;
+    if (selectedDept.value) params.department_id = selectedDept.value;
+    if (selectedActive.value !== '') params.is_active = selectedActive.value;
     router.get(route('admin.users.index'), params, { preserveScroll: true, replace: true });
 }
 
@@ -108,21 +116,19 @@ function resetFilters() {
     router.get(route('admin.users.index'), {}, { preserveScroll: false, replace: true });
 }
 
-const hasFilters = computed(
-    () => !!(search.value || selectedRole.value || selectedDept.value || selectedActive.value),
-);
+const hasFilters = computed(() => !!(search.value || selectedRole.value || selectedDept.value || selectedActive.value));
 
 // ── Create modal ────────────────────────────────────────────────────────
 const showCreate = ref(false);
 
 const createForm = useForm({
-    name:                '',
-    email:               '',
-    password:            '',
+    name: '',
+    email: '',
+    password: '',
     registration_number: '',
-    role:                '',
-    department_id:       '' as string | number,
-    is_active:           true,
+    role: '',
+    department_id: '' as string | number,
+    is_active: true,
 });
 
 function openCreate() {
@@ -133,38 +139,44 @@ function openCreate() {
 
 function submitCreate() {
     createForm.post(route('admin.users.store'), {
-        onSuccess: () => { showCreate.value = false; createForm.reset(); },
+        onSuccess: () => {
+            showCreate.value = false;
+            createForm.reset();
+        },
     });
 }
 
 // ── Edit modal ──────────────────────────────────────────────────────────
-const showEdit    = ref(false);
+const showEdit = ref(false);
 const editingUser = ref<UserItem | null>(null);
 
 const editForm = useForm({
-    name:                '',
-    email:               '',
-    password:            '',
+    name: '',
+    email: '',
+    password: '',
     registration_number: '',
-    role:                '',
-    department_id:       '' as string | number,
+    role: '',
+    department_id: '' as string | number,
 });
 
 function openEdit(user: UserItem) {
-    editingUser.value        = user;
-    editForm.name            = user.name;
-    editForm.email           = user.email;
-    editForm.password        = '';
+    editingUser.value = user;
+    editForm.name = user.name;
+    editForm.email = user.email;
+    editForm.password = '';
     editForm.registration_number = user.registration_number ?? '';
-    editForm.role            = user.roles[0]?.name ?? '';
-    editForm.department_id   = user.department_id ?? '';
-    showEdit.value           = true;
+    editForm.role = user.roles[0]?.name ?? '';
+    editForm.department_id = user.department_id ?? '';
+    showEdit.value = true;
 }
 
 function submitEdit() {
     if (!editingUser.value) return;
     editForm.patch(route('admin.users.update', editingUser.value.id), {
-        onSuccess: () => { showEdit.value = false; editForm.reset(); },
+        onSuccess: () => {
+            showEdit.value = false;
+            editForm.reset();
+        },
     });
 }
 
@@ -188,30 +200,19 @@ function deleteUser() {
     <Head title="إدارة المستخدمين" />
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 p-4" dir="rtl">
-
             <!-- ── Header ─────────────────────────────────────── -->
             <div class="flex items-center justify-between">
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">إدارة المستخدمين</h1>
-                <button
-                    type="button"
-                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                    @click="openCreate"
-                >
+                <button type="button" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700" @click="openCreate">
                     + إضافة مستخدم
                 </button>
             </div>
 
             <!-- ── Flash messages ──────────────────────────────── -->
-            <div
-                v-if="flash.success"
-                class="rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400"
-            >
+            <div v-if="flash.success" class="rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
                 {{ flash.success }}
             </div>
-            <div
-                v-if="flash.error"
-                class="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400"
-            >
+            <div v-if="flash.error" class="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
                 {{ flash.error }}
             </div>
 
@@ -262,9 +263,7 @@ function deleteUser() {
             </div>
 
             <!-- ── Results count ───────────────────────────────── -->
-            <p class="text-sm text-gray-500 dark:text-gray-400">
-                إجمالي المستخدمين: {{ users.meta.total }}
-            </p>
+            <p class="text-sm text-gray-500 dark:text-gray-400">إجمالي المستخدمين: {{ users.meta.total }}</p>
 
             <!-- ── Table ──────────────────────────────────────── -->
             <div class="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
@@ -282,11 +281,7 @@ function deleteUser() {
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
-                        <tr
-                            v-for="(user, idx) in users.data"
-                            :key="user.id"
-                            class="hover:bg-gray-50 dark:hover:bg-gray-800"
-                        >
+                        <tr v-for="(user, idx) in users.data" :key="user.id" class="hover:bg-gray-50 dark:hover:bg-gray-800">
                             <td class="px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
                                 {{ rowNumber(idx) }}
                             </td>
@@ -312,9 +307,11 @@ function deleteUser() {
                             </td>
                             <td class="px-4 py-3 text-sm">
                                 <span
-                                    :class="user.is_active
-                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                                        : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'"
+                                    :class="
+                                        user.is_active
+                                            ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+                                            : 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400'
+                                    "
                                     class="rounded-full px-2.5 py-0.5 text-xs font-medium"
                                 >
                                     {{ user.is_active ? 'نشط' : 'غير نشط' }}
@@ -331,9 +328,11 @@ function deleteUser() {
                                     </button>
                                     <button
                                         type="button"
-                                        :class="user.is_active
-                                            ? 'bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/20 dark:text-orange-400'
-                                            : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400'"
+                                        :class="
+                                            user.is_active
+                                                ? 'bg-orange-100 text-orange-700 hover:bg-orange-200 dark:bg-orange-900/20 dark:text-orange-400'
+                                                : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400'
+                                        "
                                         class="rounded px-3 py-1 text-xs font-medium"
                                         @click="toggleActive(user)"
                                     >
@@ -350,9 +349,7 @@ function deleteUser() {
                             </td>
                         </tr>
                         <tr v-if="users.data.length === 0">
-                            <td colspan="8" class="px-4 py-10 text-center text-sm text-gray-500">
-                                لا يوجد مستخدمون
-                            </td>
+                            <td colspan="8" class="px-4 py-10 text-center text-sm text-gray-500">لا يوجد مستخدمون</td>
                         </tr>
                     </tbody>
                 </table>
@@ -360,9 +357,7 @@ function deleteUser() {
 
             <!-- ── Pagination ──────────────────────────────────── -->
             <div v-if="users.meta.last_page > 1" class="flex items-center justify-between text-sm">
-                <p class="text-gray-600 dark:text-gray-400">
-                    صفحة {{ users.meta.current_page }} من {{ users.meta.last_page }}
-                </p>
+                <p class="text-gray-600 dark:text-gray-400">صفحة {{ users.meta.current_page }} من {{ users.meta.last_page }}</p>
                 <div class="flex gap-1">
                     <template v-for="link in users.links" :key="link.label">
                         <button
@@ -385,7 +380,6 @@ function deleteUser() {
                     </template>
                 </div>
             </div>
-
         </div>
 
         <!-- ── CreateUserModal ─────────────────────────────────── -->
@@ -590,11 +584,6 @@ function deleteUser() {
         </Modal>
 
         <!-- ── Confirm delete ──────────────────────────────────── -->
-        <ConfirmDelete
-            :show="!!confirmDelete"
-            :item-name="confirmDelete?.name"
-            @confirmed="deleteUser"
-            @cancelled="confirmDelete = null"
-        />
+        <ConfirmDelete :show="!!confirmDelete" :item-name="confirmDelete?.name" @confirmed="deleteUser" @cancelled="confirmDelete = null" />
     </AppLayout>
 </template>

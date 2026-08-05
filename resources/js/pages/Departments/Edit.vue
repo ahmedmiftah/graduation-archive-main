@@ -46,7 +46,9 @@ function submit() {
             <div class="max-w-xl rounded-xl border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
                 <form @submit.prevent="submit" class="space-y-5">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">اسم القسم <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                            >اسم القسم <span class="text-red-500">*</span></label
+                        >
                         <input
                             v-model="form.name"
                             type="text"

@@ -63,10 +63,13 @@ const showDropdown = ref(false);
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 async function loadSuggestions(q: string) {
-    if (q.length < 2) { suggestions.value = []; return; }
+    if (q.length < 2) {
+        suggestions.value = [];
+        return;
+    }
     try {
         const res = await fetch(route('search.suggestions') + '?q=' + encodeURIComponent(q));
-        suggestions.value = await res.json() as string[];
+        suggestions.value = (await res.json()) as string[];
     } catch {
         suggestions.value = [];
     }
@@ -87,7 +90,9 @@ function selectSuggestion(s: string) {
 }
 
 function onBlur() {
-    setTimeout(() => { showDropdown.value = false; }, 200);
+    setTimeout(() => {
+        showDropdown.value = false;
+    }, 200);
 }
 
 const filteredSpecs = computed(() =>

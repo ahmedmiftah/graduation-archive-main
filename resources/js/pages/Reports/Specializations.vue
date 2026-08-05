@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import ExportButtons from '@/components/ExportButtons.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { BarChart2, Bell, BookOpen, Building2, FolderOpen, LayoutGrid, Search, Upload, UserCheck, Users } from 'lucide-vue-next';
 import { type BreadcrumbItem } from '@/types';
 import { usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
