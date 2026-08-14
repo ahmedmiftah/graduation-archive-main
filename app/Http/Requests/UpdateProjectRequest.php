@@ -23,7 +23,6 @@ class UpdateProjectRequest extends FormRequest
             'specialization_id'              => ['required', 'integer', 'exists:specializations,id'],
             'supervisor_id'                  => ['required', 'integer', 'exists:users,id'],
             'current_status_id'              => ['required', 'integer', 'exists:project_status,id'],
-            'pdf_file'                       => ['nullable', 'file', 'mimes:pdf', 'max:15360'],
             'students'                       => ['required', 'array', 'min:1'],
             'students.*.full_name'           => ['required', 'string'],
             'students.*.registration_number' => ['required', 'string'],

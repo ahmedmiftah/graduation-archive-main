@@ -58,7 +58,7 @@ test('super_admin can view full dashboard stats', function () {
             ->has('stats.total_projects')
             ->has('stats.total_departments')
             ->has('stats.projects_this_year')
-            ->has('stats.pending_approvals')
+            ->has('stats.in_progress_count')
             ->has('stats.recent_projects', 3)
             ->has('stats.by_status')
         );

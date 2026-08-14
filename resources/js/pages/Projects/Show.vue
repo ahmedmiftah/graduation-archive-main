@@ -3,6 +3,7 @@ import AssignExaminerModal from '@/components/AssignExaminerModal.vue';
 import ConfirmDelete from '@/components/ConfirmDelete.vue';
 import ScoreInput from '@/components/ScoreInput.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { statusColor, statusLabel } from '@/lib/statusBadge';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
@@ -53,6 +54,7 @@ interface Project {
     project_title: string;
     description: string;
     academic_year: string;
+    semester: string | null;
     draft_file_path: string | null;
     final_score: string | null;
     visit_count: number;
@@ -75,19 +77,31 @@ const page = usePage<SharedData>();
 const flash = computed(() => page.props.flash ?? {});
 const userRole = computed(() => (page.props.auth.user as { role?: string }).role ?? '');
 
-const breadcrumbs: BreadcrumbItem[] = [
-    { title: 'لوحة التحكم', href: '/dashboard' },
-    { title: 'المشاريع', href: '/projects' },
-    { title: props.project.project_title, href: '#' },
-];
+// Tracks whether this page was opened from the archived-projects list so the
+// breadcrumb, sidebar highlight, and score editability all match that context.
+const cameFromArchive = computed(() => new URLSearchParams(window.location.search).get('from') === 'archived');
+
+const breadcrumbs = computed<BreadcrumbItem[]>(() =>
+    cameFromArchive.value
+        ? [
+              { title: 'لوحة تحكم أرشفة المشاريع', href: '/projects/archived' },
+              { title: props.project.project_title, href: '#' },
+          ]
+        : [
+              { title: 'لوحة التحكم', href: '/dashboard' },
+              { title: 'المشاريع', href: '/projects' },
+              { title: props.project.project_title, href: '#' },
+          ],
+);
 
 // ── Permissions ───────────────────────────────────────────────────
 const canEdit = computed(() => ['dept_staff', 'dept_manager', 'super_admin'].includes(userRole.value));
 const canDelete = computed(() => ['dept_manager', 'super_admin'].includes(userRole.value));
 const canManage = computed(() => ['dept_manager', 'super_admin'].includes(userRole.value));
-const canApprove = computed(
-    () => ['dept_manager', 'super_admin'].includes(userRole.value) && props.project.current_status?.status_name === 'proposal_submitted',
-);
+
+// Score entry is only allowed when reached from the archived-projects list —
+// the regular project details view is read-only for the score.
+const canEditScore = computed(() => canManage.value && cameFromArchive.value);
 
 // ── Project actions ────────────────────────────────────────────────
 const showConfirmDelete = ref(false);
@@ -96,10 +110,6 @@ function deleteProject() {
     router.delete(route('projects.destroy', [props.project.id]), {
         onFinish: () => (showConfirmDelete.value = false),
     });
-}
-
-function approveProject() {
-    router.post(route('projects.approve', [props.project.id]));
 }
 
 // ── Examiner assign / remove ───────────────────────────────────────
@@ -129,40 +139,6 @@ const finalScore = computed(() => {
 
 const scoreIsPass = computed(() => finalScore.value !== null && finalScore.value >= PASS_THRESHOLD);
 
-// ── Status helpers ─────────────────────────────────────────────────
-const STATUS_COLORS: Record<string, string> = {
-    archived: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
-    proposal_submitted: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
-    supervisor_approved: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-    hod_approved: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-    in_progress: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400',
-    ready_for_defense: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
-    under_defense: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
-    revisions_required: 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
-    rejected: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
-    cancelled: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-    archived: 'منجز',
-    proposal_submitted: 'في انتظار الموافقة',
-    supervisor_approved: 'موافقة المشرف',
-    hod_approved: 'موافقة رئيس القسم',
-    in_progress: 'تحت التنفيذ',
-    ready_for_defense: 'جاهز للمناقشة',
-    under_defense: 'تحت المناقشة',
-    revisions_required: 'يحتاج تعديلات',
-    rejected: 'مرفوض',
-    cancelled: 'منقطع',
-};
-
-function statusColor(name: string) {
-    return STATUS_COLORS[name] ?? 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400';
-}
-
-function statusLabel(name: string) {
-    return STATUS_LABELS[name] ?? name;
-}
 
 const pdfUrl = computed(() => (props.project.draft_file_path ? `/storage/${props.project.draft_file_path}` : null));
 
@@ -192,7 +168,7 @@ const studentStatusLabel: Record<string, string> = {
                 <div class="flex-1">
                     <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{{ project.project_title }}</h1>
                     <div class="mt-2 flex flex-wrap items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                        <span>{{ project.academic_year }}</span>
+                        <span>{{ project.semester ? `${project.semester} ${project.academic_year}` : project.academic_year }}</span>
                         <span>•</span>
                         <span>{{ project.visit_count }} مشاهدة</span>
                         <span
@@ -204,14 +180,6 @@ const studentStatusLabel: Record<string, string> = {
                     </div>
                 </div>
                 <div class="flex flex-wrap gap-2">
-                    <button
-                        v-if="canApprove"
-                        type="button"
-                        class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-                        @click="approveProject"
-                    >
-                        اعتماد المشروع
-                    </button>
                     <a
                         v-if="canEdit"
                         :href="route('projects.edit', [project.id])"
@@ -364,9 +332,9 @@ const studentStatusLabel: Record<string, string> = {
                                 </dd>
                             </div>
                             <div>
-                                <dt class="text-xs text-gray-500 dark:text-gray-400">السنة الدراسية</dt>
+                                <dt class="text-xs text-gray-500 dark:text-gray-400">الفصل الدراسي</dt>
                                 <dd class="mt-0.5 text-sm font-medium text-gray-800 dark:text-gray-200">
-                                    {{ project.academic_year }}
+                                    {{ project.semester ? `${project.semester} ${project.academic_year}` : project.academic_year }}
                                 </dd>
                             </div>
                         </dl>
@@ -376,10 +344,10 @@ const studentStatusLabel: Record<string, string> = {
                     <div class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
                         <h2 class="mb-4 text-base font-semibold text-gray-800 dark:text-gray-200">الدرجة النهائية</h2>
 
-                        <!-- Manager view: full ScoreInput (display + input form) -->
-                        <ScoreInput v-if="canManage" :project-id="project.id" :current-score="project.final_score" />
+                        <!-- Manager view (only when opened from the archive): full ScoreInput (display + input form) -->
+                        <ScoreInput v-if="canEditScore" :project-id="project.id" :current-score="project.final_score" />
 
-                        <!-- Non-manager view: read-only display -->
+                        <!-- Read-only display -->
                         <template v-else>
                             <div v-if="finalScore !== null" class="flex items-center gap-3">
                                 <span class="text-3xl font-bold text-blue-600 dark:text-blue-400">{{ finalScore }}</span>

@@ -3,8 +3,9 @@ import ExportButtons from '@/components/ExportButtons.vue';
 import StatsCard from '@/components/StatsCard.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
+import { router } from '@inertiajs/vue3';
 import { TrendingDown, TrendingUp } from 'lucide-vue-next';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -27,6 +28,11 @@ const props = defineProps<{
     report: {
         yearly: YearlyItem[];
         department_by_year: Record<string, DeptInYear[]>;
+        available_years: string[];
+    };
+    filter: {
+        from_year?: string;
+        to_year?: string;
     };
 }>();
 
@@ -37,8 +43,30 @@ const breadcrumbs: BreadcrumbItem[] = [
     { title: 'التقرير السنوي', href: '/reports/yearly' },
 ];
 
-const pdfUrl = computed(() => route('reports.export.pdf', { type: 'yearly' }));
-const excelUrl = computed(() => route('reports.export.excel', { type: 'yearly' }));
+const pdfUrl = computed(() => route('reports.export.pdf', { type: 'yearly', ...filterParams.value }));
+const excelUrl = computed(() => route('reports.export.excel', { type: 'yearly', ...filterParams.value }));
+
+// ── Year range filter ────────────────────────────────────────────────────
+
+const fromYear = ref(props.filter.from_year ?? '');
+const toYear = ref(props.filter.to_year ?? '');
+
+const filterParams = computed(() => {
+    const p: Record<string, string> = {};
+    if (fromYear.value) p.from_year = fromYear.value;
+    if (toYear.value) p.to_year = toYear.value;
+    return p;
+});
+
+function applyYearFilter() {
+    router.get(route('reports.yearly'), filterParams.value, { preserveState: true, replace: true });
+}
+
+function resetYearFilter() {
+    fromYear.value = '';
+    toYear.value = '';
+    router.get(route('reports.yearly'), {}, { preserveState: true, replace: true });
+}
 
 // ── Summary stats ──────────────────────────────────────────────────────────
 
@@ -92,6 +120,45 @@ function growthClass(pct: number | null) {
                     <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">مقارنة المشاريع عبر السنوات الأكاديمية</p>
                 </div>
                 <ExportButtons :pdf-url="pdfUrl" :excel-url="excelUrl" title="التقرير السنوي" subtitle="مقارنة المشاريع عبر السنوات الأكاديمية" />
+            </div>
+
+            <!-- Year range filter -->
+            <div class="no-print flex flex-wrap items-end gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">من سنة</label>
+                    <select
+                        v-model="fromYear"
+                        class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                    >
+                        <option value="">الكل</option>
+                        <option v-for="yr in report.available_years" :key="yr" :value="yr">{{ yr }}</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">إلى سنة</label>
+                    <select
+                        v-model="toYear"
+                        class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                    >
+                        <option value="">الكل</option>
+                        <option v-for="yr in report.available_years" :key="yr" :value="yr">{{ yr }}</option>
+                    </select>
+                </div>
+                <button
+                    type="button"
+                    class="rounded-lg bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-700"
+                    @click="applyYearFilter"
+                >
+                    تطبيق
+                </button>
+                <button
+                    v-if="filter.from_year || filter.to_year"
+                    type="button"
+                    class="rounded-lg border border-gray-300 px-4 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700"
+                    @click="resetYearFilter"
+                >
+                    إعادة تعيين
+                </button>
             </div>
 
             <!-- Summary cards -->

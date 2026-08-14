@@ -14,6 +14,32 @@ class SearchService
 
     public function searchProjects(array $filters): LengthAwarePaginator
     {
+        $query = $this->buildFilteredQuery($filters);
+
+        $sort = $filters['sort'] ?? 'created_at';
+        match ($sort) {
+            'title'       => $query->orderBy('project_title'),
+            'visit_count' => $query->orderByDesc('visit_count'),
+            default       => $query->latest(),
+        };
+
+        return $query->paginate(15)->withQueryString();
+    }
+
+    /**
+     * Same filters as searchProjects() but unpaginated, for exports.
+     *
+     * @return Collection<int, Project>
+     */
+    public function searchProjectsForExport(array $filters): Collection
+    {
+        $query = $this->buildFilteredQuery($filters);
+
+        return $query->orderBy('project_title')->get();
+    }
+
+    private function buildFilteredQuery(array &$filters)
+    {
         /** @var \App\Models\User|null $user */
         $user = auth()->user();
 
@@ -61,6 +87,10 @@ class SearchService
             $query->where('academic_year', $filters['academic_year']);
         }
 
+        if (! empty($filters['semester'])) {
+            $query->where('semester', $filters['semester']);
+        }
+
         if (! empty($filters['degree_level'])) {
             $query->where('degree_level', $filters['degree_level']);
         }
@@ -69,19 +99,16 @@ class SearchService
             $query->where('supervisor_id', $filters['supervisor_id']);
         }
 
-        // 'active' restricts to published (archived) projects only
+        // 'active' restricts to published (archived) projects only;
+        // 'exclude_archived' hides them (used by the general projects list,
+        // since archived/"منجز" projects only belong in the archive page).
         if (! empty($filters['status']) && $filters['status'] === 'active') {
             $query->where('current_status_id', self::STATUS_ARCHIVED);
+        } elseif (! empty($filters['status']) && $filters['status'] === 'exclude_archived') {
+            $query->where('current_status_id', '!=', self::STATUS_ARCHIVED);
         }
 
-        $sort = $filters['sort'] ?? 'created_at';
-        match ($sort) {
-            'title'       => $query->orderBy('project_title'),
-            'visit_count' => $query->orderByDesc('visit_count'),
-            default       => $query->latest(),
-        };
-
-        return $query->paginate(15)->withQueryString();
+        return $query;
     }
 
     /**

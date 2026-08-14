@@ -158,7 +158,7 @@ function closeFeedbackModal() {
                         <span class="font-medium text-text-dark">{{ project.specialization?.name ?? '—' }}</span>
                     </div>
                     <div class="flex gap-2">
-                        <span class="w-32 shrink-0 text-text-muted">السنة الدراسية:</span>
+                        <span class="w-32 shrink-0 text-text-muted">الفصل الدراسي:</span>
                         <span class="font-medium text-text-dark">{{ project.academic_year }}</span>
                     </div>
                     <div class="flex gap-2">
@@ -282,7 +282,7 @@ function closeFeedbackModal() {
                         </div>
                         <div class="mb-4 flex-1 space-y-1 text-xs text-text-muted">
                             <p>
-                                السنة الدراسية: <span class="font-medium text-text-dark">{{ rel.academic_year }}</span>
+                                الفصل الدراسي: <span class="font-medium text-text-dark">{{ rel.academic_year }}</span>
                             </p>
                             <p>
                                 المشرف: <span class="font-medium text-text-dark">{{ rel.supervisor?.name ?? '—' }}</span>

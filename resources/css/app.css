@@ -97,8 +97,14 @@ html {
 
 @media print {
     @page {
-        margin: 12mm;
+        margin: 16mm 12mm 18mm 12mm;
         size: A4;
+
+        @bottom-center {
+            content: "صفحة " counter(page) " من " counter(pages);
+            font-size: 9px;
+            color: #6b7280;
+        }
     }
 
     body {

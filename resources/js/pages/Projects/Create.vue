@@ -30,6 +30,10 @@ const props = defineProps<{
     supervisors: Supervisor[];
 }>();
 
+// New projects always start "in progress" — the archive workflow (examiners,
+// score, file) happens later from the project's edit page.
+const STATUS_IN_PROGRESS = 5;
+
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'لوحة التحكم', href: '/dashboard' },
     { title: 'المشاريع', href: '/projects' },
@@ -40,12 +44,12 @@ const form = useForm({
     project_title: '',
     description: '',
     academic_year: '',
+    semester: 'خريف',
     degree_level: 'bachelor',
     department_id: null as number | null,
     specialization_id: null as number | null,
     supervisor_id: null as number | null,
-    current_status_id: 1 as number | null,
-    pdf_file: null as File | null,
+    current_status_id: STATUS_IN_PROGRESS as number,
     students: [{ full_name: '', registration_number: '' }] as Student[],
 });
 
@@ -87,12 +91,8 @@ function removeStudent(index: number) {
     if (form.students.length > 1) form.students.splice(index, 1);
 }
 
-function onFileChange(e: Event) {
-    form.pdf_file = (e.target as HTMLInputElement).files?.[0] ?? null;
-}
-
 function submit() {
-    form.post(route('projects.store'), { forceFormData: true });
+    form.post(route('projects.store'));
 }
 </script>
 
@@ -147,6 +147,22 @@ function submit() {
                         <p v-if="form.errors.academic_year" class="mt-1 text-xs text-red-600">{{ form.errors.academic_year }}</p>
                     </div>
 
+                    <!-- Semester -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            الفصل الدراسي <span class="text-red-500">*</span>
+                        </label>
+                        <select
+                            v-model="form.semester"
+                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                            :class="{ 'border-red-500': form.errors.semester }"
+                        >
+                            <option value="خريف">خريف</option>
+                            <option value="ربيع">ربيع</option>
+                        </select>
+                        <p v-if="form.errors.semester" class="mt-1 text-xs text-red-600">{{ form.errors.semester }}</p>
+                    </div>
+
                     <!-- Degree Level -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -162,23 +178,6 @@ function submit() {
                             <option value="master">ماجستير</option>
                         </select>
                         <p v-if="form.errors.degree_level" class="mt-1 text-xs text-red-600">{{ form.errors.degree_level }}</p>
-                    </div>
-
-                    <!-- Project Status -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            حالة المشروع <span class="text-red-500">*</span>
-                        </label>
-                        <select
-                            v-model="form.current_status_id"
-                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                            :class="{ 'border-red-500': form.errors.current_status_id }"
-                        >
-                            <option :value="1">منجز</option>
-                            <option :value="5">تحت التنفيذ</option>
-                            <option :value="10">منقطع</option>
-                        </select>
-                        <p v-if="form.errors.current_status_id" class="mt-1 text-xs text-red-600">{{ form.errors.current_status_id }}</p>
                     </div>
 
                     <!-- Department + Specialization -->
@@ -291,29 +290,6 @@ function submit() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- PDF Upload -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"> ملف المشروع (PDF) </label>
-                        <input
-                            type="file"
-                            accept=".pdf"
-                            class="mt-1 block w-full text-sm text-gray-600 file:ml-3 file:mr-0 file:rounded-lg file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-400 dark:file:bg-blue-900/20 dark:file:text-blue-400"
-                            @change="onFileChange"
-                        />
-                        <p class="mt-1 text-xs text-gray-500">PDF فقط — الحجم الأقصى 15 ميجابايت</p>
-                        <p v-if="form.errors.pdf_file" class="mt-1 text-xs text-red-600">{{ form.errors.pdf_file }}</p>
-                        <!-- Upload progress -->
-                        <div v-if="form.progress" class="mt-2">
-                            <div class="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-                                <div
-                                    class="h-1.5 rounded-full bg-blue-600 transition-all duration-300"
-                                    :style="{ width: `${form.progress.percentage}%` }"
-                                />
-                            </div>
-                            <p class="mt-1 text-xs text-gray-500">{{ form.progress.percentage }}%</p>
                         </div>
                     </div>
 

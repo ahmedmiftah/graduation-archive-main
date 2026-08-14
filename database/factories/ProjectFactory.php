@@ -20,7 +20,7 @@ class ProjectFactory extends Factory
             'department_id'     => Department::factory(),
             'specialization_id' => Specialization::factory(),
             'supervisor_id'     => User::factory(),
-            'current_status_id' => 1,
+            'current_status_id' => 5, // in_progress — matches the default for newly created projects
             'is_deleted'        => false,
         ];
     }

@@ -1,12 +1,24 @@
 <script setup lang="ts">
-defineProps<{
-    show: boolean;
-    title?: string;
-}>();
+import { computed } from 'vue';
+
+const props = withDefaults(
+    defineProps<{
+        show: boolean;
+        title?: string;
+        size?: 'md' | 'lg' | 'xl';
+    }>(),
+    { size: 'lg' },
+);
 
 defineEmits<{
     close: [];
 }>();
+
+const sizeClass = computed(() => {
+    if (props.size === 'xl') return 'max-w-2xl';
+    if (props.size === 'md') return 'max-w-md';
+    return 'max-w-lg';
+});
 </script>
 
 <template>
@@ -19,9 +31,9 @@ defineEmits<{
             leave-from-class="opacity-100"
             leave-to-class="opacity-0"
         >
-            <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center" dir="rtl">
+            <div v-if="show" class="pointer-events-auto fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4" dir="rtl">
                 <div class="absolute inset-0 bg-black/50" @click="$emit('close')" />
-                <div class="relative z-10 w-full max-w-lg rounded-xl bg-white shadow-xl dark:bg-gray-800">
+                <div class="relative z-10 w-full rounded-xl bg-white shadow-xl dark:bg-gray-800" :class="sizeClass" @click.stop>
                     <div class="flex items-center justify-between border-b border-gray-200 px-6 py-4 dark:border-gray-700">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{{ title }}</h3>
                         <button type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300" @click="$emit('close')">✕</button>

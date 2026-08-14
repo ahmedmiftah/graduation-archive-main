@@ -70,6 +70,8 @@ function validProjectPayload(int $deptId, int $specId, int $supervisorId): array
         'project_title'     => 'نظام تجريبي لاختبار الصلاحيات',
         'description'       => 'وصف المشروع التجريبي لاختبار صلاحيات المستخدمين',
         'academic_year'     => '2025/2026',
+        'semester'          => 'خريف',
+        'degree_level'      => 'bachelor',
         'department_id'     => $deptId,
         'specialization_id' => $specId,
         'supervisor_id'     => $supervisorId,
@@ -125,17 +127,6 @@ test('super_admin can create project', function () {
         ->assertRedirect();
 
     $this->assertDatabaseHas('projects', ['project_title' => 'نظام تجريبي لاختبار الصلاحيات']);
-});
-
-test('super_admin can approve a pending project', function () {
-    ['dept' => $dept, 'spec' => $spec, 'supervisor' => $sv] = rvSetup();
-    $project = pendingRvProject($dept->id, $spec->id, $sv->id);
-
-    $this->actingAs(userWithRole('super_admin'))
-        ->post(route('projects.approve', $project->id))
-        ->assertRedirect();
-
-    $this->assertDatabaseHas('projects', ['id' => $project->id, 'current_status_id' => 1]);
 });
 
 test('super_admin can soft-delete a project', function () {
@@ -203,23 +194,11 @@ test('dept_manager can create project in their department', function () {
         ->post(route('projects.store'), validProjectPayload($dept->id, $spec->id, $sv->id))
         ->assertRedirect();
 
-    // dept_manager created projects go straight to archived (status 1)
+    // every new project starts in progress (status 5), regardless of role
     $this->assertDatabaseHas('projects', [
         'project_title'     => 'نظام تجريبي لاختبار الصلاحيات',
-        'current_status_id' => 1,
+        'current_status_id' => 5,
     ]);
-});
-
-test('dept_manager can approve a pending project', function () {
-    ['dept' => $dept, 'spec' => $spec, 'supervisor' => $sv] = rvSetup();
-    $project = pendingRvProject($dept->id, $spec->id, $sv->id);
-    $mgr     = managerInDept($dept->id);
-
-    $this->actingAs($mgr)
-        ->post(route('projects.approve', $project->id))
-        ->assertRedirect();
-
-    $this->assertDatabaseHas('projects', ['id' => $project->id, 'current_status_id' => 1]);
 });
 
 test('dept_manager can soft-delete a project', function () {
@@ -463,10 +442,10 @@ test('dept_staff can create project in their own department', function () {
         ->post(route('projects.store'), validProjectPayload($dept->id, $spec->id, $sv->id))
         ->assertRedirect();
 
-    // dept_staff created projects land as pending (status 2)
+    // every new project starts in progress (status 5), regardless of role
     $this->assertDatabaseHas('projects', [
         'project_title'     => 'نظام تجريبي لاختبار الصلاحيات',
-        'current_status_id' => 2,
+        'current_status_id' => 5,
     ]);
 });
 
@@ -518,16 +497,6 @@ test('dept_staff cannot delete a project', function () {
 
     $this->actingAs($staff)
         ->delete(route('projects.destroy', $project->id))
-        ->assertForbidden();
-});
-
-test('dept_staff cannot approve a project', function () {
-    ['dept' => $dept, 'spec' => $spec, 'supervisor' => $sv] = rvSetup();
-    $project = pendingRvProject($dept->id, $spec->id, $sv->id);
-    $staff   = staffInDept($dept->id);
-
-    $this->actingAs($staff)
-        ->post(route('projects.approve', $project->id))
         ->assertForbidden();
 });
 

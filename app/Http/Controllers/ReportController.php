@@ -66,10 +66,14 @@ class ReportController extends Controller
         ]);
     }
 
-    public function yearlyReport(): Response
+    public function yearlyReport(Request $request): Response
     {
         return Inertia::render('Reports/Yearly', [
-            'report' => $this->reportService->getYearlyComparisonReport(),
+            'report' => $this->reportService->getYearlyComparisonReport(
+                $request->input('from_year'),
+                $request->input('to_year'),
+            ),
+            'filter' => $request->only(['from_year', 'to_year']),
         ]);
     }
 
@@ -100,7 +104,7 @@ class ReportController extends Controller
     {
         $type = $request->input('type', 'department');
 
-        [$title, $headers, $rows] = $this->buildExportData($type);
+        [$title, $headers, $rows] = $this->buildExportData($type, $request);
 
         $pdf = Pdf::loadView('exports.report', compact('title', 'headers', 'rows'))
             ->setPaper('a4', 'landscape');
@@ -112,7 +116,7 @@ class ReportController extends Controller
     {
         $type = $request->input('type', 'department');
 
-        [$title, $headers, $rows] = $this->buildExportData($type);
+        [$title, $headers, $rows] = $this->buildExportData($type, $request);
 
         return Excel::download(new ReportExport($title, $headers, $rows), "{$type}-report.xlsx");
     }
@@ -134,12 +138,12 @@ class ReportController extends Controller
         ];
     }
 
-    private function buildExportData(string $type): array
+    private function buildExportData(string $type, Request $request): array
     {
         return match ($type) {
             'specializations' => $this->specializationExportData(),
             'supervisors'     => $this->supervisorExportData(),
-            'yearly'          => $this->yearlyExportData(),
+            'yearly'          => $this->yearlyExportData($request),
             default           => $this->departmentExportData(),
         };
     }
@@ -186,9 +190,12 @@ class ReportController extends Controller
         return ['تقرير المشرفين', $headers, $rows];
     }
 
-    private function yearlyExportData(): array
+    private function yearlyExportData(Request $request): array
     {
-        $report  = $this->reportService->getYearlyComparisonReport();
+        $report  = $this->reportService->getYearlyComparisonReport(
+            $request->input('from_year'),
+            $request->input('to_year'),
+        );
         $headers = ['السنة الأكاديمية', 'عدد المشاريع', 'نسبة النمو %'];
         $rows    = collect($report['yearly'])->map(fn ($y) => [
             $y['year'],

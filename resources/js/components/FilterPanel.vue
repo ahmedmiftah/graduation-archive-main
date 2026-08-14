@@ -21,6 +21,7 @@ export interface FilterValues {
     department_id: string | number;
     specialization_id: string | number;
     academic_year: string;
+    semester: string;
     supervisor_id: string | number;
     degree_level: string;
     sort: string;
@@ -70,9 +71,9 @@ const activeCount = computed(
             local.value.department_id,
             local.value.specialization_id,
             local.value.academic_year,
+            local.value.semester,
             local.value.supervisor_id,
             local.value.degree_level,
-            local.value.status,
         ].filter((v) => v !== '' && v != null).length,
 );
 
@@ -90,10 +91,10 @@ watch(
     () => [
         local.value.specialization_id,
         local.value.academic_year,
+        local.value.semester,
         local.value.supervisor_id,
         local.value.degree_level,
         local.value.sort,
-        local.value.status,
     ],
     () => emit('filter-changed', { ...local.value }),
 );
@@ -112,6 +113,7 @@ function reset() {
         department_id: '',
         specialization_id: '',
         academic_year: '',
+        semester: '',
         supervisor_id: '',
         degree_level: '',
         sort: 'created_at',
@@ -169,21 +171,22 @@ const selectClass =
                 </select>
             </div>
 
+            <!-- Semester -->
+            <div class="flex flex-col gap-1">
+                <label class="text-xs font-medium text-gray-600 dark:text-gray-400">الفصل الدراسي</label>
+                <select v-model="local.semester" :class="selectClass">
+                    <option value="">كل الفصول</option>
+                    <option value="خريف">خريف</option>
+                    <option value="ربيع">ربيع</option>
+                </select>
+            </div>
+
             <!-- Supervisor -->
             <div class="flex flex-col gap-1">
                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">المشرف</label>
                 <select v-model="local.supervisor_id" :class="selectClass">
                     <option value="">كل المشرفين</option>
                     <option v-for="sup in supervisors" :key="sup.id" :value="sup.id">{{ sup.name }}</option>
-                </select>
-            </div>
-
-            <!-- Status -->
-            <div class="flex flex-col gap-1">
-                <label class="text-xs font-medium text-gray-600 dark:text-gray-400">الحالة</label>
-                <select v-model="local.status" :class="selectClass">
-                    <option value="">كل المشاريع</option>
-                    <option value="active">المنجزة فقط</option>
                 </select>
             </div>
 

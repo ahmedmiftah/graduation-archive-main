@@ -49,8 +49,8 @@ Route::middleware(['auth', 'role:dept_manager,super_admin'])->prefix('reports')-
 
 
 
-// super_admin only
-Route::middleware(['auth', 'role:super_admin'])->prefix('admin')->name('admin.')->group(function () {
+// super_admin + dept_manager: dept managers can manage users only in their own department
+Route::middleware(['auth', 'role:super_admin,dept_manager'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', fn () => Inertia::render('Admin/Dashboard'))->name('dashboard');
     Route::resource('users', AdminUserController::class)
         ->only(['index', 'store', 'update', 'destroy']);
@@ -92,10 +92,17 @@ Route::post('projects/{id}/feedback', [ProjectFeedbackController::class, 'store'
 
 // Projects — all authenticated users can browse; role checks handled in controller/form requests
 Route::middleware(['auth'])->group(function () {
+    // Archived projects — must be registered before the resource route so
+    // "archived" isn't captured by the projects/{project} wildcard.
+    Route::get('projects/archived', [ProjectController::class, 'archivedIndex'])->name('projects.archived');
+    Route::get('projects/archived/export/excel', [ProjectController::class, 'archivedExportExcel'])->name('projects.archived.export.excel');
+    Route::get('projects/archived/export/pdf', [ProjectController::class, 'archivedExportPdf'])->name('projects.archived.export.pdf');
+    Route::middleware('role:dept_manager,super_admin')->group(function () {
+        Route::post('projects/archived', [ProjectController::class, 'archiveStore'])->name('projects.archived.store');
+        Route::put('projects/{id}/archive', [ProjectController::class, 'archiveUpdate'])->name('projects.archived.update');
+    });
+
     Route::resource('projects', ProjectController::class);
-    Route::post('projects/{id}/approve', [ProjectController::class, 'approve'])
-        ->middleware('role:dept_manager,super_admin')
-        ->name('projects.approve');
 
     Route::get('search', [SearchController::class, 'index'])->name('search.index');
     Route::get('search/suggestions', [SearchController::class, 'suggestions'])->name('search.suggestions');

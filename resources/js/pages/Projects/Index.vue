@@ -4,6 +4,8 @@ import FilterPanel, { type FilterValues } from '@/components/FilterPanel.vue';
 import SearchBar from '@/components/SearchBar.vue';
 import SimilarityWarning from '@/components/SimilarityWarning.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { specializationBadgeColor } from '@/lib/specializationBadge';
+import { statusColor, statusLabel } from '@/lib/statusBadge';
 import { type BreadcrumbItem, type SharedData, type SimilarProject } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref } from 'vue';
@@ -32,6 +34,7 @@ interface Project {
     id: number;
     project_title: string;
     academic_year: string;
+    semester: string | null;
     degree_level: string;
     department: Department | null;
     specialization: Specialization | null;
@@ -72,6 +75,7 @@ const props = defineProps<{
         department_id?: string | number;
         specialization_id?: string | number;
         academic_year?: string;
+        semester?: string;
         supervisor_id?: string | number;
         degree_level?: string;
         status?: string;
@@ -107,10 +111,11 @@ const filters = reactive<FilterValues>({
     department_id: props.filters.department_id ?? '',
     specialization_id: props.filters.specialization_id ?? '',
     academic_year: props.filters.academic_year ?? '',
+    semester: props.filters.semester ?? '',
     supervisor_id: props.filters.supervisor_id ?? '',
     degree_level: props.filters.degree_level ?? '',
     sort: props.filters.sort ?? 'created_at',
-    status: props.filters.status ?? '',
+    status: '',
 });
 
 // Flat specializations list for FilterPanel
@@ -122,6 +127,7 @@ function buildParams(): Record<string, string> {
     if (filters.department_id) p.department_id = String(filters.department_id);
     if (filters.specialization_id) p.specialization_id = String(filters.specialization_id);
     if (filters.academic_year) p.academic_year = filters.academic_year;
+    if (filters.semester) p.semester = filters.semester;
     if (filters.supervisor_id) p.supervisor_id = String(filters.supervisor_id);
     if (filters.degree_level) p.degree_level = filters.degree_level;
     if (filters.status) p.status = filters.status;
@@ -140,6 +146,7 @@ function clearAll() {
         department_id: '',
         specialization_id: '',
         academic_year: '',
+        semester: '',
         supervisor_id: '',
         degree_level: '',
         sort: 'created_at',
@@ -196,6 +203,7 @@ const activeChips = computed<Chip[]>(() => {
         if (s) chips.push({ key: 'specialization_id', label: s.name });
     }
     if (filters.academic_year) chips.push({ key: 'academic_year', label: filters.academic_year });
+    if (filters.semester) chips.push({ key: 'semester', label: filters.semester });
     if (filters.supervisor_id) {
         const s = props.filterOptions.supervisors.find((x) => x.id == filters.supervisor_id);
         if (s) chips.push({ key: 'supervisor_id', label: s.name });
@@ -204,7 +212,6 @@ const activeChips = computed<Chip[]>(() => {
         const degreeLabels: Record<string, string> = { diploma: 'دبلوم', bachelor: 'بكالوريوس', master: 'ماجستير' };
         chips.push({ key: 'degree_level', label: degreeLabels[filters.degree_level] ?? filters.degree_level });
     }
-    if (filters.status === 'active') chips.push({ key: 'status', label: 'المنجزة فقط' });
     return chips;
 });
 
@@ -225,10 +232,6 @@ function canEdit(_p: Project) {
     return ['dept_staff', 'dept_manager', 'super_admin'].includes(userRole.value);
 }
 
-function canApprove(p: Project) {
-    return ['dept_manager', 'super_admin'].includes(userRole.value) && p.current_status?.status_name === 'proposal_submitted';
-}
-
 // ── Actions ──────────────────────────────────────────────────────────
 
 const confirmDelete = ref<Project | null>(null);
@@ -242,44 +245,6 @@ function deleteProject() {
     });
 }
 
-function approveProject(id: number) {
-    router.post(route('projects.approve', [id]));
-}
-
-// ── Status helpers ───────────────────────────────────────────────────
-
-const STATUS_COLORS: Record<string, string> = {
-    archived: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
-    proposal_submitted: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
-    supervisor_approved: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-    hod_approved: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-    in_progress: 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/20 dark:text-indigo-400',
-    ready_for_defense: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
-    under_defense: 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400',
-    revisions_required: 'bg-orange-100 text-orange-700 dark:bg-orange-900/20 dark:text-orange-400',
-    rejected: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
-    cancelled: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-};
-
-const STATUS_LABELS: Record<string, string> = {
-    archived: 'منجز',
-    proposal_submitted: 'في انتظار الموافقة',
-    supervisor_approved: 'موافقة المشرف',
-    hod_approved: 'موافقة رئيس القسم',
-    in_progress: 'تحت التنفيذ',
-    ready_for_defense: 'جاهز للمناقشة',
-    under_defense: 'تحت المناقشة',
-    revisions_required: 'يحتاج تعديلات',
-    rejected: 'مرفوض',
-    cancelled: 'ملغي',
-};
-
-function statusColor(name: string) {
-    return STATUS_COLORS[name] ?? 'bg-gray-100 text-gray-600';
-}
-function statusLabel(name: string) {
-    return STATUS_LABELS[name] ?? name;
-}
 </script>
 
 <template>
@@ -368,10 +333,9 @@ function statusLabel(name: string) {
                         <tr>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">العنوان</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">الفئة</th>
-                            <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">القسم</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">التخصص</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">المشرف</th>
-                            <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">السنة</th>
+                            <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">الفصل الدراسي</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">الحالة</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">إجراءات</th>
                         </tr>
@@ -400,17 +364,21 @@ function statusLabel(name: string) {
                                     {{ project.degree_level === 'diploma' ? 'دبلوم' : project.degree_level === 'master' ? 'ماجستير' : 'بكالوريوس' }}
                                 </span>
                             </td>
-                            <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                {{ project.department?.name ?? '—' }}
-                            </td>
-                            <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                {{ project.specialization?.name ?? '—' }}
+                            <td class="whitespace-nowrap px-4 py-3">
+                                <span
+                                    v-if="project.specialization"
+                                    :title="project.specialization.name"
+                                    :class="['rounded-full px-2 py-0.5 text-xs font-medium', specializationBadgeColor(project.specialization.name)]"
+                                >
+                                    {{ project.specialization.name }}
+                                </span>
+                                <span v-else class="text-sm text-gray-400">—</span>
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                 {{ project.supervisor?.name ?? '—' }}
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                {{ project.academic_year }}
+                                {{ project.semester ? `${project.semester} ${project.academic_year}` : project.academic_year }}
                             </td>
                             <td class="px-4 py-3">
                                 <span
@@ -436,14 +404,6 @@ function statusLabel(name: string) {
                                         تعديل
                                     </a>
                                     <button
-                                        v-if="canApprove(project)"
-                                        type="button"
-                                        class="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-700 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400"
-                                        @click="approveProject(project.id)"
-                                    >
-                                        اعتماد
-                                    </button>
-                                    <button
                                         v-if="canDelete"
                                         type="button"
                                         class="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400"
@@ -455,7 +415,7 @@ function statusLabel(name: string) {
                             </td>
                         </tr>
                         <tr v-if="projects.data.length === 0">
-                            <td colspan="8" class="px-4 py-10 text-center text-sm text-gray-500">لا توجد مشاريع مطابقة للبحث</td>
+                            <td colspan="7" class="px-4 py-10 text-center text-sm text-gray-500">لا توجد مشاريع مطابقة للبحث</td>
                         </tr>
                     </tbody>
                 </table>

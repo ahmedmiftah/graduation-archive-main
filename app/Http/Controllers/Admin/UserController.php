@@ -16,7 +16,13 @@ class UserController extends Controller
 {
     public function index(Request $request): Response
     {
+        /** @var \App\Models\User $authUser */
+        $authUser = auth()->user();
+
         $query = User::with(['roles', 'department'])
+            ->when($authUser && $authUser->hasRole('dept_manager'), function ($q) use ($authUser) {
+                $q->where('department_id', $authUser->department_id);
+            })
             ->when($request->input('search'), function ($q, $search) {
                 $q->where(function ($q) use ($search) {
                     $q->where('name', 'like', "%{$search}%")
@@ -30,6 +36,12 @@ class UserController extends Controller
 
         $paginated = $query->orderBy('name')->paginate(15)->withQueryString();
 
+        $departmentQuery = Department::orderBy('name');
+        if ($authUser && $authUser->hasRole('dept_manager')) {
+            $departmentQuery->where('id', $authUser->department_id);
+        }
+        $departmentList = $departmentQuery->get(['id', 'name']);
+
         return Inertia::render('Admin/Users/Index', [
             'users' => [
                 'data'  => $paginated->items(),
@@ -41,14 +53,31 @@ class UserController extends Controller
                     'per_page'     => $paginated->perPage(),
                 ],
             ],
-            'roles'       => Role::orderBy('name')->pluck('name'),
-            'departments' => Department::orderBy('name')->get(['id', 'name']),
+            'roles'       => $authUser && $authUser->hasRole('dept_manager')
+                ? Role::orderBy('name')->whereIn('name', ['dept_staff', 'supervisor', 'viewer'])->pluck('name')
+                : Role::orderBy('name')->pluck('name'),
+            'departments' => $departmentList,
             'filters'     => $request->only(['search', 'role', 'department_id', 'is_active']),
         ]);
     }
 
     public function store(StoreUserRequest $request)
     {
+        /** @var \App\Models\User $authUser */
+        $authUser = auth()->user();
+
+        if ($authUser && $authUser->hasRole('dept_manager')) {
+            $departmentId = $request->input('department_id');
+            if ((int) $departmentId !== (int) $authUser->department_id) {
+                abort(403, 'لا يمكنك إضافة مستخدم إلى قسم آخر.');
+            }
+
+            $allowedRoles = ['dept_staff', 'supervisor', 'viewer'];
+            if (!in_array($request->input('role'), $allowedRoles, true)) {
+                abort(403, 'لا يمكنك إنشاء هذا الدور داخل القسم الخاص بك.');
+            }
+        }
+
         $validated = $request->validated();
         $role = $validated['role'];
 
@@ -69,6 +98,25 @@ class UserController extends Controller
 
     public function update(UpdateUserRequest $request, User $user)
     {
+        /** @var \App\Models\User $authUser */
+        $authUser = auth()->user();
+
+        if ($authUser && $authUser->hasRole('dept_manager')) {
+            if ($user->department_id !== $authUser->department_id) {
+                abort(403, 'لا يمكنك إدارة مستخدمين من أقسام أخرى.');
+            }
+
+            $requestedDepartment = (int) ($request->input('department_id') ?? $user->department_id);
+            if ($requestedDepartment !== (int) $authUser->department_id) {
+                abort(403, 'لا يمكنك نقل مستخدم إلى قسم آخر.');
+            }
+
+            $allowedRoles = ['dept_staff', 'supervisor', 'viewer'];
+            if (!in_array($request->input('role'), $allowedRoles, true)) {
+                abort(403, 'لا يمكنك تعيين هذا الدور داخل القسم الخاص بك.');
+            }
+        }
+
         $validated = $request->validated();
 
         $updateData = [
@@ -91,6 +139,15 @@ class UserController extends Controller
 
     public function toggleActive(User $user)
     {
+        /** @var \App\Models\User $authUser */
+        $authUser = auth()->user();
+
+        if ($authUser && $authUser->hasRole('dept_manager')) {
+            if ($user->department_id !== $authUser->department_id) {
+                abort(403, 'لا يمكنك تعديل مستخدمين من أقسام أخرى.');
+            }
+        }
+
         $newActive = !$user->is_active;
         $user->update(['is_active' => $newActive]);
 
@@ -100,6 +157,15 @@ class UserController extends Controller
 
     public function destroy(User $user)
     {
+        /** @var \App\Models\User $authUser */
+        $authUser = auth()->user();
+
+        if ($authUser && $authUser->hasRole('dept_manager')) {
+            if ($user->department_id !== $authUser->department_id) {
+                abort(403, 'لا يمكنك حذف مستخدمين من أقسام أخرى.');
+            }
+        }
+
         if ($user->hasRole('super_admin') && User::role('super_admin')->count() === 1) {
             return redirect()->route('admin.users.index')
                 ->with('error', 'لا يمكن حذف المسؤول الأخير في النظام');

@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import ArchiveProjectModal from '@/components/ArchiveProjectModal.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
-import { computed, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 interface Department {
     id: number;
@@ -18,10 +19,20 @@ interface Supervisor {
     name: string;
     department_id: number;
 }
+interface Examiner {
+    id: number;
+    full_name: string;
+    title: string | null;
+    department_id: number;
+}
 interface ProjectStudent {
     id: number;
     full_name: string;
     registration_number: string;
+}
+interface ProjectEvaluation {
+    examiner_id: number;
+    notes: string | null;
 }
 
 interface Project {
@@ -29,12 +40,17 @@ interface Project {
     project_title: string;
     description: string;
     academic_year: string;
+    semester: string | null;
     degree_level: string;
     department_id: number;
     specialization_id: number;
     supervisor_id: number;
+    current_status_id: number;
     draft_file_path: string | null;
+    final_score: number | null;
     students: ProjectStudent[];
+    examiners: Examiner[];
+    evaluations: ProjectEvaluation[];
 }
 
 interface Student {
@@ -47,7 +63,10 @@ const props = defineProps<{
     departments: Department[];
     specializations: Specialization[];
     supervisors: Supervisor[];
+    examiners: Examiner[];
 }>();
+
+const STATUS_ARCHIVED = 1;
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'لوحة التحكم', href: '/dashboard' },
@@ -59,12 +78,12 @@ const form = useForm({
     project_title: props.project.project_title,
     description: props.project.description,
     academic_year: props.project.academic_year,
+    semester: props.project.semester ?? 'خريف',
     degree_level: props.project.degree_level ?? 'bachelor',
     department_id: props.project.department_id as number | null,
     specialization_id: props.project.specialization_id as number | null,
     supervisor_id: props.project.supervisor_id as number | null,
     current_status_id: props.project.current_status_id as number | null,
-    pdf_file: null as File | null,
     students: props.project.students.map((s) => ({
         full_name: s.full_name,
         registration_number: s.registration_number,
@@ -73,6 +92,24 @@ const form = useForm({
 
 const page = usePage();
 const authUser = computed(() => page.props.auth?.user);
+
+const showArchiveModal = ref(false);
+
+const initialExaminers = computed(() =>
+    props.project.examiners.map((ex) => ({
+        examiner_id: ex.id,
+        notes: props.project.evaluations.find((e) => e.examiner_id === ex.id)?.notes ?? '',
+    })),
+);
+
+const currentFileName = computed(() => {
+    if (!props.project.draft_file_path) return null;
+    return props.project.draft_file_path.split('/').pop() ?? null;
+});
+
+function closeArchiveModal() {
+    showArchiveModal.value = false;
+}
 
 const filteredDepartments = computed(() => {
     if (authUser.value?.role === 'super_admin' || !authUser.value?.department_id) {
@@ -113,21 +150,16 @@ function removeStudent(index: number) {
     if (form.students.length > 1) form.students.splice(index, 1);
 }
 
-function onFileChange(e: Event) {
-    form.pdf_file = (e.target as HTMLInputElement).files?.[0] ?? null;
-}
-
 function submit() {
+    if (form.current_status_id === STATUS_ARCHIVED) {
+        showArchiveModal.value = true;
+        return;
+    }
     form.transform((data) => ({
         ...data,
         _method: 'PUT',
     })).post(route('projects.update', [props.project.id]));
 }
-
-const currentFileName = computed(() => {
-    if (!props.project.draft_file_path) return null;
-    return props.project.draft_file_path.split('/').pop() ?? null;
-});
 </script>
 
 <template>
@@ -180,6 +212,22 @@ const currentFileName = computed(() => {
                         <p v-if="form.errors.academic_year" class="mt-1 text-xs text-red-600">{{ form.errors.academic_year }}</p>
                     </div>
 
+                    <!-- Semester -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            الفصل الدراسي <span class="text-red-500">*</span>
+                        </label>
+                        <select
+                            v-model="form.semester"
+                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                            :class="{ 'border-red-500': form.errors.semester }"
+                        >
+                            <option value="خريف">خريف</option>
+                            <option value="ربيع">ربيع</option>
+                        </select>
+                        <p v-if="form.errors.semester" class="mt-1 text-xs text-red-600">{{ form.errors.semester }}</p>
+                    </div>
+
                     <!-- Degree Level -->
                     <div>
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -211,11 +259,7 @@ const currentFileName = computed(() => {
                             <option :value="5">تحت التنفيذ</option>
                             <option :value="10">منقطع</option>
                             <option v-if="![1, 5, 10].includes(project.current_status_id)" :value="project.current_status_id">
-                                {{
-                                    project.current_status?.status_name === 'proposal_submitted'
-                                        ? 'في انتظار الموافقة'
-                                        : project.current_status?.status_name
-                                }}
+                                {{ project.current_status_id === 2 ? 'في انتظار الموافقة' : 'حالة أخرى' }}
                             </option>
                         </select>
                         <p v-if="form.errors.current_status_id" class="mt-1 text-xs text-red-600">{{ form.errors.current_status_id }}</p>
@@ -334,54 +378,6 @@ const currentFileName = computed(() => {
                         </div>
                     </div>
 
-                    <!-- PDF Upload -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"> ملف المشروع (PDF) </label>
-
-                        <!-- Current file -->
-                        <div
-                            v-if="currentFileName && !form.pdf_file"
-                            class="mt-1 flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-700 dark:bg-gray-700/50"
-                        >
-                            <span class="text-lg">📄</span>
-                            <div class="min-w-0 flex-1">
-                                <p class="truncate text-sm text-gray-700 dark:text-gray-300">{{ currentFileName }}</p>
-                                <p class="text-xs text-gray-500">الملف الحالي</p>
-                            </div>
-                            <a
-                                :href="`/storage/${project.draft_file_path}`"
-                                target="_blank"
-                                class="text-xs text-blue-600 hover:underline dark:text-blue-400"
-                            >
-                                تنزيل
-                            </a>
-                        </div>
-
-                        <div class="mt-2">
-                            <input
-                                type="file"
-                                accept=".pdf"
-                                class="block w-full text-sm text-gray-600 file:ml-3 file:mr-0 file:rounded-lg file:border-0 file:bg-blue-50 file:px-4 file:py-2 file:text-sm file:font-medium file:text-blue-700 hover:file:bg-blue-100 dark:text-gray-400 dark:file:bg-blue-900/20 dark:file:text-blue-400"
-                                @change="onFileChange"
-                            />
-                            <p class="mt-1 text-xs text-gray-500">
-                                {{ currentFileName ? 'اختر ملفاً جديداً لاستبدال الحالي —' : '' }} PDF فقط، الحجم الأقصى 15 ميجابايت
-                            </p>
-                        </div>
-                        <p v-if="form.errors.pdf_file" class="mt-1 text-xs text-red-600">{{ form.errors.pdf_file }}</p>
-
-                        <!-- Upload progress -->
-                        <div v-if="form.progress" class="mt-2">
-                            <div class="h-1.5 w-full rounded-full bg-gray-200 dark:bg-gray-700">
-                                <div
-                                    class="h-1.5 rounded-full bg-blue-600 transition-all duration-300"
-                                    :style="{ width: `${form.progress.percentage}%` }"
-                                />
-                            </div>
-                            <p class="mt-1 text-xs text-gray-500">{{ form.progress.percentage }}%</p>
-                        </div>
-                    </div>
-
                     <!-- Buttons -->
                     <div class="flex gap-3 border-t border-gray-200 pt-5 dark:border-gray-700">
                         <button
@@ -401,5 +397,29 @@ const currentFileName = computed(() => {
                 </form>
             </div>
         </div>
+
+        <ArchiveProjectModal
+            :show="showArchiveModal"
+            mode="update"
+            :project-id="project.id"
+            :project-title="form.project_title"
+            :description="form.description"
+            :academic-year="form.academic_year"
+            :semester="form.semester"
+            :degree-level="form.degree_level"
+            :department-id="form.department_id"
+            :specialization-id="form.specialization_id"
+            :supervisor-id="form.supervisor_id"
+            :students="form.students"
+            :departments="departments"
+            :specializations="specializations"
+            :supervisors="supervisors"
+            :examiners="examiners"
+            :current-file-name="currentFileName"
+            :initial-final-score="project.final_score"
+            :initial-examiners="initialExaminers"
+            @close="closeArchiveModal"
+            @saved="showArchiveModal = false"
+        />
     </AppLayout>
 </template>

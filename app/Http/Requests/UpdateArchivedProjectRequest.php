@@ -4,18 +4,17 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreProjectRequest extends FormRequest
+class UpdateArchivedProjectRequest extends FormRequest
 {
     public function authorize(): bool
     {
         $user = $this->user();
 
-        if (! $user->hasAnyRole(['dept_staff', 'dept_manager', 'super_admin'])) {
+        if (! $user->hasAnyRole(['dept_manager', 'super_admin'])) {
             return false;
         }
 
-        // dept_staff may only submit projects for their own department
-        if ($user->hasRole('dept_staff') && (int) $this->department_id !== $user->department_id) {
+        if ($user->hasRole('dept_manager') && (int) $this->department_id !== $user->department_id) {
             return false;
         }
 
@@ -33,9 +32,14 @@ class StoreProjectRequest extends FormRequest
             'department_id'                  => ['required', 'integer', 'exists:departments,id'],
             'specialization_id'              => ['required', 'integer', 'exists:specializations,id'],
             'supervisor_id'                  => ['required', 'integer', 'exists:users,id'],
+            'pdf_file'                       => ['nullable', 'file', 'mimes:pdf', 'max:15360'],
+            'final_score'                    => ['nullable', 'numeric', 'min:0', 'max:100'],
             'students'                       => ['required', 'array', 'min:1'],
             'students.*.full_name'           => ['required', 'string'],
             'students.*.registration_number' => ['required', 'string'],
+            'examiners'                      => ['nullable', 'array', 'max:2'],
+            'examiners.*.examiner_id'        => ['required', 'integer', 'exists:examiners,id', 'distinct'],
+            'examiners.*.notes'              => ['nullable', 'string'],
         ];
     }
 }

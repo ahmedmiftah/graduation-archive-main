@@ -60,6 +60,12 @@ const props = defineProps<{
 // ── Page setup ─────────────────────────────────────────────────────────
 const page = usePage<SharedData>();
 const flash = computed(() => page.props.flash ?? {});
+const isDeptManager = computed(() => page.props.auth?.user?.role === 'dept_manager');
+const currentDepartmentId = computed(() => page.props.auth?.user?.department_id ?? '');
+const currentDepartmentName = computed(() => {
+    if (!Array.isArray(props.departments)) return 'القسم الحالي';
+    return props.departments.find((dept) => dept.id === Number(currentDepartmentId.value))?.name ?? 'القسم الحالي';
+});
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'لوحة التحكم', href: '/dashboard' },
@@ -134,6 +140,11 @@ const createForm = useForm({
 function openCreate() {
     createForm.reset();
     createForm.is_active = true;
+
+    if (isDeptManager.value && currentDepartmentId.value) {
+        createForm.department_id = Number(currentDepartmentId.value);
+    }
+
     showCreate.value = true;
 }
 
@@ -221,7 +232,7 @@ function deleteUser() {
                 <input
                     v-model="search"
                     type="text"
-                    placeholder="البحث بالاسم أو البريد أو رقم القيد..."
+                    placeholder="البحث بالاسم أو البريد..."
                     class="min-w-60 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                     @input="onSearchInput"
                 />
@@ -273,7 +284,6 @@ function deleteUser() {
                             <th class="w-12 px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">#</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">الاسم</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">البريد الإلكتروني</th>
-                            <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">رقم القيد</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">القسم</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">الدور</th>
                             <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700 dark:text-gray-300">الحالة</th>
@@ -290,9 +300,6 @@ function deleteUser() {
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                 {{ user.email }}
-                            </td>
-                            <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                {{ user.registration_number ?? '—' }}
                             </td>
                             <td class="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                 {{ user.department?.name ?? '—' }}
@@ -420,17 +427,6 @@ function deleteUser() {
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">رقم القيد</label>
-                    <input
-                        v-model="createForm.registration_number"
-                        type="text"
-                        class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                        :class="{ 'border-red-500': createForm.errors.registration_number }"
-                    />
-                    <p v-if="createForm.errors.registration_number" class="mt-1 text-xs text-red-600">{{ createForm.errors.registration_number }}</p>
-                </div>
-
-                <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">الدور</label>
                     <select
                         v-model="createForm.role"
@@ -445,7 +441,15 @@ function deleteUser() {
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">القسم</label>
+                    <input
+                        v-if="isDeptManager"
+                        :value="currentDepartmentName"
+                        type="text"
+                        readonly
+                        class="mt-1 w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-700 focus:outline-none dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100"
+                    />
                     <select
+                        v-else
                         v-model="createForm.department_id"
                         class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                         :class="{ 'border-red-500': createForm.errors.department_id }"
@@ -453,6 +457,7 @@ function deleteUser() {
                         <option value="">-- بدون قسم --</option>
                         <option v-for="dept in departments" :key="dept.id" :value="dept.id">{{ dept.name }}</option>
                     </select>
+                    <input v-if="isDeptManager" v-model="createForm.department_id" type="hidden" />
                     <p v-if="createForm.errors.department_id" class="mt-1 text-xs text-red-600">{{ createForm.errors.department_id }}</p>
                 </div>
 

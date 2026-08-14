@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Department;
+use App\Models\Examiner;
 use App\Models\Project;
 use App\Models\Specialization;
 use App\Models\User;
@@ -41,6 +42,8 @@ function projectData(array $deps, array $overrides = []): array
         'project_title'     => 'Test Project Title',
         'description'       => 'Project description text',
         'academic_year'     => '2024/2025',
+        'semester'          => 'خريف',
+        'degree_level'      => 'bachelor',
         'department_id'     => $deps['dept']->id,
         'specialization_id' => $deps['spec']->id,
         'supervisor_id'     => $deps['supervisor']->id,
@@ -70,6 +73,34 @@ test('super_admin can view all projects', function () {
         );
 });
 
+test('archived projects do not appear on the general projects index', function () {
+    $deps = makeProjectDeps();
+
+    Project::factory()->create([
+        'department_id'     => $deps['dept']->id,
+        'specialization_id' => $deps['spec']->id,
+        'supervisor_id'     => $deps['supervisor']->id,
+        'current_status_id' => 1, // archived
+        'project_title'     => 'Archived Project',
+    ]);
+    Project::factory()->create([
+        'department_id'     => $deps['dept']->id,
+        'specialization_id' => $deps['spec']->id,
+        'supervisor_id'     => $deps['supervisor']->id,
+        'current_status_id' => 5, // in_progress
+        'project_title'     => 'In Progress Project',
+    ]);
+
+    $this->actingAs(userWithRole('super_admin'))
+        ->get(route('projects.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Projects/Index')
+            ->has('projects.data', 1)
+            ->where('projects.data.0.project_title', 'In Progress Project')
+        );
+});
+
 // ── Create / Store ────────────────────────────────────────────────────────────
 
 test('dept_manager can create project', function () {
@@ -81,11 +112,11 @@ test('dept_manager can create project', function () {
 
     $this->assertDatabaseHas('projects', [
         'project_title'     => 'Test Project Title',
-        'current_status_id' => 1, // archived — managers bypass approval
+        'current_status_id' => 5, // in_progress — every new project starts here
     ]);
 });
 
-test('dept_staff can create project with pending approval status', function () {
+test('dept_staff creates project with in-progress status', function () {
     $dept = Department::factory()->create();
     $deps = makeProjectDeps($dept);
 
@@ -98,7 +129,7 @@ test('dept_staff can create project with pending approval status', function () {
 
     $this->assertDatabaseHas('projects', [
         'project_title'     => 'Test Project Title',
-        'current_status_id' => 2, // proposal_submitted — awaits approval
+        'current_status_id' => 5, // in_progress — every new project starts here
     ]);
 });
 
@@ -115,67 +146,88 @@ test('dept_staff cannot create project in other department', function () {
         ->assertForbidden();
 });
 
-// ── PDF Validation ────────────────────────────────────────────────────────────
+// ── PDF Validation (archived project creation) ─────────────────────────────────
 
-test('project rejects non-PDF uploaded file', function () {
-    $deps = makeProjectDeps();
+test('archived project rejects non-PDF uploaded file', function () {
+    $deps    = makeProjectDeps();
+    $manager = User::factory()->create(['department_id' => $deps['dept']->id]);
+    $manager->assignRole('dept_manager');
 
-    $this->actingAs(userWithRole('dept_manager'))
-        ->post(route('projects.store'), projectData($deps, [
+    $this->actingAs($manager)
+        ->post(route('projects.archived.store'), projectData($deps, [
             'pdf_file' => UploadedFile::fake()->create('document.txt', 100, 'text/plain'),
         ]))
         ->assertSessionHasErrors('pdf_file');
 });
 
-test('project PDF cannot exceed 15MB', function () {
-    $deps = makeProjectDeps();
+test('archived project PDF cannot exceed 15MB', function () {
+    $deps    = makeProjectDeps();
+    $manager = User::factory()->create(['department_id' => $deps['dept']->id]);
+    $manager->assignRole('dept_manager');
 
-    $this->actingAs(userWithRole('dept_manager'))
-        ->post(route('projects.store'), projectData($deps, [
+    $this->actingAs($manager)
+        ->post(route('projects.archived.store'), projectData($deps, [
             'pdf_file' => UploadedFile::fake()->create('document.pdf', 16384, 'application/pdf'), // 16 MB
         ]))
         ->assertSessionHasErrors('pdf_file');
 });
 
-// ── Approve ───────────────────────────────────────────────────────────────────
+// ── Archive create/update ────────────────────────────────────────────────────
 
-test('dept_manager can approve pending project', function () {
-    $deps = makeProjectDeps();
+test('dept_manager can create archived project with examiners and score', function () {
+    $deps     = makeProjectDeps();
+    $manager  = User::factory()->create(['department_id' => $deps['dept']->id]);
+    $manager->assignRole('dept_manager');
+    $examiner = Examiner::factory()->create(['department_id' => $deps['dept']->id]);
 
-    $project = Project::factory()->create([
-        'department_id'     => $deps['dept']->id,
-        'specialization_id' => $deps['spec']->id,
-        'supervisor_id'     => $deps['supervisor']->id,
-        'current_status_id' => 2,
-    ]);
-
-    $this->actingAs(userWithRole('dept_manager'))
-        ->post(route('projects.approve', $project->id))
+    $this->actingAs($manager)
+        ->post(route('projects.archived.store'), projectData($deps, [
+            'final_score' => 88.5,
+            'examiners'   => [
+                ['examiner_id' => $examiner->id, 'notes' => 'ممتاز'],
+            ],
+        ]))
         ->assertRedirect();
 
     $this->assertDatabaseHas('projects', [
-        'id'                => $project->id,
+        'project_title'     => 'Test Project Title',
         'current_status_id' => 1,
+        'final_score'       => 88.5,
     ]);
+
+    $project = Project::where('project_title', 'Test Project Title')->firstOrFail();
+    expect($project->examiners)->toHaveCount(1);
+    expect($project->evaluations)->toHaveCount(1);
 });
 
-test('dept_staff cannot approve project', function () {
-    $dept = Department::factory()->create();
-    $deps = makeProjectDeps($dept);
+test('dept_manager can update archived project examiners and score', function () {
+    $deps      = makeProjectDeps();
+    $manager   = User::factory()->create(['department_id' => $deps['dept']->id]);
+    $manager->assignRole('dept_manager');
+    $examiner1 = Examiner::factory()->create(['department_id' => $deps['dept']->id]);
+    $examiner2 = Examiner::factory()->create(['department_id' => $deps['dept']->id]);
 
     $project = Project::factory()->create([
         'department_id'     => $deps['dept']->id,
         'specialization_id' => $deps['spec']->id,
         'supervisor_id'     => $deps['supervisor']->id,
-        'current_status_id' => 2,
+        'current_status_id' => 1,
+        'final_score'       => 70,
     ]);
+    $project->examiners()->attach($examiner1->id, ['assigned_by' => $manager->id]);
 
-    $staff = User::factory()->create(['department_id' => $dept->id]);
-    $staff->assignRole('dept_staff');
+    $this->actingAs($manager)
+        ->put(route('projects.archived.update', $project->id), projectData($deps, [
+            'final_score' => 95,
+            'examiners'   => [
+                ['examiner_id' => $examiner2->id, 'notes' => 'جيد جداً'],
+            ],
+        ]))
+        ->assertRedirect();
 
-    $this->actingAs($staff)
-        ->post(route('projects.approve', $project->id))
-        ->assertForbidden();
+    $project->refresh();
+    expect((float) $project->final_score)->toBe(95.0);
+    expect($project->examiners->pluck('id')->all())->toBe([$examiner2->id]);
 });
 
 // ── Delete / Soft Delete ──────────────────────────────────────────────────────

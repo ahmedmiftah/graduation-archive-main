@@ -41,8 +41,11 @@ function printReport() {
         </div>
 
         <div class="hidden print:mb-6 print:block print:border-b print:border-slate-200 print:pb-4">
-            <div class="flex justify-center">
+            <div class="flex flex-col items-center gap-2">
                 <img src="/images/logo.png" alt="شعار الكلية" class="h-14 w-auto" />
+                <p class="text-base font-bold text-slate-800">كلية التقنية الإلكترونية</p>
+                <p v-if="title" class="text-sm font-semibold text-slate-700">{{ title }}</p>
+                <p v-if="subtitle" class="text-xs text-slate-500">{{ subtitle }}</p>
             </div>
         </div>
     </div>

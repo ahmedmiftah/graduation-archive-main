@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import StatsCard from '@/components/StatsCard.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { statusColor, statusLabel } from '@/lib/statusBadge';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import { BarChart2, Building2, Calendar, Clock, FolderOpen } from 'lucide-vue-next';
+import { BarChart2, Building2, Calendar, FolderOpen, Loader2 } from 'lucide-vue-next';
 import { computed } from 'vue';
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -16,6 +17,7 @@ interface RecentProject {
     id: number;
     project_title: string;
     academic_year: string;
+    semester: string | null;
     department: { name: string } | null;
     current_status: { status_name: string } | null;
 }
@@ -36,7 +38,7 @@ interface DashboardStats {
     total_projects?: number;
     total_departments?: number;
     projects_this_year?: number;
-    pending_approvals?: number;
+    in_progress_count?: number;
     recent_projects?: RecentProject[];
     by_status?: StatusItem[];
     // dept_manager
@@ -131,7 +133,7 @@ const reportLinks = [
                     <StatsCard title="إجمالي المشاريع" :value="stats.total_projects ?? 0" :icon="FolderOpen" color="blue" />
                     <StatsCard title="الأقسام" :value="stats.total_departments ?? 0" :icon="Building2" color="green" />
                     <StatsCard title="مشاريع هذا العام" :value="stats.projects_this_year ?? 0" :icon="Calendar" color="purple" />
-                    <StatsCard title="في انتظار الموافقة" :value="stats.pending_approvals ?? 0" :icon="Clock" color="orange" />
+                    <StatsCard title="مشاريع تحت التنفيذ" :value="stats.in_progress_count ?? 0" :icon="Loader2" color="orange" />
                 </div>
 
                 <!-- Recent projects + Status chart -->
@@ -165,14 +167,16 @@ const reportLinks = [
                                             {{ p.department?.name ?? '—' }}
                                         </td>
                                         <td class="px-4 py-2.5 text-sm text-gray-600 dark:text-gray-400">
-                                            {{ p.academic_year }}
+                                            {{ p.semester ? `${p.semester} ${p.academic_year}` : p.academic_year }}
                                         </td>
                                         <td class="px-4 py-2.5">
                                             <span
-                                                class="inline-flex rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                                v-if="p.current_status"
+                                                :class="['inline-flex rounded-full px-2 py-0.5 text-xs font-medium', statusColor(p.current_status.status_name)]"
                                             >
-                                                {{ p.current_status?.status_name ?? '—' }}
+                                                {{ statusLabel(p.current_status.status_name) }}
                                             </span>
+                                            <span v-else class="text-sm text-gray-400">—</span>
                                         </td>
                                     </tr>
                                     <tr v-if="!stats.recent_projects?.length">

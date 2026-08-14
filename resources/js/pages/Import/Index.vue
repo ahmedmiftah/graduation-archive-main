@@ -147,7 +147,7 @@ function downloadErrorCsv() {
 const columns = [
     { name: 'project_title', label: 'عنوان المشروع', required: true },
     { name: 'description', label: 'الوصف', required: false },
-    { name: 'academic_year', label: 'السنة الدراسية (2023/2024)', required: true },
+    { name: 'academic_year', label: 'الفصل الدراسي (2023/2024)', required: true },
     { name: 'department_code', label: 'رمز القسم', required: true },
     { name: 'specialization_name', label: 'اسم التخصص', required: true },
     { name: 'supervisor_email', label: 'البريد الإلكتروني للمشرف', required: true },

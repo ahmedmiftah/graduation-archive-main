@@ -9,7 +9,7 @@ use App\Models\User;
 
 class ReportService
 {
-    private const STATUS_PROPOSAL = 2; // proposal_submitted — awaiting dept_manager approval
+    private const STATUS_IN_PROGRESS = 5; // in_progress
 
     public function getDashboardStats(): array
     {
@@ -21,8 +21,8 @@ class ReportService
             'projects_this_year' => Project::where('is_deleted', false)
                 ->where('academic_year', 'like', "%{$currentYear}%")
                 ->count(),
-            'pending_approvals'  => Project::where('is_deleted', false)
-                ->where('current_status_id', self::STATUS_PROPOSAL)
+            'in_progress_count'  => Project::where('is_deleted', false)
+                ->where('current_status_id', self::STATUS_IN_PROGRESS)
                 ->count(),
             'recent_projects'    => Project::with([
                     'department:id,name',
@@ -32,7 +32,7 @@ class ReportService
                 ->where('is_deleted', false)
                 ->latest()
                 ->limit(5)
-                ->get(['id', 'project_title', 'academic_year', 'department_id', 'specialization_id', 'current_status_id', 'created_at']),
+                ->get(['id', 'project_title', 'academic_year', 'semester', 'department_id', 'specialization_id', 'current_status_id', 'created_at']),
             'by_status'          => Project::where('is_deleted', false)
                 ->join('project_status', 'projects.current_status_id', '=', 'project_status.id')
                 ->groupBy('project_status.id', 'project_status.status_name')
@@ -173,8 +173,10 @@ class ReportService
         })->values()->all();
     }
 
-    public function getYearlyComparisonReport(): array
+    public function getYearlyComparisonReport(?string $fromYear = null, ?string $toYear = null): array
     {
+        // Growth % is computed against the full, unfiltered history so that
+        // filtering the display range never distorts the year-over-year figures.
         $perYear = Project::where('is_deleted', false)
             ->groupBy('academic_year')
             ->selectRaw('academic_year, COUNT(*) as count')
@@ -192,10 +194,16 @@ class ReportService
                 'count'      => $row->count,
                 'growth_pct' => $growth,
             ];
+        })->filter(function ($row) use ($fromYear, $toYear) {
+            if ($fromYear && $row['year'] < $fromYear) return false;
+            if ($toYear && $row['year'] > $toYear) return false;
+            return true;
         });
 
         $deptByYear = Project::where('is_deleted', false)
             ->join('departments', 'projects.department_id', '=', 'departments.id')
+            ->when($fromYear, fn ($q) => $q->where('projects.academic_year', '>=', $fromYear))
+            ->when($toYear, fn ($q) => $q->where('projects.academic_year', '<=', $toYear))
             ->groupBy('projects.academic_year', 'departments.id', 'departments.name')
             ->selectRaw('projects.academic_year, departments.id as department_id, departments.name as department_name, COUNT(projects.id) as count')
             ->orderBy('projects.academic_year')
@@ -206,6 +214,7 @@ class ReportService
         return [
             'yearly'             => $yearly->values(),
             'department_by_year' => $deptByYear,
+            'available_years'    => $perYear->pluck('academic_year')->values(),
         ];
     }
 }

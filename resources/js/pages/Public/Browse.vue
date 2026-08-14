@@ -252,7 +252,7 @@ function resetFilters() {
                     </div>
                     <div class="mb-4 flex-1 space-y-1 text-xs text-text-muted">
                         <p>
-                            السنة الدراسية: <span class="font-medium text-text-dark">{{ project.academic_year }}</span>
+                            الفصل الدراسي: <span class="font-medium text-text-dark">{{ project.academic_year }}</span>
                         </p>
                         <p>
                             الفئة:

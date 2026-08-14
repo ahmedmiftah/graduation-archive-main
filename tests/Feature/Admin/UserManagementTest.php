@@ -125,11 +125,36 @@ test('super_admin can delete a non-admin user', function () {
 
 // ── 8. Access control ─────────────────────────────────────────────────────────
 
-test('dept_manager cannot access admin users', function () {
-    $manager = userWithRole('dept_manager');
+test('dept_manager can manage only users from their department', function () {
+    $deptA = Department::factory()->create();
+    $deptB = Department::factory()->create();
+
+    $manager = User::factory()->create(['department_id' => $deptA->id]);
+    $manager->assignRole('dept_manager');
+
+    $deptUser = User::factory()->create(['department_id' => $deptA->id]);
+    $deptUser->assignRole('dept_staff');
+
+    $otherDeptUser = User::factory()->create(['department_id' => $deptB->id]);
+    $otherDeptUser->assignRole('dept_staff');
 
     $this->actingAs($manager)
         ->get(route('admin.users.index'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('Admin/Users/Index')
+            ->where('users.meta.total', 2)
+        );
+
+    $this->actingAs($manager)
+        ->post(route('admin.users.store'), [
+            'name'          => 'Wrong Department User',
+            'email'         => 'wrongdept@example.com',
+            'password'      => 'password123',
+            'role'          => 'dept_staff',
+            'department_id' => $deptB->id,
+            'is_active'     => true,
+        ])
         ->assertForbidden();
 });
 
