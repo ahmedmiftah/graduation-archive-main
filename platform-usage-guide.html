@@ -1,0 +1,735 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>دليل استخدام المنصة</title>
+<style>
+  :root {
+    --bg: #EDF0F2;
+    --surface: #FFFFFF;
+    --surface-2: #F4F6F7;
+    --ink: #12212E;
+    --ink-muted: #4B6072;
+    --ink-faint: #7C8FA0;
+    --line: #D3DBE0;
+    --line-strong: #AFC0C9;
+    --accent: #8A2E4E;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #F4E4EA;
+    --teal: #1F7A6C;
+    --teal-soft: #E3F1EE;
+    --amber: #A6631E;
+    --amber-soft: #F4E9D8;
+    --blue: #2B5FD9;
+    --blue-soft: #E7EDFC;
+    --shadow: 0 1px 2px rgba(18,33,46,0.06), 0 8px 24px -12px rgba(18,33,46,0.18);
+    --font-display: 'Dubai', 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-body: 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-mono: 'Cascadia Code', 'Consolas', 'SF Mono', 'Courier New', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1720;
+      --surface: #17212C;
+      --surface-2: #1D2833;
+      --ink: #E7ECEF;
+      --ink-muted: #9FB0BD;
+      --ink-faint: #6C7E8C;
+      --line: #2B3946;
+      --line-strong: #3C4C5A;
+      --accent: #D97A97;
+      --accent-ink: #1A0A10;
+      --accent-soft: #2E1B22;
+      --teal: #4FC3B0;
+      --teal-soft: #163430;
+      --amber: #D9A24B;
+      --amber-soft: #332617;
+      --blue: #6C93F5;
+      --blue-soft: #1B2740;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1720;
+    --surface: #17212C;
+    --surface-2: #1D2833;
+    --ink: #E7ECEF;
+    --ink-muted: #9FB0BD;
+    --ink-faint: #6C7E8C;
+    --line: #2B3946;
+    --line-strong: #3C4C5A;
+    --accent: #D97A97;
+    --accent-ink: #1A0A10;
+    --accent-soft: #2E1B22;
+    --teal: #4FC3B0;
+    --teal-soft: #163430;
+    --amber: #D9A24B;
+    --amber-soft: #332617;
+    --blue: #6C93F5;
+    --blue-soft: #1B2740;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    line-height: 1.25;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  code, .mono {
+    font-family: var(--font-mono);
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+  }
+
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+  }
+
+  header.top {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .top-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 24px 32px;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    padding: 4px 12px;
+    border-radius: 3px;
+    margin-bottom: 18px;
+  }
+  h1.title {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  p.dek {
+    margin-top: 12px;
+    max-width: 66ch;
+    color: var(--ink-muted);
+    font-size: 17px;
+  }
+  .badges { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    font-size: 12.5px; padding: 5px 11px; border-radius: 3px; border: 1px solid var(--line-strong);
+    color: var(--ink-muted); background: var(--surface-2); display: inline-flex; align-items: center; gap: 6px;
+  }
+
+  /* ── Role switcher chips at top of content ───────────────── */
+  .role-jump { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+  .role-card {
+    flex: 1 1 220px; text-decoration: none; display: block;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px;
+    padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .role-card .rc-icon { font-size: 22px; }
+  .role-card .rc-title { font-family: var(--font-display); font-weight: 700; font-size: 16px; color: var(--ink); margin-top: 6px; }
+  .role-card .rc-desc { font-size: 12.5px; color: var(--ink-muted); margin-top: 4px; }
+  .role-card.student { border-top: 3px solid var(--blue); }
+  .role-card.supervisor { border-top: 3px solid var(--teal); }
+  .role-card.staff { border-top: 3px solid var(--accent); }
+
+  nav.rail {
+    position: sticky; top: 24px; padding: 24px 0; font-size: 14px;
+    max-height: calc(100vh - 48px); overflow-y: auto;
+  }
+  nav.rail .rail-label { font-size: 11.5px; letter-spacing: 0.08em; color: var(--ink-faint); margin-bottom: 12px; padding-right: 12px; }
+  nav.rail .rail-group { font-size: 11px; letter-spacing: .05em; color: var(--ink-faint); margin: 18px 0 6px; padding-right: 12px; text-transform: uppercase; }
+  nav.rail .rail-group:first-child { margin-top: 0; }
+  nav.rail ol { list-style: none; margin: 0; padding: 0; counter-reset: navsteps; border-right: 2px solid var(--line); }
+  nav.rail li { counter-increment: navsteps; }
+  nav.rail a {
+    display: flex; align-items: baseline; gap: 8px; padding: 6px 14px 6px 8px; margin-right: -2px;
+    border-right: 2px solid transparent; color: var(--ink-muted); text-decoration: none;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  nav.rail a::before {
+    content: counter(navsteps, decimal-leading-zero); font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint);
+  }
+  nav.rail a:hover, nav.rail a.active { color: var(--ink); border-right-color: var(--accent); }
+  nav.rail a.active::before { color: var(--accent); }
+
+  main { min-width: 0; padding: 48px 0 96px; }
+
+  .role-divider {
+    display: flex; align-items: center; gap: 16px; margin: 72px 0 40px;
+  }
+  .role-divider:first-child { margin-top: 0; }
+  .role-divider .rd-icon {
+    width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex: none;
+  }
+  .role-divider.student .rd-icon { background: var(--blue-soft); }
+  .role-divider.supervisor .rd-icon { background: var(--teal-soft); }
+  .role-divider.staff .rd-icon { background: var(--accent-soft); }
+  .role-divider .rd-title { font-size: 22px; font-weight: 700; }
+  .role-divider .rd-sub { font-size: 13px; color: var(--ink-muted); margin-top: 2px; }
+  .role-divider .rd-line { flex: 1; height: 1px; background: var(--line); }
+
+  section.block { padding-top: 52px; margin-top: 52px; border-top: 1px solid var(--line); scroll-margin-top: 20px; }
+  section.block.no-border { border-top: none; margin-top: 0; padding-top: 0; }
+
+  .block-head { margin-bottom: 22px; }
+  .block-num { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-bottom: 6px; display: block; }
+  h2.block-title { font-size: 22px; font-weight: 700; }
+  p.block-intro { margin-top: 10px; max-width: 68ch; color: var(--ink-muted); }
+
+  .prose { max-width: 68ch; }
+  .prose p { margin: 0 0 14px; color: var(--ink); }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--ink); }
+
+  /* ── Step list ────────────────────────────────────────────── */
+  .steps { list-style: none; margin: 0; padding: 0; counter-reset: steps; display: flex; flex-direction: column; gap: 0; }
+  .steps li {
+    counter-increment: steps; position: relative; padding: 0 0 22px 0; padding-right: 46px; min-height: 32px;
+  }
+  .steps li:last-child { padding-bottom: 0; }
+  .steps li::before {
+    content: counter(steps); position: absolute; right: 0; top: 0; width: 30px; height: 30px;
+    border-radius: 50%; background: var(--surface); border: 2px solid var(--accent); color: var(--accent);
+    font-family: var(--font-mono); font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: center; z-index: 1;
+  }
+  .steps li::after {
+    content: ''; position: absolute; right: 14px; top: 30px; bottom: 0; width: 2px; background: var(--line);
+  }
+  .steps li:last-child::after { display: none; }
+  .step-title { font-weight: 600; font-size: 15px; color: var(--ink); }
+  .step-detail { margin-top: 4px; font-size: 14px; color: var(--ink-muted); }
+  .step-route {
+    display: inline-block; margin-top: 6px; font-family: var(--font-mono); font-size: 12px;
+    background: var(--surface-2); color: var(--teal); padding: 2px 8px; border-radius: 3px; direction: ltr;
+  }
+
+  /* ── Panels / grids ───────────────────────────────────────── */
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 18px 20px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  @media (max-width: 720px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .field-label { font-size: 11.5px; letter-spacing: 0.04em; color: var(--ink-faint); margin-bottom: 4px; }
+  .field-value { font-size: 14.5px; color: var(--ink); }
+
+  /* ── Callouts ─────────────────────────────────────────────── */
+  .callout { border-radius: 6px; padding: 14px 16px; font-size: 14px; display: flex; gap: 10px; align-items: flex-start; margin: 16px 0; }
+  .callout .ci { flex: none; font-size: 16px; }
+  .callout.tip { background: var(--teal-soft); color: var(--teal); }
+  .callout.note { background: var(--blue-soft); color: var(--blue); }
+  .callout.warn { background: var(--amber-soft); color: var(--amber); }
+
+  /* ── Status legend chips ──────────────────────────────────── */
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+  .chip { font-size: 12.5px; padding: 4px 10px; border-radius: 20px; border: 1px solid var(--line); color: var(--ink-muted); background: var(--surface); }
+  .chip b { color: var(--ink); }
+  .chip.arrow::after { content: '←'; margin-right: 6px; color: var(--ink-faint); }
+  .chip.arrow:last-child::after { content: ''; }
+
+  /* ── Tables ───────────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; background: var(--surface); }
+  thead th {
+    text-align: right; font-size: 11.5px; letter-spacing: 0.04em; color: var(--ink-faint);
+    background: var(--surface-2); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  tbody td { padding: 10px 12px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td .mono, th .mono { font-size: 12.5px; color: var(--teal); }
+
+  footer.page-foot {
+    max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px;
+    color: var(--ink-faint); font-size: 13px; border-top: 1px solid var(--line); margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="eyebrow">دليل استخدام</span>
+    <h1 class="title">دليل استخدام المنصة</h1>
+    <p class="dek">خطوة بخطوة: كيف يستخدم كل دور — الطالب، المشرف، وموظف/مدير القسم — منصة دورة حياة مشروع التخرج الكاملة، من تسجيل الدخول إلى نشر فكرة، تقديم مقترح، طلب انضمام، إدارة حجز، والإشعارات.</p>
+    <div class="badges">
+      <span class="badge">3 أدوار</span>
+      <span class="badge">8 مراحل مُنفَّذة</span>
+      <span class="badge">تحديث 2026-08-17</span>
+    </div>
+    <div class="role-jump">
+      <a href="#student" class="role-card student">
+        <div class="rc-icon">🎓</div>
+        <div class="rc-title">دليل الطالب</div>
+        <div class="rc-desc">تقديم مقترح، تصفّح أفكار، طلب انضمام، إدارة الحجز</div>
+      </a>
+      <a href="#supervisor" class="role-card supervisor">
+        <div class="rc-icon">🧑‍🏫</div>
+        <div class="rc-title">دليل المشرف</div>
+        <div class="rc-desc">مراجعة المقترحات، نشر أفكار، قبول الطلبات، اعتماد الحجز</div>
+      </a>
+      <a href="#staff" class="role-card staff">
+        <div class="rc-icon">🏢</div>
+        <div class="rc-title">دليل الموظف/القسم</div>
+        <div class="rc-desc">استيراد الطلاب، إنشاء حسابات، مراجعة المقترحات والمشاريع</div>
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="محتويات الصفحة">
+    <div class="rail-label">المحتويات</div>
+
+    <div class="rail-group">🎓 الطالب</div>
+    <ol id="toc-student">
+      <li><a href="#student-login">تسجيل الدخول</a></li>
+      <li><a href="#student-proposal">تقديم مقترح</a></li>
+      <li><a href="#student-ideas">تصفّح الأفكار والانضمام</a></li>
+      <li><a href="#student-reservation">إدارة الحجز</a></li>
+      <li><a href="#student-notif">الإشعارات</a></li>
+    </ol>
+
+    <div class="rail-group">🧑‍🏫 المشرف</div>
+    <ol id="toc-supervisor">
+      <li><a href="#supervisor-login">تسجيل الدخول</a></li>
+      <li><a href="#supervisor-proposals">مراجعة المقترحات</a></li>
+      <li><a href="#supervisor-ideas">نشر ومتابعة الأفكار</a></li>
+      <li><a href="#supervisor-requests">قبول ورفض الطلبات</a></li>
+      <li><a href="#supervisor-reservation">إدارة الحجز</a></li>
+    </ol>
+
+    <div class="rail-group">🏢 الموظف / القسم</div>
+    <ol id="toc-staff">
+      <li><a href="#staff-import">استيراد الطلاب</a></li>
+      <li><a href="#staff-accounts">حسابات المشرفين</a></li>
+      <li><a href="#staff-proposals">إدارة المقترحات</a></li>
+      <li><a href="#staff-projects">إدارة المشاريع</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ═══════════════════ STUDENT ═══════════════════ -->
+    <div class="role-divider student" id="student">
+      <div class="rd-icon">🎓</div>
+      <div>
+        <div class="rd-title">دليل الطالب</div>
+        <div class="rd-sub">رقم القيد هو اسم الدخول — لا بريد إلكتروني حقيقي مطلوب</div>
+      </div>
+      <div class="rd-line"></div>
+    </div>
+
+    <section class="block no-border" id="student-login">
+      <div class="block-head">
+        <span class="block-num">01</span>
+        <h2 class="block-title">تسجيل الدخول</h2>
+        <p class="block-intro">لا تسجيل ذاتي — الحساب يُنشئه القسم تلقائيًا عند استيراد كشف الطلاب.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-title">افتح صفحة الدخول</div>
+          <div class="step-detail">مباشرة عبر <span class="mono">/login</span>، أو عبر بوابة الطالب العامة القابلة للمشاركة خارجيًا (مثل فيسبوك)، ثم زر "دخول طالب".</div>
+          <span class="step-route">/student → زر "دخول طالب" → /login</span>
+        </li>
+        <li>
+          <div class="step-title">اكتب رقم القيد ككلمة الدخول</div>
+          <div class="step-detail">لا حاجة لكتابة بريد إلكتروني — النظام يتعرّف تلقائيًا على أن المدخل رقم قيد (لا يحتوي على @).</div>
+        </li>
+        <li>
+          <div class="step-title">كلمة المرور المؤقتة = تاريخ الميلاد</div>
+          <div class="step-detail">بصيغة DDMMYYYY، كما زوَّد بها القسم عند الاستيراد.</div>
+        </li>
+        <li>
+          <div class="step-title">تغيير كلمة المرور إجباري عند أول دخول</div>
+          <div class="step-detail">لن يستطيع الطالب فتح أي صفحة أخرى قبل ذلك.</div>
+        </li>
+      </ol>
+      <div class="callout note"><span class="ci">ℹ️</span> إن لم يُنشئ القسم حساب الطالب بعد، لن ينجح تسجيل الدخول برقم القيد — التواصل مع القسم مطلوب أولًا.</div>
+    </section>
+
+    <section class="block" id="student-proposal">
+      <div class="block-head">
+        <span class="block-num">02</span>
+        <h2 class="block-title">تقديم مقترح مشروع التخرج</h2>
+        <p class="block-intro">من لوحة التحكم مباشرة — مشروع واحد نشط فقط في كل مرة.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-title">من لوحة التحكم، اضغط "تقديم مقترح جديد"</div>
+          <div class="step-detail">يظهر فقط إن لم يكن لدى الطالب مقترح نشط بالفعل.</div>
+          <span class="step-route">/student/dashboard → /student/proposal/create</span>
+        </li>
+        <li>
+          <div class="step-title">املأ العنوان، الوصف، التخصص، والمشرف المطلوب</div>
+          <div class="step-detail">التخصص والفصل والسنة الدراسية معبَّأة تلقائيًا من بيانات الطالب.</div>
+        </li>
+        <li>
+          <div class="step-title">أضف زملاء الفريق (اختياري)</div>
+          <div class="step-detail">بالاسم ورقم القيد فقط — إن كان رقم القيد مطابقًا لطالب حقيقي، يُربط تلقائيًا ويصبح بإمكانه رؤية نفس المقترح من حسابه.</div>
+        </li>
+        <li>
+          <div class="step-title">احفظ — وانتبه لتحذير التشابه إن ظهر</div>
+          <div class="step-detail">إن كان العنوان/الوصف مشابهًا لمشروع أو مقترح موجود (30%+ تشابه)، يظهر تحذير أصفر بنسبة التشابه في صفحة عرض المقترح — تحذير فقط، لا يمنع الحفظ.</div>
+        </li>
+        <li>
+          <div class="step-title">تابع الحالة عبر Timeline دورة الحياة</div>
+          <div class="step-detail">شريط بصري يوضح أي مرحلة من أصل 17 مرحلة وصل إليها المشروع الآن.</div>
+          <span class="step-route">/student/proposal/{id}</span>
+        </li>
+      </ol>
+      <div class="chip-row">
+        <span class="chip arrow"><b>مبدئي</b></span>
+        <span class="chip arrow"><b>مقبول بشرط التعديل</b></span>
+        <span class="chip arrow"><b>معتمد</b></span>
+      </div>
+      <div class="callout tip"><span class="ci">✏️</span> التعديل ممكن فقط أثناء "مبدئي" أو "مقبول بشرط التعديل" — بعد الاعتماد يُقفَل المقترح للتعديل.</div>
+    </section>
+
+    <section class="block" id="student-ideas">
+      <div class="block-head">
+        <span class="block-num">03</span>
+        <h2 class="block-title">تصفّح أفكار المشاريع وطلب الانضمام</h2>
+        <p class="block-intro">بديل عن اقتراح فكرة من الصفر — الانضمام لفكرة نشرها مشرف بالفعل.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-title">تصفّح الأفكار المتاحة</div>
+          <div class="step-detail">بطاقات لكل فكرة (العنوان، التخصص، المشرف، عدد الطلاب المطلوب) — فلترة حسب التخصص متاحة.</div>
+          <span class="step-route">/student/ideas</span>
+        </li>
+        <li>
+          <div class="step-title">افتح تفاصيل فكرة لقراءة كامل الوصف والمهارات المطلوبة</div>
+          <span class="step-route">/student/ideas/{id}</span>
+        </li>
+        <li>
+          <div class="step-title">أرسل طلب انضمام مع رسالة مختصرة (اختيارية)</div>
+          <div class="step-detail">زر الطلب يظهر فقط إن لم يكن لدى الطالب مشروع نشط أو حجز نشط بالفعل.</div>
+        </li>
+        <li>
+          <div class="step-title">تابع حالة كل طلباتك في مكان واحد</div>
+          <div class="step-detail">قيد المراجعة، مقبول، أو مرفوض.</div>
+          <span class="step-route">/student/idea-requests</span>
+        </li>
+      </ol>
+      <div class="callout warn"><span class="ci">⚠️</span> لا يمكن إرسال أكثر من طلب واحد قيد المراجعة/مقبول لنفس الفكرة، ولا طلب لفكرة أخرى ما دام لديك حجز نشط بالفعل.</div>
+    </section>
+
+    <section class="block" id="student-reservation">
+      <div class="block-head">
+        <span class="block-num">04</span>
+        <h2 class="block-title">إدارة الحجز بعد القبول</h2>
+        <p class="block-intro">عند قبول طلبك، تحصل تلقائيًا على "حجز" — تديره من صفحة واحدة.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-title">افتح "حجزي" لرؤية حالته الحالية</div>
+          <span class="step-route">/student/reservation</span>
+        </li>
+        <li>
+          <div class="step-title">اضغط "بدء العمل على المقترح" عندما تكون جاهزًا فعليًا</div>
+          <div class="step-detail">ينقل الحجز من "محجوز" إلى "قيد المراجعة" — إعلان جدية للمشرف.</div>
+        </li>
+        <li>
+          <div class="step-title">أو "التخلي عن الحجز" إن غيّرت رأيك</div>
+          <div class="step-detail">متاح فقط قبل اعتماد المشرف — يحرّرك فورًا لطلب فكرة أخرى.</div>
+        </li>
+      </ol>
+      <div class="chip-row">
+        <span class="chip arrow"><b>محجوز</b></span>
+        <span class="chip arrow"><b>قيد المراجعة</b></span>
+        <span class="chip arrow"><b>معتمد</b></span>
+      </div>
+    </section>
+
+    <section class="block" id="student-notif">
+      <div class="block-head">
+        <span class="block-num">05</span>
+        <h2 class="block-title">الإشعارات</h2>
+        <p class="block-intro">الجرس أعلى كل صفحة — نقطة زرقاء تعني إشعارًا غير مقروء.</p>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="field-label">تُشعِرك المنصة عند</div>
+          <div class="field-value">تغيّر حالة مقترحك، قبول/رفض طلب انضمام، إنشاء حسابك لأول مرة</div>
+        </div>
+        <div class="panel">
+          <div class="field-label">النقر على أي إشعار</div>
+          <div class="field-value">يعلّمه كمقروء وينقلك مباشرة لصفحته المرتبطة</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════ SUPERVISOR ═══════════════════ -->
+    <div class="role-divider supervisor" id="supervisor">
+      <div class="rd-icon">🧑‍🏫</div>
+      <div>
+        <div class="rd-title">دليل المشرف</div>
+        <div class="rd-sub">حساب اختياري ينشئه القسم — البريد الحقيقي هو اسم الدخول</div>
+      </div>
+      <div class="rd-line"></div>
+    </div>
+
+    <section class="block no-border" id="supervisor-login">
+      <div class="block-head">
+        <span class="block-num">01</span>
+        <h2 class="block-title">تسجيل الدخول</h2>
+        <p class="block-intro">لا رابط بوابة منفصل — نفس صفحة الدخول الموحّدة لكل الأدوار.</p>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="field-label">اسم الدخول</div>
+          <div class="field-value">البريد الإلكتروني الحقيقي المسجَّل في سجل عضو هيئة التدريس</div>
+        </div>
+        <div class="panel">
+          <div class="field-label">كلمة المرور المؤقتة</div>
+          <div class="field-value">رقم الجوال المسجَّل — يجب تغييرها عند أول دخول</div>
+        </div>
+      </div>
+      <div class="callout note"><span class="ci">ℹ️</span> الحساب لا يوجد تلقائيًا — يجب أن ينشئه القسم أولًا (زر "إنشاء حساب دخول" في شاشة أعضاء هيئة التدريس). بلا حساب، يبقى المشرف بيانات وصفية فقط.</div>
+    </section>
+
+    <section class="block" id="supervisor-proposals">
+      <div class="block-head">
+        <span class="block-num">02</span>
+        <h2 class="block-title">مراجعة المقترحات المُسنَدة</h2>
+        <p class="block-intro">كل مقترح أُسنِد للمشرف تاريخيًا، بأي حالة كانت.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-title">افتح "مشاريعي" لرؤية القائمة كاملة</div>
+          <div class="step-detail">مع المرحلة الحالية من دورة الحياة لكل مقترح، وعلامة "يحتاج إجراء" للمقترحات المعلَّقة بلا ملاحظة منك بعد.</div>
+          <span class="step-route">/supervisor/proposals</span>
+        </li>
+        <li>
+          <div class="step-title">افتح مقترحًا لكتابة ملاحظتك الخاصة</div>
+          <div class="step-detail">قدرة محدودة: كتابة ملاحظة فقط — الاعتماد/الرفض/طلب التعديل يبقى حصرًا للقسم.</div>
+          <span class="step-route">/supervisor/proposals/{id}</span>
+        </li>
+      </ol>
+    </section>
+
+    <section class="block" id="supervisor-ideas">
+      <div class="block-head">
+        <span class="block-num">03</span>
+        <h2 class="block-title">نشر ومتابعة أفكار المشاريع</h2>
+        <p class="block-intro">أول قدرة نشر حقيقية للمشرف — بدل الاقتصار على المراجعة فقط.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-title">افتح "أفكار المشاريع" واضغط "نشر فكرة جديدة"</div>
+          <span class="step-route">/supervisor/ideas</span>
+        </li>
+        <li>
+          <div class="step-title">املأ العنوان، الوصف، التخصص، عدد الطلاب المطلوب، والمهارات</div>
+          <div class="step-detail">تبدأ الفكرة بحالة "متاحة" تلقائيًا — تظهر فورًا للطلاب في تصفّحهم.</div>
+        </li>
+        <li>
+          <div class="step-title">عدِّل أو احذف أي فكرة من نفس القائمة في أي وقت</div>
+        </li>
+      </ol>
+      <div class="chip-row">
+        <span class="chip"><b>متاحة</b> — تظهر للطلاب</span>
+        <span class="chip"><b>محجوزة</b> — طالب واحد على الأقل قَبِل</span>
+        <span class="chip"><b>مغلقة</b> — اكتمل العدد المطلوب</span>
+      </div>
+    </section>
+
+    <section class="block" id="supervisor-requests">
+      <div class="block-head">
+        <span class="block-num">04</span>
+        <h2 class="block-title">قبول ورفض طلبات الانضمام</h2>
+        <p class="block-intro">كل طلب وصل لفكرة نشرتها يظهر في مكان واحد لتلك الفكرة.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-title">من قائمة أفكارك، اضغط "مراجعة الطلبات"</div>
+          <div class="step-detail">شارة زرقاء بجانب الزر تُظهر عدد الطلبات المعلَّقة.</div>
+          <span class="step-route">/supervisor/ideas/{id}/requests</span>
+        </li>
+        <li>
+          <div class="step-title">اقرأ رسالة الطالب واضغط "قبول" أو "رفض"</div>
+          <div class="step-detail">القبول ينشئ حجزًا تلقائيًا للطالب ويُشعِره فورًا؛ الرفض يُشعِره أيضًا دون أي أثر آخر.</div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="block" id="supervisor-reservation">
+      <div class="block-head">
+        <span class="block-num">05</span>
+        <h2 class="block-title">إدارة دورة حياة الحجز</h2>
+        <p class="block-intro">من نفس صفحة مراجعة الطلبات — أزرار الحجز تظهر لكل طلب مقبول.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>الزر</th><th>يظهر عندما الحجز</th><th>الأثر</th></tr></thead>
+          <tbody>
+            <tr><td><b>اعتماد الحجز</b></td><td class="mono">under_review</td><td>يثبِّت التزام الطالب رسميًا</td></tr>
+            <tr><td><b>تحرير الحجز</b></td><td class="mono">abandoned</td><td>يُعيد فتح سعة الفكرة لطالب آخر</td></tr>
+            <tr><td><b>إنهاء الحجز</b></td><td class="mono">approved</td><td>يُغلق دورة حياة الحجز نهائيًا</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout tip"><span class="ci">💡</span> لا حاجة للبحث عن صفحة منفصلة — كل هذه الأزرار مدمجة في نفس صفحة "مراجعة الطلبات" الخاصة بكل فكرة.</div>
+    </section>
+
+    <!-- ═══════════════════ STAFF ═══════════════════ -->
+    <div class="role-divider staff" id="staff">
+      <div class="rd-icon">🏢</div>
+      <div>
+        <div class="rd-title">دليل الموظف / مدير القسم</div>
+        <div class="rd-sub">نفس الصلاحيات الإدارية الأصلية، ممتدة الآن لتشمل الحسابات والمقترحات الجديدة</div>
+      </div>
+      <div class="rd-line"></div>
+    </div>
+
+    <section class="block no-border" id="staff-import">
+      <div class="block-head">
+        <span class="block-num">01</span>
+        <h2 class="block-title">استيراد كشف الطلاب وإنشاء حساباتهم</h2>
+        <p class="block-intro">دفعة واحدة عبر ملف Excel — بنمط معاينة ثم تأكيد.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-title">نزِّل قالب Excel الجاهز</div>
+          <span class="step-route">/students/import</span>
+        </li>
+        <li>
+          <div class="step-title">املأ الأعمدة المطلوبة وارفع الملف للمعاينة</div>
+          <div class="step-detail">يعرض النظام كل صف صالح/غير صالح قبل أي حفظ فعلي — لا بيانات تُكتب أثناء المعاينة.</div>
+        </li>
+        <li>
+          <div class="step-title">أكِّد الاستيراد</div>
+          <div class="step-detail">يُنشئ سجل طالب + حساب دخول (رقم القيد / تاريخ الميلاد) لكل صف صالح تلقائيًا، مع إشعار للطالب.</div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="block" id="staff-accounts">
+      <div class="block-head">
+        <span class="block-num">02</span>
+        <h2 class="block-title">إنشاء حسابات دخول لأعضاء هيئة التدريس</h2>
+        <p class="block-intro">اختياري لكل عضو، وليس استيرادًا جماعيًا.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-title">من شاشة "أعضاء هيئة التدريس"، ابحث عن العضو المطلوب</div>
+          <span class="step-route">/faculty-members</span>
+        </li>
+        <li>
+          <div class="step-title">اضغط "إنشاء حساب دخول" (يظهر فقط لعضو بلا حساب بعد)</div>
+          <div class="step-detail">اسم الدخول = بريده الحقيقي الموجود أصلًا، كلمة المرور المؤقتة = رقم جواله.</div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="block" id="staff-proposals">
+      <div class="block-head">
+        <span class="block-num">03</span>
+        <h2 class="block-title">إدارة المقترحات</h2>
+        <p class="block-intro">تقديم مقترح نيابة عن طالب، أو اتخاذ القرار النهائي على مقترح قائم.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-title">راجع كل المقترحات النشطة في القسم</div>
+          <span class="step-route">/proposals</span>
+        </li>
+        <li>
+          <div class="step-title">افتح مقترحًا لاتخاذ القرار: اعتماد / رفض (مع سبب) / طلب تعديل</div>
+          <div class="step-detail">مدير القسم فقط يملك هذه الصلاحية — الموظف العادي يمكنه إنشاء وتعديل المقترحات المعلَّقة فقط.</div>
+        </li>
+        <li>
+          <div class="step-title">انتبه لتحذير التشابه إن ظهر عند الحفظ</div>
+          <div class="step-detail">نسبة % مقابل مشاريع ومقترحات أخرى موجودة — تحذير فقط، القرار النهائي يبقى للقسم دائمًا.</div>
+        </li>
+      </ol>
+    </section>
+
+    <section class="block" id="staff-projects">
+      <div class="block-head">
+        <span class="block-num">04</span>
+        <h2 class="block-title">إدارة المشاريع والأرشفة</h2>
+        <p class="block-intro">إضافة مشروع مباشرة، أو أرشفة مشروع منجز بدرجته ولجنته.</p>
+      </div>
+      <ol class="steps">
+        <li>
+          <div class="step-title">أضف مشروعًا جديدًا مباشرة (بلا مرور بمقترح)</div>
+          <span class="step-route">/projects → + إضافة مشروع</span>
+        </li>
+        <li>
+          <div class="step-title">أرشِف مشروعًا منجزًا مع الممتحنين والدرجة النهائية</div>
+          <span class="step-route">/projects/archived</span>
+        </li>
+      </ol>
+    </section>
+
+  </main>
+</div>
+
+<footer class="page-foot">
+  توثيق تقني داخلي — نظام أرشفة مشاريع التخرج، كلية التقنية الإلكترونية.
+</footer>
+
+<script>
+  (function () {
+    var allLinks = Array.prototype.slice.call(document.querySelectorAll('nav.rail a'));
+    var sections = allLinks.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+
+    function onScroll() {
+      var pos = window.scrollY + 120;
+      var activeIdx = -1;
+      sections.forEach(function (s, i) {
+        if (s && s.offsetTop <= pos) activeIdx = i;
+      });
+      allLinks.forEach(function (a, i) {
+        a.classList.toggle('active', i === activeIdx);
+      });
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

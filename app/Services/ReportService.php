@@ -3,9 +3,9 @@
 namespace App\Services;
 
 use App\Models\Department;
+use App\Models\FacultyMember;
 use App\Models\Project;
 use App\Models\Specialization;
-use App\Models\User;
 
 class ReportService
 {
@@ -62,16 +62,15 @@ class ReportService
             ->get()
             ->keyBy('department_id');
 
-        $supervisors = User::role('supervisor')
-            ->withCount([
+        $supervisors = FacultyMember::withCount([
                 'supervisedProjects as project_count' => fn ($q) => $q
                     ->where('is_deleted', false)
                     ->when($departmentId, fn ($q2) => $q2->where('department_id', $departmentId)),
             ])
-            ->with('department:id,name')
-            ->when($departmentId, fn ($q) => $q->where('department_id', $departmentId))
+            ->with('departments:id,name')
+            ->when($departmentId, fn ($q) => $q->whereHas('departments', fn ($q2) => $q2->where('departments.id', $departmentId)))
             ->orderByDesc('project_count')
-            ->get(['id', 'name', 'department_id']);
+            ->get();
 
         return [
             'departments' => $departments->map(fn ($dept) => [
@@ -89,8 +88,8 @@ class ReportService
             ])->values(),
             'supervisors' => $supervisors->map(fn ($sup) => [
                 'id'            => $sup->id,
-                'name'          => $sup->name,
-                'department'    => $sup->department?->name,
+                'name'          => $sup->full_name,
+                'department'    => $sup->departments->pluck('name')->join('، '),
                 'project_count' => $sup->project_count,
             ])->values(),
         ];
@@ -132,13 +131,12 @@ class ReportService
 
     public function getSupervisorReport(): array
     {
-        $supervisors = User::role('supervisor')
-            ->with('department:id,name')
+        $supervisors = FacultyMember::with('departments:id,name')
             ->withCount([
                 'supervisedProjects as project_count' => fn ($q) => $q->where('is_deleted', false),
             ])
             ->orderByDesc('project_count')
-            ->get(['id', 'name', 'department_id']);
+            ->get();
 
         $avgScores = Project::where('is_deleted', false)
             ->whereNotNull('final_score')
@@ -160,8 +158,8 @@ class ReportService
 
             return [
                 'id'            => $sup->id,
-                'name'          => $sup->name,
-                'department'    => $sup->department?->name,
+                'name'          => $sup->full_name,
+                'department'    => $sup->departments->pluck('name')->join('، '),
                 'project_count' => $sup->project_count,
                 'avg_score'     => $score?->avg_score,
                 'scored_count'  => (int) ($score?->scored_count ?? 0),

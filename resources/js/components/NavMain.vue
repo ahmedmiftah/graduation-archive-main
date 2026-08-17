@@ -2,7 +2,7 @@
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type SharedData } from '@/types';
 import { Link, usePage } from '@inertiajs/vue3';
-import type { Component } from 'vue';
+import { computed, type Component } from 'vue';
 
 interface NavItem {
     title: string;
@@ -15,6 +15,7 @@ defineProps<{
 }>();
 
 const page = usePage<SharedData>();
+const unreadCount = computed(() => page.props.notifications?.unreadCount ?? 0);
 
 // A project details page reached from the archive list (?from=archived) should
 // highlight "أرشيف المشاريع" instead of the generic "المشاريع" item, since both
@@ -39,7 +40,13 @@ function isActive(href: string): boolean {
                 <SidebarMenuButton as-child :is-active="isActive(item.href)">
                     <Link :href="item.href">
                         <component :is="item.icon" />
-                        <span>{{ item.title }}</span>
+                        <span class="truncate">{{ item.title }}</span>
+                        <span
+                            v-if="item.href === '/notifications' && unreadCount > 0"
+                            class="ms-auto inline-flex h-5 min-w-[1.25rem] shrink-0 items-center justify-center rounded-full bg-red-500 px-1.5 text-[0.65rem] font-semibold text-white"
+                        >
+                            {{ unreadCount }}
+                        </span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>

@@ -23,7 +23,7 @@ interface Specialization {
 }
 interface Supervisor {
     id: number;
-    name: string;
+    full_name: string;
 }
 interface ProjectStatus {
     id: number;
@@ -206,7 +206,7 @@ const activeChips = computed<Chip[]>(() => {
     if (filters.semester) chips.push({ key: 'semester', label: filters.semester });
     if (filters.supervisor_id) {
         const s = props.filterOptions.supervisors.find((x) => x.id == filters.supervisor_id);
-        if (s) chips.push({ key: 'supervisor_id', label: s.name });
+        if (s) chips.push({ key: 'supervisor_id', label: s.full_name });
     }
     if (filters.degree_level) {
         const degreeLabels: Record<string, string> = { diploma: 'دبلوم', bachelor: 'بكالوريوس', master: 'ماجستير' };
@@ -375,7 +375,7 @@ function deleteProject() {
                                 <span v-else class="text-sm text-gray-400">—</span>
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                {{ project.supervisor?.name ?? '—' }}
+                                {{ project.supervisor?.full_name ?? '—' }}
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                 {{ project.semester ? `${project.semester} ${project.academic_year}` : project.academic_year }}

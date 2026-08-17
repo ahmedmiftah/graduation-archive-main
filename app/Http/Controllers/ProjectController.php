@@ -8,16 +8,17 @@ use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateArchivedProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Models\Department;
-use App\Models\Examiner;
+use App\Models\FacultyMember;
 use App\Models\Project;
 use App\Models\Specialization;
-use App\Models\User;
+use App\Notifications\ProjectReadyForDefense;
 use App\Services\SearchService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -26,9 +27,10 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ProjectController extends Controller
 {
-    private const STATUS_ARCHIVED    = 1; // archived — published in archive
-    private const STATUS_PENDING     = 2; // proposal_submitted — awaiting dept_manager approval
-    private const STATUS_IN_PROGRESS = 5; // in_progress — default status for newly created projects
+    private const STATUS_ARCHIVED           = 1; // archived — published in archive
+    private const STATUS_PENDING            = 2; // proposal_submitted — awaiting dept_manager approval
+    private const STATUS_IN_PROGRESS        = 5; // in_progress — default status for newly created projects
+    private const STATUS_READY_FOR_DEFENSE  = 6; // ready_for_defense
 
     public function __construct(private readonly SearchService $search) {}
 
@@ -95,7 +97,7 @@ class ProjectController extends Controller
         $rows = $this->search->searchProjectsForExport($filters)->map(fn (Project $p) => [
             $p->project_title,
             $p->specialization?->name ?? '—',
-            $p->supervisor?->name ?? '—',
+            $p->supervisor?->full_name ?? '—',
             $p->semester ? "{$p->semester} {$p->academic_year}" : $p->academic_year,
             $p->final_score ?? '—',
             $this->gradeLabel($p->final_score),
@@ -160,12 +162,12 @@ class ProjectController extends Controller
             }
 
             foreach ($data['examiners'] ?? [] as $examiner) {
-                $project->examiners()->attach($examiner['examiner_id'], ['assigned_by' => Auth::id()]);
+                $project->facultyMembers()->attach($examiner['faculty_member_id'], ['assigned_by' => Auth::id()]);
 
                 if (! empty($examiner['notes'])) {
                     $project->evaluations()->create([
-                        'examiner_id' => $examiner['examiner_id'],
-                        'notes'       => $examiner['notes'],
+                        'faculty_member_id' => $examiner['faculty_member_id'],
+                        'notes'             => $examiner['notes'],
                     ]);
                 }
             }
@@ -225,14 +227,14 @@ class ProjectController extends Controller
             }
 
             $project->evaluations()->delete();
-            $project->examiners()->detach();
+            $project->facultyMembers()->detach();
             foreach ($data['examiners'] ?? [] as $examiner) {
-                $project->examiners()->attach($examiner['examiner_id'], ['assigned_by' => Auth::id()]);
+                $project->facultyMembers()->attach($examiner['faculty_member_id'], ['assigned_by' => Auth::id()]);
 
                 if (! empty($examiner['notes'])) {
                     $project->evaluations()->create([
-                        'examiner_id' => $examiner['examiner_id'],
-                        'notes'       => $examiner['notes'],
+                        'faculty_member_id' => $examiner['faculty_member_id'],
+                        'notes'             => $examiner['notes'],
                     ]);
                 }
             }
@@ -261,15 +263,12 @@ class ProjectController extends Controller
             $specializationsQuery->where('department_id', $departmentId);
         }
 
-        $supervisorsQuery = User::role('supervisor')->orderBy('name');
-        if ($departmentId) {
-            $supervisorsQuery->where('department_id', $departmentId);
-        }
+        $supervisors = FacultyMember::orderBy('full_name')->get(['id', 'full_name']);
 
         return Inertia::render('Projects/Create', [
             'departments'     => $departmentsQuery->get(['id', 'name']),
             'specializations' => $specializationsQuery->get(['id', 'name', 'department_id']),
-            'supervisors'     => $supervisorsQuery->get(['id', 'name', 'department_id']),
+            'supervisors'     => $supervisors,
         ]);
     }
 
@@ -277,7 +276,7 @@ class ProjectController extends Controller
     {
         $data = $request->validated();
 
-        $similar = $this->search->detectSimilarity($data['project_title']);
+        $similar = $this->search->detectSimilarity($data['project_title'], $data['description'] ?? '');
 
         // New projects always start "in progress" — status can only move to
         // "archived" later via the dedicated archive flow (with examiners,
@@ -308,15 +307,23 @@ class ProjectController extends Controller
         $redirect = redirect()->route('projects.show', $project)->with('success', 'تم إنشاء المشروع بنجاح');
 
         if ($similar->isNotEmpty()) {
-            $redirect->with('similarity_warning', $similar->map(fn ($p) => [
-                'id'            => $p->id,
-                'project_title' => $p->project_title,
-                'academic_year' => $p->academic_year,
-                'department'    => $p->department?->name,
-            ])->all());
+            $redirect->with('similarity_warning', $this->withUrls($similar));
         }
 
         return $redirect;
+    }
+
+    /**
+     * Attach a viewer-safe 'url' to each similarity candidate. Both target
+     * routes are reachable by every role that can create/edit a project
+     * (dept_staff/dept_manager/super_admin), so linking is always safe here.
+     */
+    private function withUrls(\Illuminate\Support\Collection $similar): array
+    {
+        return $similar->map(fn (array $item) => [
+            ...$item,
+            'url' => route($item['type'] === 'project' ? 'projects.show' : 'proposals.show', $item['id']),
+        ])->all();
     }
 
     public function show(int $id): Response
@@ -327,7 +334,7 @@ class ProjectController extends Controller
             'supervisor',
             'students',
             'documents',
-            'examiners.department:id,name',
+            'facultyMembers.departments:id,name',
             'evaluations',
             'currentStatus',
         ])->where('is_deleted', false)->findOrFail($id);
@@ -342,17 +349,18 @@ class ProjectController extends Controller
 
         $project->increment('visit_count');
 
-        $assignedIds        = $project->examiners->pluck('id');
-        
-        $availableExaminersQuery = Examiner::whereNotIn('id', $assignedIds)
-            ->with('department:id,name')
+        $assignedIds        = $project->facultyMembers->pluck('id');
+
+        $availableExaminersQuery = FacultyMember::whereNotIn('id', $assignedIds)
+            ->with('departments:id,name')
             ->orderBy('full_name');
 
         if ($user && !$user->hasRole('super_admin') && $user->department_id) {
-            $availableExaminersQuery->where('department_id', $user->department_id);
+            $deptId = $user->department_id;
+            $availableExaminersQuery->whereHas('departments', fn ($q) => $q->where('departments.id', $deptId));
         }
 
-        $availableExaminers = $availableExaminersQuery->get(['id', 'full_name', 'title', 'department_id']);
+        $availableExaminers = $availableExaminersQuery->get();
 
         return Inertia::render('Projects/Show', [
             'project'            => $project,
@@ -380,22 +388,19 @@ class ProjectController extends Controller
             $specializationsQuery->where('department_id', $departmentId);
         }
 
-        $supervisorsQuery = User::role('supervisor')->orderBy('name');
-        if ($departmentId) {
-            $supervisorsQuery->where('department_id', $departmentId);
-        }
+        $supervisors = FacultyMember::orderBy('full_name')->get(['id', 'full_name']);
 
-        $examinersQuery = Examiner::orderBy('full_name');
+        $examinersQuery = FacultyMember::with('departments:id,name')->orderBy('full_name');
         if ($departmentId) {
-            $examinersQuery->where('department_id', $departmentId);
+            $examinersQuery->whereHas('departments', fn ($q) => $q->where('departments.id', $departmentId));
         }
 
         return Inertia::render('Projects/Edit', [
-            'project'         => $project->load(['students', 'documents', 'examiners', 'evaluations']),
+            'project'         => $project->load(['students', 'documents', 'facultyMembers', 'evaluations']),
             'departments'     => $departmentsQuery->get(['id', 'name']),
             'specializations' => $specializationsQuery->get(['id', 'name', 'department_id']),
-            'supervisors'     => $supervisorsQuery->get(['id', 'name', 'department_id']),
-            'examiners'       => $examinersQuery->get(['id', 'full_name', 'title', 'department_id']),
+            'supervisors'     => $supervisors,
+            'examiners'       => $examinersQuery->get(),
         ]);
     }
 
@@ -405,8 +410,9 @@ class ProjectController extends Controller
 
         $this->authorizeEdit($project);
 
-        $data    = $request->validated();
-        $similar = $this->search->detectSimilarity($data['project_title'], $id);
+        $data         = $request->validated();
+        $similar      = $this->search->detectSimilarity($data['project_title'], $data['description'] ?? '', excludeProjectId: $id);
+        $previousStatusId = $project->current_status_id;
 
         $project->update([
             'project_title'     => $data['project_title'],
@@ -429,15 +435,17 @@ class ProjectController extends Controller
             ]);
         }
 
+        if ($previousStatusId !== self::STATUS_READY_FOR_DEFENSE && $project->current_status_id === self::STATUS_READY_FOR_DEFENSE) {
+            $supervisorUser = $project->supervisor?->user;
+            if ($supervisorUser) {
+                Notification::send($supervisorUser, new ProjectReadyForDefense($project));
+            }
+        }
+
         $redirect = redirect()->route('projects.show', $project)->with('success', 'تم تحديث المشروع بنجاح');
 
         if ($similar->isNotEmpty()) {
-            $redirect->with('similarity_warning', $similar->map(fn ($p) => [
-                'id'            => $p->id,
-                'project_title' => $p->project_title,
-                'academic_year' => $p->academic_year,
-                'department'    => $p->department?->name,
-            ])->all());
+            $redirect->with('similarity_warning', $this->withUrls($similar));
         }
 
         return $redirect;

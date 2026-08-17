@@ -10,7 +10,7 @@ beforeEach(function () {
 });
 
 test('all 5 roles exist in database', function () {
-    $roles = ['super_admin', 'dept_manager', 'supervisor', 'dept_staff', 'viewer'];
+    $roles = ['super_admin', 'dept_manager', 'dept_staff', 'student', 'supervisor'];
 
     foreach ($roles as $role) {
         expect(Role::where('name', $role)->exists())->toBeTrue("Role [{$role}] not found");

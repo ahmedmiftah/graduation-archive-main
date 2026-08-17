@@ -3,10 +3,11 @@
 namespace App\Services;
 
 use App\Models\Department;
+use App\Models\FacultyMember;
 use App\Models\Project;
-use App\Models\User;
+use App\Models\ProjectProposal;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Collection as SupportCollection;
 
 class SearchService
 {
@@ -29,9 +30,9 @@ class SearchService
     /**
      * Same filters as searchProjects() but unpaginated, for exports.
      *
-     * @return Collection<int, Project>
+     * @return \Illuminate\Database\Eloquent\Collection<int, Project>
      */
-    public function searchProjectsForExport(array $filters): Collection
+    public function searchProjectsForExport(array $filters): \Illuminate\Database\Eloquent\Collection
     {
         $query = $this->buildFilteredQuery($filters);
 
@@ -64,12 +65,12 @@ class SearchService
                       $q->where('name', 'like', "%{$search}%");
                   })
                   ->orWhereHas('supervisor', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
+                      $q->where('full_name', 'like', "%{$search}%");
                   })
                   ->orWhereHas('students', function ($q) use ($search) {
                       $q->where('full_name', 'like', "%{$search}%");
                   })
-                  ->orWhereHas('examiners', function ($q) use ($search) {
+                  ->orWhereHas('facultyMembers', function ($q) use ($search) {
                       $q->where('full_name', 'like', "%{$search}%");
                   });
             });
@@ -112,23 +113,120 @@ class SearchService
     }
 
     /**
-     * Find projects with a similar title using a LIKE query.
-     * Excludes $excludeId when checking an existing project being edited.
-     *
-     * @return Collection<int, Project>
+     * Minimum similarity percentage for a candidate to surface as a warning.
      */
-    public function detectSimilarity(string $title, ?int $excludeId = null): Collection
-    {
-        $query = Project::where('is_deleted', false)
-            ->where('project_title', 'like', '%' . $title . '%')
-            ->with('department:id,name')
-            ->select(['id', 'project_title', 'academic_year', 'department_id']);
+    private const SIMILARITY_THRESHOLD = 30;
 
-        if ($excludeId !== null) {
-            $query->where('id', '!=', $excludeId);
+    /**
+     * Find archived projects and live proposals with a similar title/description,
+     * scored by word-overlap percentage rather than a plain substring match.
+     * A non-blocking warning only — the department always has final say.
+     *
+     * @return SupportCollection<int, array{type: string, id: int, title: string, academic_year: ?string, department: ?string, similarity_percent: int}>
+     */
+    public function detectSimilarity(
+        string $title,
+        string $description = '',
+        ?int $excludeProjectId = null,
+        ?int $excludeProposalId = null,
+    ): SupportCollection {
+        $words = $this->significantWords($title);
+
+        $projects = Project::where('is_deleted', false)
+            ->where(function ($q) use ($title, $words) {
+                $q->where('project_title', 'like', '%' . $title . '%');
+                foreach ($words as $word) {
+                    $q->orWhere('project_title', 'like', '%' . $word . '%');
+                }
+            })
+            ->when($excludeProjectId, fn ($q) => $q->where('id', '!=', $excludeProjectId))
+            ->with('department:id,name')
+            ->limit(20)
+            ->get(['id', 'project_title', 'description', 'academic_year', 'department_id']);
+
+        $proposals = ProjectProposal::where('status', '!=', ProjectProposal::STATUS_SUPERSEDED)
+            ->where(function ($q) use ($title, $words) {
+                $q->where('title', 'like', '%' . $title . '%');
+                foreach ($words as $word) {
+                    $q->orWhere('title', 'like', '%' . $word . '%');
+                }
+            })
+            ->when($excludeProposalId, fn ($q) => $q->where('id', '!=', $excludeProposalId))
+            ->with('department:id,name')
+            ->limit(20)
+            ->get(['id', 'title', 'description', 'academic_year', 'department_id']);
+
+        $scored = $projects
+            ->map(fn (Project $p) => [
+                'type'               => 'project',
+                'id'                 => $p->id,
+                'title'              => $p->project_title,
+                'academic_year'      => $p->academic_year,
+                'department'         => $p->department?->name,
+                'similarity_percent' => $this->similarityPercent($title, $description, $p->project_title, $p->description),
+            ])
+            ->concat($proposals->map(fn (ProjectProposal $p) => [
+                'type'               => 'proposal',
+                'id'                 => $p->id,
+                'title'              => $p->title,
+                'academic_year'      => $p->academic_year,
+                'department'         => $p->department?->name,
+                'similarity_percent' => $this->similarityPercent($title, $description, $p->title, $p->description),
+            ]));
+
+        return $scored
+            ->filter(fn (array $item) => $item['similarity_percent'] >= self::SIMILARITY_THRESHOLD)
+            ->sortByDesc('similarity_percent')
+            ->take(5)
+            ->values();
+    }
+
+    /**
+     * Weighted word-overlap score (title 70%, description 30% when both
+     * sides have one) expressed as a 0–100 percentage.
+     */
+    private function similarityPercent(string $titleA, string $descriptionA, string $titleB, ?string $descriptionB): int
+    {
+        $titleScore = $this->jaccard($titleA, $titleB);
+
+        if ($descriptionA === '' || empty($descriptionB)) {
+            return (int) round($titleScore * 100);
         }
 
-        return $query->limit(5)->get();
+        $descriptionScore = $this->jaccard($descriptionA, $descriptionB);
+
+        return (int) round(($titleScore * 0.7 + $descriptionScore * 0.3) * 100);
+    }
+
+    /**
+     * Jaccard index (intersection / union) of the significant words in two texts.
+     */
+    private function jaccard(string $a, string $b): float
+    {
+        $wordsA = $this->significantWords($a);
+        $wordsB = $this->significantWords($b);
+
+        if (empty($wordsA) || empty($wordsB)) {
+            return 0.0;
+        }
+
+        $intersection = count(array_intersect($wordsA, $wordsB));
+        $union        = count(array_unique(array_merge($wordsA, $wordsB)));
+
+        return $union > 0 ? $intersection / $union : 0.0;
+    }
+
+    /**
+     * Lowercased, de-duplicated word tokens (2+ characters), Unicode-aware
+     * so Arabic titles/descriptions are tokenized correctly too.
+     *
+     * @return array<int, string>
+     */
+    private function significantWords(string $text): array
+    {
+        $words = preg_split('/[^\p{L}\p{N}]+/u', mb_strtolower($text), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        return array_values(array_unique(array_filter($words, fn ($w) => mb_strlen($w) >= 2)));
     }
 
     /**
@@ -148,11 +246,7 @@ class SearchService
             $departmentsQuery->where('id', $departmentId);
         }
 
-        $supervisorsQuery = User::role('supervisor')
-            ->orderBy('name');
-        if ($departmentId) {
-            $supervisorsQuery->where('department_id', $departmentId);
-        }
+        $supervisorsQuery = FacultyMember::orderBy('full_name');
 
         return [
             'departments'    => $departmentsQuery->get(['id', 'name']),
@@ -160,7 +254,7 @@ class SearchService
                                         ->distinct()
                                         ->orderByDesc('academic_year')
                                         ->pluck('academic_year'),
-            'supervisors'    => $supervisorsQuery->get(['id', 'name']),
+            'supervisors'    => $supervisorsQuery->get(['id', 'full_name']),
         ];
     }
 }

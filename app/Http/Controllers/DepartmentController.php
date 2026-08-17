@@ -70,6 +70,10 @@ class DepartmentController extends Controller
             return back()->with('error', 'لا يمكن حذف القسم لوجود مشاريع مرتبطة به');
         }
 
+        if ($department->students()->exists()) {
+            return back()->with('error', 'لا يمكن حذف القسم لوجود طلاب مرتبطين به');
+        }
+
         $department->delete();
 
         return redirect()->route('departments.index')

@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Department;
-use App\Models\Examiner;
+use App\Models\FacultyMember;
 use App\Models\Project;
 use App\Models\Specialization;
 use App\Models\User;
@@ -15,6 +15,7 @@ beforeEach(function () {
     app()[PermissionRegistrar::class]->forgetCachedPermissions();
     $this->seed(RoleSeeder::class);
     $this->seed(ProjectStatusSeeder::class);
+    $this->seed(\Database\Seeders\SemesterSeeder::class);
     Storage::fake('public');
 });
 
@@ -28,7 +29,8 @@ function makeProjectDeps(?Department $dept = null): array
 {
     $dept       = $dept ?? Department::factory()->create();
     $spec       = Specialization::factory()->create(['department_id' => $dept->id]);
-    $supervisor = userWithRole('supervisor');
+    $supervisor = FacultyMember::factory()->create();
+    $supervisor->departments()->sync([$dept->id]);
 
     return compact('dept', 'spec', 'supervisor');
 }
@@ -178,13 +180,14 @@ test('dept_manager can create archived project with examiners and score', functi
     $deps     = makeProjectDeps();
     $manager  = User::factory()->create(['department_id' => $deps['dept']->id]);
     $manager->assignRole('dept_manager');
-    $examiner = Examiner::factory()->create(['department_id' => $deps['dept']->id]);
+    $examiner = FacultyMember::factory()->create();
+    $examiner->departments()->sync([$deps['dept']->id]);
 
     $this->actingAs($manager)
         ->post(route('projects.archived.store'), projectData($deps, [
             'final_score' => 88.5,
             'examiners'   => [
-                ['examiner_id' => $examiner->id, 'notes' => 'ممتاز'],
+                ['faculty_member_id' => $examiner->id, 'notes' => 'ممتاز'],
             ],
         ]))
         ->assertRedirect();
@@ -196,7 +199,7 @@ test('dept_manager can create archived project with examiners and score', functi
     ]);
 
     $project = Project::where('project_title', 'Test Project Title')->firstOrFail();
-    expect($project->examiners)->toHaveCount(1);
+    expect($project->facultyMembers)->toHaveCount(1);
     expect($project->evaluations)->toHaveCount(1);
 });
 
@@ -204,8 +207,10 @@ test('dept_manager can update archived project examiners and score', function ()
     $deps      = makeProjectDeps();
     $manager   = User::factory()->create(['department_id' => $deps['dept']->id]);
     $manager->assignRole('dept_manager');
-    $examiner1 = Examiner::factory()->create(['department_id' => $deps['dept']->id]);
-    $examiner2 = Examiner::factory()->create(['department_id' => $deps['dept']->id]);
+    $examiner1 = FacultyMember::factory()->create();
+    $examiner1->departments()->sync([$deps['dept']->id]);
+    $examiner2 = FacultyMember::factory()->create();
+    $examiner2->departments()->sync([$deps['dept']->id]);
 
     $project = Project::factory()->create([
         'department_id'     => $deps['dept']->id,
@@ -214,20 +219,20 @@ test('dept_manager can update archived project examiners and score', function ()
         'current_status_id' => 1,
         'final_score'       => 70,
     ]);
-    $project->examiners()->attach($examiner1->id, ['assigned_by' => $manager->id]);
+    $project->facultyMembers()->attach($examiner1->id, ['assigned_by' => $manager->id]);
 
     $this->actingAs($manager)
         ->put(route('projects.archived.update', $project->id), projectData($deps, [
             'final_score' => 95,
             'examiners'   => [
-                ['examiner_id' => $examiner2->id, 'notes' => 'جيد جداً'],
+                ['faculty_member_id' => $examiner2->id, 'notes' => 'جيد جداً'],
             ],
         ]))
         ->assertRedirect();
 
     $project->refresh();
     expect((float) $project->final_score)->toBe(95.0);
-    expect($project->examiners->pluck('id')->all())->toBe([$examiner2->id]);
+    expect($project->facultyMembers->pluck('id')->all())->toBe([$examiner2->id]);
 });
 
 // ── Delete / Soft Delete ──────────────────────────────────────────────────────

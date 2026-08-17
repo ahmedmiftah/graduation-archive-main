@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>بوابة الطالب</title>
+<style>
+  :root {
+    --bg: #EDF0F2; --surface: #FFFFFF; --surface-2: #F4F6F7;
+    --ink: #12212E; --ink-muted: #4B6072; --ink-faint: #7C8FA0;
+    --line: #D3DBE0; --line-strong: #AFC0C9;
+    --accent: #8A2E4E; --accent-ink: #FFFFFF; --accent-soft: #F4E4EA;
+    --teal: #1F7A6C; --teal-soft: #E3F1EE;
+    --amber: #A6631E; --amber-soft: #F4E9D8;
+    --stage-done: #1F7A6C; --stage-done-soft: #E3F1EE;
+    --stage-current: #2B5FD9; --stage-current-soft: #E7EDFC;
+    --stage-upcoming: #AFC0C9;
+    --shadow: 0 1px 2px rgba(18,33,46,0.06), 0 8px 24px -12px rgba(18,33,46,0.18);
+    --font-display: 'Dubai', 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-body: 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-mono: 'Cascadia Code', 'Consolas', 'SF Mono', 'Courier New', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1720; --surface: #17212C; --surface-2: #1D2833; --ink: #E7ECEF;
+      --ink-muted: #9FB0BD; --ink-faint: #6C7E8C; --line: #2B3946; --line-strong: #3C4C5A;
+      --accent: #D97A97; --accent-ink: #1A0A10; --accent-soft: #2E1B22;
+      --teal: #4FC3B0; --teal-soft: #163430; --amber: #D9A24B; --amber-soft: #332617;
+      --stage-done: #4FC3B0; --stage-done-soft: #163430;
+      --stage-current: #6C93F5; --stage-current-soft: #1B2740; --stage-upcoming: #3C4C5A;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1720; --surface: #17212C; --surface-2: #1D2833; --ink: #E7ECEF;
+    --ink-muted: #9FB0BD; --ink-faint: #6C7E8C; --line: #2B3946; --line-strong: #3C4C5A;
+    --accent: #D97A97; --accent-ink: #1A0A10; --accent-soft: #2E1B22;
+    --teal: #4FC3B0; --teal-soft: #163430; --amber: #D9A24B; --amber-soft: #332617;
+    --stage-done: #4FC3B0; --stage-done-soft: #163430;
+    --stage-current: #6C93F5; --stage-current-soft: #1B2740; --stage-upcoming: #3C4C5A;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.25; color: var(--ink); margin: 0; }
+  code, .mono { font-family: var(--font-mono); direction: ltr; unicode-bidi: isolate; }
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--stage-current); outline-offset: 2px; }
+  .shell { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px; align-items: start; }
+  @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } }
+  header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+  .top-inner { max-width: 1180px; margin: 0 auto; padding: 40px 24px 32px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; letter-spacing: 0.06em; color: var(--accent); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); padding: 4px 12px; border-radius: 3px; margin-bottom: 18px; }
+  h1.title { font-size: clamp(28px, 4vw, 40px); font-weight: 700; letter-spacing: -0.01em; }
+  p.dek { margin-top: 12px; max-width: 66ch; color: var(--ink-muted); font-size: 17px; }
+  .badges { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge { font-size: 12.5px; padding: 5px 11px; border-radius: 3px; border: 1px solid var(--line-strong); color: var(--ink-muted); background: var(--surface-2); display: inline-flex; align-items: center; gap: 6px; }
+  nav.rail { position: sticky; top: 24px; padding: 24px 0; font-size: 14px; max-height: calc(100vh - 48px); overflow-y: auto; }
+  nav.rail .rail-label { font-size: 11.5px; letter-spacing: 0.08em; color: var(--ink-faint); margin-bottom: 12px; padding-right: 12px; }
+  nav.rail ol { list-style: none; margin: 0; padding: 0; counter-reset: navsteps; border-right: 2px solid var(--line); }
+  nav.rail li { counter-increment: navsteps; }
+  nav.rail a { display: flex; align-items: baseline; gap: 8px; padding: 7px 14px 7px 8px; margin-right: -2px; border-right: 2px solid transparent; color: var(--ink-muted); text-decoration: none; transition: color .15s ease, border-color .15s ease; }
+  nav.rail a::before { content: counter(navsteps, decimal-leading-zero); font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); }
+  nav.rail a:hover, nav.rail a.active { color: var(--ink); border-right-color: var(--accent); }
+  nav.rail a.active::before { color: var(--accent); }
+  main { min-width: 0; padding: 48px 0 96px; }
+  section.block { padding-top: 56px; margin-top: 56px; border-top: 1px solid var(--line); scroll-margin-top: 20px; }
+  section.block:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  .block-head { margin-bottom: 24px; }
+  .block-num { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-bottom: 6px; display: block; }
+  h2.block-title { font-size: 24px; font-weight: 700; }
+  p.block-intro { margin-top: 12px; max-width: 68ch; color: var(--ink-muted); }
+  .prose { max-width: 68ch; }
+  .prose p { margin: 0 0 14px; color: var(--ink); }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--ink); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+  .field-label { font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); margin-bottom: 4px; }
+  .field-value { font-size: 15px; color: var(--ink); }
+  .flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; margin: 28px 0; }
+  .flow-step { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; min-width: 160px; flex: 1 1 160px; box-shadow: var(--shadow); }
+  .flow-step .fs-kicker { font-size: 11.5px; color: var(--ink-faint); letter-spacing: .04em; margin-bottom: 6px; }
+  .flow-step .fs-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .flow-step .fs-detail { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+  .flow-arrow { display: flex; align-items: center; justify-content: center; padding: 0 10px; color: var(--ink-faint); font-size: 18px; flex: 0 0 auto; }
+  @media (max-width: 780px) { .flow { flex-direction: column; } .flow-arrow { transform: rotate(90deg); padding: 4px 0; } }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); }
+  thead th { text-align: right; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); background: var(--surface-2); padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td .mono, th .mono { font-size: 13px; color: var(--teal); }
+  .code-block { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.7; direction: ltr; text-align: left; color: var(--ink); }
+  .code-block .k { color: var(--accent); }
+  .code-block .s { color: var(--teal); }
+  .code-block .c { color: var(--ink-faint); }
+  .tl-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 22px 24px; }
+  .tl-list { list-style: none; margin: 0; padding: 0; }
+  .tl-item { position: relative; display: flex; gap: 14px; padding-bottom: 18px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-rail { position: absolute; right: 11px; top: 24px; bottom: 0; width: 2px; }
+  .tl-item.done .tl-rail { background: var(--stage-done); }
+  .tl-item:not(.done) .tl-rail { background: var(--line); }
+  .tl-item:last-child .tl-rail { display: none; }
+  .tl-dot { flex: none; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; z-index: 1; }
+  .tl-item.done .tl-dot { background: var(--stage-done); color: var(--surface); }
+  .tl-item.current .tl-dot { background: var(--stage-current); color: var(--surface); box-shadow: 0 0 0 4px var(--stage-current-soft); }
+  .tl-item.upcoming .tl-dot { background: var(--surface); border: 2px solid var(--stage-upcoming); }
+  .tl-body { padding-top: 1px; }
+  .tl-name { font-size: 14.5px; font-weight: 600; }
+  .tl-item.upcoming .tl-name { color: var(--ink-faint); font-weight: 500; }
+  .tl-item.current .tl-name { color: var(--stage-current); }
+  .tl-item.done .tl-name { color: var(--stage-done); }
+  .tl-signal { font-size: 12.5px; color: var(--ink-faint); margin-top: 3px; }
+  .rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .rules li { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 13px 16px; font-size: 14.5px; }
+  .rules li .tag { flex: none; font-family: var(--font-mono); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 3px; margin-top: 1px; }
+  .rules li.allow .tag { background: var(--teal-soft); color: var(--teal); }
+  .rules li.deny .tag { background: var(--accent-soft); color: var(--accent); }
+  .rules li.note .tag { background: var(--amber-soft); color: var(--amber); }
+  .filemap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .filemap { grid-template-columns: 1fr; } }
+  .filemap .col h3 { font-size: 13px; letter-spacing: .04em; color: var(--ink-faint); margin-bottom: 10px; }
+  .filemap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .filemap li { font-family: var(--font-mono); font-size: 12.8px; padding: 6px 10px; border-radius: 4px; direction: ltr; text-align: left; color: var(--ink-muted); }
+  .filemap li:hover { background: var(--surface-2); color: var(--ink); }
+  .filemap li .fdesc { font-family: var(--font-body); direction: rtl; text-align: right; display: block; color: var(--ink-faint); font-size: 12px; margin-top: 1px; }
+  footer.page-foot { max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px; color: var(--ink-faint); font-size: 13px; border-top: 1px solid var(--line); margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="eyebrow">مرجع تقني — Phase 2 / 8</span>
+    <h1 class="title">بوابة الطالب</h1>
+    <p class="dek">من حساب مُنشَأ حديثًا إلى لوحة تحكم حية: صفحة عامة قابلة للإعلان، تقديم مقترح مع ربط فريق تلقائي، ودورة حياة 17 مرحلة تُحسب حيًّا بلا أي جدول تتبّع منفصل.</p>
+    <div class="badges">
+      <span class="badge"><span class="dot"></span> Phase 2 — مُنفَّذ 2026-08-16</span>
+      <span class="badge">16 اختبارًا جديدًا</span>
+      <span class="badge">278/279 ناجحة</span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="محتويات الصفحة">
+    <div class="rail-label">المحتويات</div>
+    <ol id="toc">
+      <li><a href="#overview">نظرة عامة</a></li>
+      <li><a href="#reuse">إعادة استخدام Browse.vue</a></li>
+      <li><a href="#timeline">حساب الـ17 مرحلة حيًّا</a></li>
+      <li><a href="#trait">لماذا Trait لا Controller</a></li>
+      <li><a href="#linking">ربط الفريق التلقائي</a></li>
+      <li><a href="#rules">قواعد العمل</a></li>
+      <li><a href="#decision">قرار مسجَّل صراحة</a></li>
+      <li><a href="#files">الملفات المسؤولة</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section class="block" id="overview">
+      <div class="block-head">
+        <span class="block-num">01</span>
+        <h2 class="block-title">نظرة عامة</h2>
+        <p class="block-intro">أول واجهة يستخدمها الطالب فعليًا بعد Phase 1 — من مجرد حساب مُنشَأ إلى تجربة كاملة: تسجيل دخول، لوحة تحكم، تقديم مقترح، ومتابعة حيّة.</p>
+      </div>
+      <div class="flow">
+        <div class="flow-step"><div class="fs-kicker">عام</div><div class="fs-title">/student</div><div class="fs-detail">بلا تسجيل دخول، قابلة للإعلان خارجيًا</div></div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-step"><div class="fs-kicker">خاص</div><div class="fs-title">/student/dashboard</div><div class="fs-detail">بعد الدخول — حالة المقترح إن وُجد</div></div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-step"><div class="fs-kicker">تقديم</div><div class="fs-title">/student/proposal/create</div><div class="fs-detail">ربط فريق تلقائي</div></div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-step"><div class="fs-kicker">متابعة</div><div class="fs-title">Timeline حيّ</div><div class="fs-detail">17 مرحلة محسوبة من الحالة الفعلية</div></div>
+      </div>
+    </section>
+
+    <section class="block" id="reuse">
+      <div class="block-head">
+        <span class="block-num">02</span>
+        <h2 class="block-title">إعادة استخدام Browse.vue بدل تكرارها</h2>
+        <p class="block-intro">صفحة <span class="mono">/student</span> العامة تعرض نفس محتوى "تصفّح المشاريع" — لكن بدون نسخ الكود.</p>
+      </div>
+      <div class="prose">
+        <p><span class="mono">PublicController::browse()</span> أُعيد بناؤه حول دالة خاصة مشتركة <span class="mono">renderBrowse()</span>. الإجراء الجديد <span class="mono">studentPortal()</span> يستدعي نفس الدالة بقيم مختلفة فقط لـ<span class="mono">routeName</span> و<span class="mono">loginLabel</span> — يُصيَّر نفس مكوّن <span class="mono">Public/Browse.vue</span> بالضبط، بخصائص اختيارية جديدة (قيمها الافتراضية تحافظ على سلوك <span class="mono">/browse</span> الأصلي حرفيًا دون أي تغيير).</p>
+        <p><strong>صفحة <span class="mono">/browse</span> الأصلية لم تُمسّ إطلاقًا</strong> — لا اختبار واحد من اختباراتها القديمة احتاج تعديلًا.</p>
+      </div>
+    </section>
+
+    <section class="block" id="timeline">
+      <div class="block-head">
+        <span class="block-num">03</span>
+        <h2 class="block-title">حساب دورة حياة 17 مرحلة — بلا جدول تتبّع</h2>
+        <p class="block-intro">القرار الأهم في هذه المرحلة: لا <span class="mono">lifecycle_progress</span> منفصل يحتاج مزامنة يدوية عند كل تغيير حالة.</p>
+      </div>
+      <div class="tl-wrap">
+        <ol class="tl-list">
+          <li class="tl-item done"><div class="tl-rail"></div><div class="tl-dot">✓</div><div class="tl-body"><div class="tl-name">اختيار المشرف</div><div class="tl-signal">مكتملة — <span class="mono">supervisor_id</span> غير فارغ</div></div></li>
+          <li class="tl-item done"><div class="tl-rail"></div><div class="tl-dot">✓</div><div class="tl-body"><div class="tl-name">تقديم المقترح</div><div class="tl-signal">مكتملة بمجرد وجود سجل المقترح</div></div></li>
+          <li class="tl-item current"><div class="tl-rail"></div><div class="tl-dot">●</div><div class="tl-body"><div class="tl-name">مراجعة المشرف / القسم</div><div class="tl-signal">الحالية — الحالة ما زالت <span class="mono">pending</span></div></div></li>
+          <li class="tl-item upcoming"><div class="tl-rail"></div><div class="tl-dot"></div><div class="tl-body"><div class="tl-name">اعتماد المقترح</div><div class="tl-signal">قادمة — تنتظر <span class="mono">status = approved</span></div></div></li>
+          <li class="tl-item upcoming"><div class="tl-rail"></div><div class="tl-dot"></div><div class="tl-body"><div class="tl-name">بدء المشروع ← إنجازه</div><div class="tl-signal">تتبع وجود <span class="mono">Project</span> ثم <span class="mono">current_status_id</span></div></div></li>
+        </ol>
+      </div>
+      <div class="prose" style="margin-top:16px">
+        <p><span class="mono">LifecycleTimelineService::build($proposal)</span> يعيد مصفوفة من 17 عنصرًا، كل واحد بحالة <span class="mono">done</span>/<span class="mono">current</span>/<span class="mono">upcoming</span> — كلها مشتقة من نفس عمودين موجودين أصلًا: <span class="mono">ProjectProposal.status</span> (5 حالات نصية) و<span class="mono">Project.current_status_id</span> + <span class="mono">ProjectStatus.sort_order</span>. بعض المراحل (رفع التوثيق، موافقة المشرف، التدريب الميداني، إخلاء الطرف) تبقى "قادمة" للأبد حاليًا — لا نظام مقابل مبني بعد، وهذا مقصود ومُفصَح عنه، لا خطأ.</p>
+      </div>
+    </section>
+
+    <section class="block" id="trait">
+      <div class="block-head">
+        <span class="block-num">04</span>
+        <h2 class="block-title">لماذا Trait لا منطق داخل الـController</h2>
+        <p class="block-intro">عطل اكتُشف أثناء البناء: قاعدة "على الأقل طالب واحد بالفريق" كانت تفشل قبل أن يصل الطلب للـController أصلًا.</p>
+      </div>
+      <div class="code-block">
+<span class="c">// المشكلة: FormRequest يُتحقَّق منه قبل تنفيذ الـController</span>
+<span class="c">// students: required|min:1 ← يفشل فورًا إن أرسل الطالب مصفوفة فارغة</span>
+
+<span class="c">// الحل: EnsuresStudentTeamMembership trait</span>
+<span class="k">protected function</span> prepareForValidation(): <span class="k">void</span>
+{
+    <span class="c">// يُدرِج الطالب نفسه في students[] هنا — قبل التحقق، لا بعده</span>
+}
+      </div>
+      <div class="prose" style="margin-top:16px">
+        <p>Laravel يُنفِّذ تحقّق <span class="mono">FormRequest</span> <strong>قبل</strong> استدعاء أي كود داخل الـController — أي منطق لإدراج الطالب نفسه في فريقه داخل <span class="mono">store()</span> كان سيصل متأخرًا جدًا. النقل لـ<span class="mono">prepareForValidation()</span> ضمن Trait مشترك حلّ المشكلة جذريًا، وأزال الحاجة لمنطق مكرَّر داخل <span class="mono">Student\ProposalController</span>.</p>
+      </div>
+    </section>
+
+    <section class="block" id="linking">
+      <div class="block-head">
+        <span class="block-num">05</span>
+        <h2 class="block-title">ربط الفريق التلقائي عبر رقم القيد</h2>
+        <p class="block-intro">لا إجراء ربط يدوي — أي زميل يُذكَر برقم قيد مطابق يُصبح عضوًا فعليًا برؤية مشتركة.</p>
+      </div>
+      <div class="prose">
+        <p><span class="mono">ProjectProposalRepository::withResolvedStudentId()</span> يبحث عن سجل <span class="mono">Student</span> مطابق لرقم القيد المذكور في كل صف فريق، ويربطه عبر <span class="mono">student_id</span> على <span class="mono">ProjectProposalStudent</span>. النتيجة: كل عضو فريق له حساب حقيقي يرى <strong>نفس المقترح بالضبط</strong> من حسابه الخاص — لا حصرية على من ضغط "حفظ" فقط.</p>
+      </div>
+    </section>
+
+    <section class="block" id="rules">
+      <div class="block-head">
+        <span class="block-num">06</span>
+        <h2 class="block-title">قواعد العمل</h2>
+        <p class="block-intro">كلها في <span class="mono">ProjectProposalPolicy</span> — فرع <span class="mono">student</span> مخصَّص.</p>
+      </div>
+      <ul class="rules">
+        <li class="allow"><span class="tag">يسمح</span> رؤية وتعديل مقترح فريقه فقط، عبر تطابق <span class="mono">student_id</span></li>
+        <li class="allow"><span class="tag">يسمح</span> التعديل أثناء <span class="mono">pending</span> أو <span class="mono">needs_revision</span> فقط</li>
+        <li class="deny"><span class="tag">يمنع</span> مقترحًا ثانيًا أثناء وجود مقترح نشط (<span class="mono">hasActiveProposal()</span>)</li>
+        <li class="deny"><span class="tag">يمنع</span> رؤية أي مقترح لفريق آخر</li>
+        <li class="deny"><span class="tag">يمنع</span> تغيير حالة المقترح — يبقى حصرًا لـ<span class="mono">dept_manager</span></li>
+      </ul>
+    </section>
+
+    <section class="block" id="decision">
+      <div class="block-head">
+        <span class="block-num">07</span>
+        <h2 class="block-title">قرار مسجَّل صراحة — لا Versioning للملفات بعد</h2>
+        <p class="block-intro">مخالفة واعية للطلب الأصلي، بموافقة المستخدم صراحة.</p>
+      </div>
+      <div class="prose">
+        <p>الملف القديم لا يزال يُستبدَل عند كل رفع جديد (لا نظام إصدارات <span class="mono">v1 → v2 → v3</span> فعلي للملفات نفسها). كذلك تقييد <span class="mono">/projects</span> و<span class="mono">/search</span> عن دور <span class="mono">student</span> بقي مؤجَّلًا من Phase 1 — لم يُعالَج في هذه المرحلة أيضًا، بقرار مستخدم صريح.</p>
+      </div>
+    </section>
+
+    <section class="block" id="files">
+      <div class="block-head">
+        <span class="block-num">08</span>
+        <h2 class="block-title">الملفات المسؤولة</h2>
+        <p class="block-intro">خريطة الكود الفعلي وراء بوابة الطالب.</p>
+      </div>
+      <div class="filemap">
+        <div class="col">
+          <h3>Backend</h3>
+          <ul>
+            <li>app/Http/Controllers/Student/DashboardController.php<span class="fdesc">بيانات اللوحة + المقترح الحالي</span></li>
+            <li>app/Http/Controllers/Student/ProposalController.php<span class="fdesc">create/store/show/edit/update</span></li>
+            <li>app/Http/Controllers/PublicController.php<span class="fdesc">studentPortal() يعيد استخدام renderBrowse()</span></li>
+            <li>app/Services/LifecycleTimelineService.php<span class="fdesc">حساب المراحل الـ17 حيًّا</span></li>
+            <li>app/Http/Requests/Concerns/EnsuresStudentTeamMembership.php<span class="fdesc">إدراج الطالب قبل التحقق</span></li>
+            <li>app/Models/Student.php<span class="fdesc">currentProposal() و hasActiveProposal()</span></li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Frontend</h3>
+          <ul>
+            <li>resources/js/pages/Student/Dashboard.vue<span class="fdesc">اللوحة الرئيسية</span></li>
+            <li>resources/js/pages/Student/Proposal/{Create,Edit,Show}.vue<span class="fdesc">دورة حياة المقترح كاملة</span></li>
+            <li>resources/js/components/LifecycleTimeline.vue<span class="fdesc">مكوّن الشريط البصري</span></li>
+            <li>resources/js/pages/Public/Browse.vue<span class="fdesc">مُعاد استخدامها في /student</span></li>
+          </ul>
+          <h3 style="margin-top:22px">الاختبارات</h3>
+          <ul>
+            <li>tests/Feature/Student/StudentProposalTest.php<span class="fdesc">تقديم/تعديل/ربط فريق/Timeline</span></li>
+            <li>tests/Feature/Student/StudentPortalPageTest.php<span class="fdesc">صفحة /student العامة</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="page-foot">توثيق تقني داخلي — نظام أرشفة مشاريع التخرج، كلية التقنية الإلكترونية.</footer>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+    var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+    function onScroll() {
+      var pos = window.scrollY + 120;
+      var activeIdx = 0;
+      sections.forEach(function (s, i) { if (s && s.offsetTop <= pos) activeIdx = i; });
+      links.forEach(function (a, i) { a.classList.toggle('active', i === activeIdx); });
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { useForm } from '@inertiajs/vue3';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
 import Modal from '@/components/Modal.vue';
+import { type SharedData } from '@/types';
 
 interface Department {
     id: number;
@@ -14,21 +15,19 @@ interface Specialization {
 }
 interface Supervisor {
     id: number;
-    name: string;
-    department_id: number;
+    full_name: string;
 }
 interface Examiner {
     id: number;
     full_name: string;
-    title: string | null;
-    department_id: number;
+    degree?: { degree_code: string } | null;
 }
 interface Student {
     full_name: string;
     registration_number: string;
 }
 interface ExaminerEntry {
-    examiner_id: number | null;
+    faculty_member_id: number | null;
     notes: string;
 }
 
@@ -68,6 +67,9 @@ const emit = defineEmits<{
     saved: [];
 }>();
 
+const page = usePage<SharedData>();
+const maxExaminers = computed(() => page.props.systemSettings?.examiners_per_project ?? 2);
+
 const form = useForm({
     pdf_file: null as File | null,
     final_score: props.initialFinalScore,
@@ -88,15 +90,11 @@ watch(
 
 const departmentName = computed(() => props.departments.find((d) => d.id === props.departmentId)?.name ?? '—');
 const specializationName = computed(() => props.specializations.find((s) => s.id === props.specializationId)?.name ?? '—');
-const supervisorName = computed(() => props.supervisors.find((s) => s.id === props.supervisorId)?.name ?? '—');
+const supervisorName = computed(() => props.supervisors.find((s) => s.id === props.supervisorId)?.full_name ?? '—');
 const degreeLevelLabel = computed(() => {
     const map: Record<string, string> = { diploma: 'دبلوم', bachelor: 'بكالوريوس', master: 'ماجستير' };
     return map[props.degreeLevel] ?? props.degreeLevel;
 });
-
-const filteredExaminers = computed(() =>
-    props.departmentId ? props.examiners.filter((e) => Number(e.department_id) === Number(props.departmentId)) : [],
-);
 
 const gradeLabel = computed(() => {
     const score = form.final_score;
@@ -109,8 +107,8 @@ const gradeLabel = computed(() => {
 });
 
 function addExaminer() {
-    if (form.examiners.length >= 2) return;
-    form.examiners.push({ examiner_id: null, notes: '' });
+    if (form.examiners.length >= maxExaminers.value) return;
+    form.examiners.push({ faculty_member_id: null, notes: '' });
 }
 
 function removeExaminer(index: number) {
@@ -167,11 +165,12 @@ function close() {
                 <!-- Examiners -->
                 <div>
                     <div class="mb-2 flex items-center justify-between">
-                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">الممتحنون (حد أقصى 2)</label>
+                        <label class="block text-xs font-medium text-gray-700 dark:text-gray-300">
+                            أعضاء هيئة التدريس المناقشون (حد أقصى {{ maxExaminers }})
+                        </label>
                         <button
-                            v-if="form.examiners.length < 2"
+                            v-if="form.examiners.length < maxExaminers"
                             type="button"
-                            :disabled="!departmentId"
                             class="rounded bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 hover:bg-blue-200 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-blue-900/20 dark:text-blue-400"
                             @click="addExaminer"
                         >
@@ -184,17 +183,17 @@ function close() {
                         <div v-for="(examiner, idx) in form.examiners" :key="idx" class="rounded-lg border border-gray-200 p-2 dark:border-gray-700">
                             <div class="flex items-center gap-2">
                                 <select
-                                    v-model="examiner.examiner_id"
+                                    v-model="examiner.faculty_member_id"
                                     class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
-                                    :class="{ 'border-red-500': form.errors[`examiners.${idx}.examiner_id`] }"
+                                    :class="{ 'border-red-500': form.errors[`examiners.${idx}.faculty_member_id`] }"
                                 >
-                                    <option :value="null">اختر الممتحن</option>
-                                    <option v-for="ex in filteredExaminers" :key="ex.id" :value="ex.id">{{ ex.full_name }}</option>
+                                    <option :value="null">اختر عضو هيئة التدريس</option>
+                                    <option v-for="ex in props.examiners" :key="ex.id" :value="ex.id">{{ ex.full_name }}</option>
                                 </select>
                                 <button type="button" class="shrink-0 text-xs text-red-500 hover:text-red-700" @click="removeExaminer(idx)">✕</button>
                             </div>
-                            <p v-if="form.errors[`examiners.${idx}.examiner_id`]" class="mt-1 text-xs text-red-600">
-                                {{ form.errors[`examiners.${idx}.examiner_id`] }}
+                            <p v-if="form.errors[`examiners.${idx}.faculty_member_id`]" class="mt-1 text-xs text-red-600">
+                                {{ form.errors[`examiners.${idx}.faculty_member_id`] }}
                             </p>
                             <textarea
                                 v-model="examiner.notes"

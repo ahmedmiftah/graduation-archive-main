@@ -2,9 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\AcademicDegree;
 use App\Models\Department;
 use App\Models\Evaluation;
-use App\Models\Examiner;
+use App\Models\FacultyMember;
 use App\Models\Project;
 use App\Models\ProjectStudent;
 use App\Models\Specialization;
@@ -22,20 +23,20 @@ class DummyDataSeeder extends Seeder
         DB::transaction(function () {
             $departments     = $this->createDepartments();
             $specializations = $this->createSpecializations($departments);
-            [$managers, $supervisors, $staffs] = $this->createUsers($departments);
-            $examiners    = $this->createExaminers($departments);
+            [$managers, $staffs] = $this->createUsers($departments);
+            [$supervisors, $examiners] = $this->createFacultyMembers($departments);
             $projectCount = $this->createProjects($departments, $specializations, $supervisors, $managers, $examiners);
 
-            $specCount = array_sum(array_map('count', $specializations));
-            $userCount = count($managers) + count($supervisors) + count($staffs);
-            $examCount = array_sum(array_map('count', $examiners));
+            $specCount    = array_sum(array_map('count', $specializations));
+            $userCount    = count($managers) + count($staffs);
+            $facultyCount = array_sum(array_map('count', $supervisors)) + array_sum(array_map('count', $examiners));
 
             $this->command->info(sprintf(
-                "Created: %d departments, %d specializations, %d users, %d examiners, %d projects",
+                "Created: %d departments, %d specializations, %d users, %d faculty members, %d projects",
                 count($departments),
                 $specCount,
                 $userCount,
-                $examCount,
+                $facultyCount,
                 $projectCount
             ));
         });
@@ -101,38 +102,6 @@ class DummyDataSeeder extends Seeder
             $managers[$code] = $u;
         }
 
-        $supervisorDefs = [
-            'SW'   => [
-                ['name' => 'محمد علي الشهري',        'email' => 'supervisor1.sw@college.com'],
-                ['name' => 'عمر حسن الدوسري',        'email' => 'supervisor2.sw@college.com'],
-            ],
-            'NET'  => [
-                ['name' => 'فيصل أحمد القحطاني',     'email' => 'supervisor1.net@college.com'],
-                ['name' => 'عبدالرحمن يوسف العتيبي', 'email' => 'supervisor2.net@college.com'],
-            ],
-            'ELEC' => [
-                ['name' => 'نايف سعد المالكي',       'email' => 'supervisor1.elec@college.com'],
-                ['name' => 'طارق محمد البقمي',       'email' => 'supervisor2.elec@college.com'],
-            ],
-        ];
-
-        $supervisors = [];
-        foreach ($supervisorDefs as $code => $defs) {
-            $supervisors[$code] = [];
-            foreach ($defs as $def) {
-                $u = User::create([
-                    'name'              => $def['name'],
-                    'email'             => $def['email'],
-                    'password'          => $pass,
-                    'email_verified_at' => now(),
-                    'department_id'     => $departments[$code]->id,
-                    'is_active'         => true,
-                ]);
-                $u->assignRole('supervisor');
-                $supervisors[$code][] = $u;
-            }
-        }
-
         $staffDefs = [
             ['name' => 'ريم سلمان الجهني',   'email' => 'staff1@college.com', 'dept' => 'SW'],
             ['name' => 'هند عبدالله الحربي', 'email' => 'staff2@college.com', 'dept' => 'SW'],
@@ -155,40 +124,89 @@ class DummyDataSeeder extends Seeder
             $staffs[] = $u;
         }
 
-        return [$managers, $supervisors, $staffs];
+        return [$managers, $staffs];
     }
 
-    private function createExaminers(array $departments): array
+    /**
+     * Returns [supervisorsByDept, examinersByDept] — two distinct faculty-member
+     * pools per department, both backed by the same faculty_members table.
+     */
+    private function createFacultyMembers(array $departments): array
     {
-        $data = [
+        $phdId    = AcademicDegree::where('degree_code', 'Ph.D')->value('id');
+        $masterId = AcademicDegree::where('degree_code', 'M.Sc')->value('id');
+
+        $supervisorDefs = [
             'SW'   => [
-                ['full_name' => 'د. حمد سليمان الفيفي',      'title' => 'Dr.'],
-                ['full_name' => 'أ.د. عبدالعزيز محمد الزيد', 'title' => 'Prof.'],
-                ['full_name' => 'د. منيرة خالد العنزي',       'title' => 'Dr.'],
+                ['name' => 'محمد علي الشهري',        'email' => 'supervisor1.sw@college.com'],
+                ['name' => 'عمر حسن الدوسري',        'email' => 'supervisor2.sw@college.com'],
             ],
             'NET'  => [
-                ['full_name' => 'د. يوسف إبراهيم المسعد',    'title' => 'Dr.'],
-                ['full_name' => 'أ.د. راشد سعد الوادعي',     'title' => 'Prof.'],
-                ['full_name' => 'د. نورة فهد الصالح',         'title' => 'Dr.'],
+                ['name' => 'فيصل أحمد القحطاني',     'email' => 'supervisor1.net@college.com'],
+                ['name' => 'عبدالرحمن يوسف العتيبي', 'email' => 'supervisor2.net@college.com'],
             ],
             'ELEC' => [
-                ['full_name' => 'د. بدر عبدالرحمن الحسيني',  'title' => 'Dr.'],
-                ['full_name' => 'أ.د. صالح مطلق الجعيد',     'title' => 'Prof.'],
+                ['name' => 'نايف سعد المالكي',       'email' => 'supervisor1.elec@college.com'],
+                ['name' => 'طارق محمد البقمي',       'email' => 'supervisor2.elec@college.com'],
             ],
         ];
 
-        $examiners = [];
-        foreach ($data as $code => $items) {
-            $examiners[$code] = [];
-            foreach ($items as $item) {
-                $examiners[$code][] = Examiner::create([
-                    'full_name'     => $item['full_name'],
-                    'title'         => $item['title'],
-                    'department_id' => $departments[$code]->id,
+        $examinerDefs = [
+            'SW'   => [
+                ['name' => 'د. حمد سليمان الفيفي',      'email' => 'faculty1.sw@college.com'],
+                ['name' => 'أ.د. عبدالعزيز محمد الزيد', 'email' => 'faculty2.sw@college.com'],
+                ['name' => 'د. منيرة خالد العنزي',       'email' => 'faculty3.sw@college.com'],
+            ],
+            'NET'  => [
+                ['name' => 'د. يوسف إبراهيم المسعد',    'email' => 'faculty1.net@college.com'],
+                ['name' => 'أ.د. راشد سعد الوادعي',     'email' => 'faculty2.net@college.com'],
+                ['name' => 'د. نورة فهد الصالح',         'email' => 'faculty3.net@college.com'],
+            ],
+            'ELEC' => [
+                ['name' => 'د. بدر عبدالرحمن الحسيني',  'email' => 'faculty1.elec@college.com'],
+                ['name' => 'أ.د. صالح مطلق الجعيد',     'email' => 'faculty2.elec@college.com'],
+            ],
+        ];
+
+        $counter     = 0;
+        $supervisors = [];
+        foreach ($supervisorDefs as $code => $defs) {
+            $supervisors[$code] = [];
+            foreach ($defs as $def) {
+                $counter++;
+                $member = FacultyMember::create([
+                    'full_name'    => $def['name'],
+                    'phone_number' => $this->phoneNumber($counter),
+                    'email'        => $def['email'],
+                    'degree_id'    => $masterId,
                 ]);
+                $member->departments()->attach($departments[$code]->id);
+                $supervisors[$code][] = $member;
             }
         }
-        return $examiners;
+
+        $examiners = [];
+        foreach ($examinerDefs as $code => $defs) {
+            $examiners[$code] = [];
+            foreach ($defs as $def) {
+                $counter++;
+                $member = FacultyMember::create([
+                    'full_name'    => $def['name'],
+                    'phone_number' => $this->phoneNumber($counter),
+                    'email'        => $def['email'],
+                    'degree_id'    => $phdId,
+                ]);
+                $member->departments()->attach($departments[$code]->id);
+                $examiners[$code][] = $member;
+            }
+        }
+
+        return [$supervisors, $examiners];
+    }
+
+    private function phoneNumber(int $counter): string
+    {
+        return '05' . str_pad((string) (10000000 + $counter), 8, '0', STR_PAD_LEFT);
     }
 
     private function createProjects(
@@ -316,13 +334,13 @@ class DummyDataSeeder extends Seeder
                 $ex1   = $examiners[$code][$pair[0]];
                 $ex2   = $examiners[$code][$pair[1]];
 
-                DB::table('project_examiners')->insert([
-                    ['project_id' => $project->id, 'examiner_id' => $ex1->id, 'assigned_by' => $managers[$code]->id, 'created_at' => now(), 'updated_at' => now()],
-                    ['project_id' => $project->id, 'examiner_id' => $ex2->id, 'assigned_by' => $managers[$code]->id, 'created_at' => now(), 'updated_at' => now()],
+                DB::table('project_faculty_members')->insert([
+                    ['project_id' => $project->id, 'faculty_member_id' => $ex1->id, 'assigned_by' => $managers[$code]->id, 'created_at' => now(), 'updated_at' => now()],
+                    ['project_id' => $project->id, 'faculty_member_id' => $ex2->id, 'assigned_by' => $managers[$code]->id, 'created_at' => now(), 'updated_at' => now()],
                 ]);
 
-                Evaluation::create(['project_id' => $project->id, 'examiner_id' => $ex1->id, 'notes' => $comments[array_rand($comments)]]);
-                Evaluation::create(['project_id' => $project->id, 'examiner_id' => $ex2->id, 'notes' => $comments[array_rand($comments)]]);
+                Evaluation::create(['project_id' => $project->id, 'faculty_member_id' => $ex1->id, 'notes' => $comments[array_rand($comments)]]);
+                Evaluation::create(['project_id' => $project->id, 'faculty_member_id' => $ex2->id, 'notes' => $comments[array_rand($comments)]]);
             }
 
             $createdProjects[] = $project;

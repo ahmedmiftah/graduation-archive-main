@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ArchiveProjectModal from '@/components/ArchiveProjectModal.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 
@@ -16,14 +16,13 @@ interface Specialization {
 }
 interface Supervisor {
     id: number;
-    name: string;
-    department_id: number;
+    full_name: string;
 }
 interface Examiner {
     id: number;
     full_name: string;
-    title: string | null;
-    department_id: number;
+    degree?: { degree_code: string } | null;
+    departments?: Department[];
 }
 interface ProjectStudent {
     id: number;
@@ -31,7 +30,7 @@ interface ProjectStudent {
     registration_number: string;
 }
 interface ProjectEvaluation {
-    examiner_id: number;
+    faculty_member_id: number;
     notes: string | null;
 }
 
@@ -49,7 +48,7 @@ interface Project {
     draft_file_path: string | null;
     final_score: number | null;
     students: ProjectStudent[];
-    examiners: Examiner[];
+    faculty_members: Examiner[];
     evaluations: ProjectEvaluation[];
 }
 
@@ -90,15 +89,17 @@ const form = useForm({
     })) as Student[],
 });
 
-const page = usePage();
+const page = usePage<SharedData>();
 const authUser = computed(() => page.props.auth?.user);
+const semesters = computed(() => page.props.semesters ?? []);
+const maxStudents = computed(() => page.props.systemSettings?.max_students_per_project ?? 20);
 
 const showArchiveModal = ref(false);
 
 const initialExaminers = computed(() =>
-    props.project.examiners.map((ex) => ({
-        examiner_id: ex.id,
-        notes: props.project.evaluations.find((e) => e.examiner_id === ex.id)?.notes ?? '',
+    props.project.faculty_members.map((ex) => ({
+        faculty_member_id: ex.id,
+        notes: props.project.evaluations.find((e) => e.faculty_member_id === ex.id)?.notes ?? '',
     })),
 );
 
@@ -122,16 +123,11 @@ const filteredSpecializations = computed(() =>
     form.department_id ? props.specializations.filter((s) => Number(s.department_id) === Number(form.department_id)) : [],
 );
 
-const filteredSupervisors = computed(() =>
-    form.department_id ? props.supervisors.filter((s) => Number(s.department_id) === Number(form.department_id)) : [],
-);
-
 watch(
     () => form.department_id,
     (newVal, oldVal) => {
         if (oldVal !== null && newVal !== oldVal) {
             form.specialization_id = null;
-            form.supervisor_id = null;
         }
     },
 );
@@ -143,6 +139,7 @@ if (authUser.value?.department_id && form.department_id !== authUser.value.depar
 }
 
 function addStudent() {
+    if (form.students.length >= maxStudents.value) return;
     form.students.push({ full_name: '', registration_number: '' });
 }
 
@@ -222,8 +219,7 @@ function submit() {
                             class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                             :class="{ 'border-red-500': form.errors.semester }"
                         >
-                            <option value="خريف">خريف</option>
-                            <option value="ربيع">ربيع</option>
+                            <option v-for="sem in semesters" :key="sem" :value="sem">{{ sem }}</option>
                         </select>
                         <p v-if="form.errors.semester" class="mt-1 text-xs text-red-600">{{ form.errors.semester }}</p>
                     </div>
@@ -305,12 +301,11 @@ function submit() {
                         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300"> المشرف <span class="text-red-500">*</span> </label>
                         <select
                             v-model="form.supervisor_id"
-                            :disabled="!form.department_id"
-                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:disabled:bg-gray-800"
+                            class="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
                             :class="{ 'border-red-500': form.errors.supervisor_id }"
                         >
-                            <option :value="null">{{ form.department_id ? 'اختر المشرف' : 'اختر القسم أولاً' }}</option>
-                            <option v-for="sup in filteredSupervisors" :key="sup.id" :value="sup.id">{{ sup.name }}</option>
+                            <option :value="null">اختر المشرف</option>
+                            <option v-for="sup in props.supervisors" :key="sup.id" :value="sup.id">{{ sup.full_name }}</option>
                         </select>
                         <p v-if="form.errors.supervisor_id" class="mt-1 text-xs text-red-600">{{ form.errors.supervisor_id }}</p>
                     </div>
@@ -320,8 +315,10 @@ function submit() {
                         <div class="mb-3 flex items-center justify-between">
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                 الطلاب <span class="text-red-500">*</span>
+                                <span class="text-xs font-normal text-gray-400">(الحد الأقصى {{ maxStudents }})</span>
                             </label>
                             <button
+                                v-if="form.students.length < maxStudents"
                                 type="button"
                                 class="rounded bg-blue-100 px-3 py-1 text-xs font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-400"
                                 @click="addStudent"

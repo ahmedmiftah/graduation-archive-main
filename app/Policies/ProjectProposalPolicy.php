@@ -12,7 +12,7 @@ class ProjectProposalPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole(['super_admin', 'dept_manager', 'dept_staff', 'supervisor']);
+        return $user->hasAnyRole(['super_admin', 'dept_manager', 'dept_staff', 'student', 'supervisor']);
     }
 
     /**
@@ -20,6 +20,14 @@ class ProjectProposalPolicy
      */
     public function view(User $user, ProjectProposal $proposal): bool
     {
+        if ($user->hasRole('student')) {
+            return $this->isTeamMember($user, $proposal);
+        }
+
+        if ($user->hasRole('supervisor')) {
+            return $this->isAssignedSupervisor($user, $proposal);
+        }
+
         if (!$this->viewAny($user)) {
             return false;
         }
@@ -36,7 +44,12 @@ class ProjectProposalPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasAnyRole(['super_admin', 'dept_manager', 'dept_staff', 'supervisor']);
+        if ($user->hasRole('student')) {
+            // One active (pending/needs_revision) proposal per student at a time.
+            return $user->student !== null && ! $user->student->hasActiveProposal();
+        }
+
+        return $user->hasAnyRole(['super_admin', 'dept_manager', 'dept_staff']);
     }
 
     /**
@@ -44,7 +57,14 @@ class ProjectProposalPolicy
      */
     public function update(User $user, ProjectProposal $proposal): bool
     {
-        if (!$user->hasAnyRole(['super_admin', 'dept_manager', 'dept_staff', 'supervisor'])) {
+        if ($user->hasRole('student')) {
+            // Students may only edit their own team's proposal, and only
+            // while it's still awaiting or returned for revision.
+            return $this->isTeamMember($user, $proposal)
+                && in_array($proposal->status, [ProjectProposal::STATUS_PENDING, ProjectProposal::STATUS_NEEDS_REVISION], true);
+        }
+
+        if (!$user->hasAnyRole(['super_admin', 'dept_manager', 'dept_staff'])) {
             return false;
         }
 
@@ -60,7 +80,7 @@ class ProjectProposalPolicy
      */
     public function delete(User $user, ProjectProposal $proposal): bool
     {
-        if (!$user->hasAnyRole(['super_admin', 'dept_manager'])) { // staff/supervisor cannot delete
+        if (!$user->hasAnyRole(['super_admin', 'dept_manager'])) { // dept_staff and students cannot delete
             return false;
         }
 
@@ -87,5 +107,28 @@ class ProjectProposalPolicy
 
         return $user->department_id === $proposal->department_id;
     }
+
+    /**
+     * Determine whether the user can write their own supervisor_note.
+     * A narrower ability than changeStatus — the supervisor may leave a
+     * note but cannot approve/reject/request revisions themselves.
+     */
+    public function updateNote(User $user, ProjectProposal $proposal): bool
+    {
+        return $user->hasRole('supervisor') && $this->isAssignedSupervisor($user, $proposal);
+    }
+
+    private function isTeamMember(User $user, ProjectProposal $proposal): bool
+    {
+        if (! $user->student) {
+            return false;
+        }
+
+        return $proposal->students->contains('student_id', $user->student->id);
+    }
+
+    private function isAssignedSupervisor(User $user, ProjectProposal $proposal): bool
+    {
+        return $user->facultyMember !== null && $proposal->supervisor_id === $user->facultyMember->id;
+    }
 }
-?>

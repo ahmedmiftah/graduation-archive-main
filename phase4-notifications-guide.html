@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>نظام الإشعارات</title>
+<style>
+  :root {
+    --bg: #EDF0F2; --surface: #FFFFFF; --surface-2: #F4F6F7;
+    --ink: #12212E; --ink-muted: #4B6072; --ink-faint: #7C8FA0;
+    --line: #D3DBE0; --line-strong: #AFC0C9;
+    --accent: #8A2E4E; --accent-ink: #FFFFFF; --accent-soft: #F4E4EA;
+    --teal: #1F7A6C; --teal-soft: #E3F1EE;
+    --amber: #A6631E; --amber-soft: #F4E9D8;
+    --shadow: 0 1px 2px rgba(18,33,46,0.06), 0 8px 24px -12px rgba(18,33,46,0.18);
+    --font-display: 'Dubai', 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-body: 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-mono: 'Cascadia Code', 'Consolas', 'SF Mono', 'Courier New', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1720; --surface: #17212C; --surface-2: #1D2833; --ink: #E7ECEF;
+      --ink-muted: #9FB0BD; --ink-faint: #6C7E8C; --line: #2B3946; --line-strong: #3C4C5A;
+      --accent: #D97A97; --accent-ink: #1A0A10; --accent-soft: #2E1B22;
+      --teal: #4FC3B0; --teal-soft: #163430; --amber: #D9A24B; --amber-soft: #332617;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1720; --surface: #17212C; --surface-2: #1D2833; --ink: #E7ECEF;
+    --ink-muted: #9FB0BD; --ink-faint: #6C7E8C; --line: #2B3946; --line-strong: #3C4C5A;
+    --accent: #D97A97; --accent-ink: #1A0A10; --accent-soft: #2E1B22;
+    --teal: #4FC3B0; --teal-soft: #163430; --amber: #D9A24B; --amber-soft: #332617;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.25; color: var(--ink); margin: 0; }
+  code, .mono { font-family: var(--font-mono); direction: ltr; unicode-bidi: isolate; }
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .shell { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px; align-items: start; }
+  @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } }
+  header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+  .top-inner { max-width: 1180px; margin: 0 auto; padding: 40px 24px 32px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; letter-spacing: 0.06em; color: var(--accent); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); padding: 4px 12px; border-radius: 3px; margin-bottom: 18px; }
+  h1.title { font-size: clamp(28px, 4vw, 40px); font-weight: 700; letter-spacing: -0.01em; }
+  p.dek { margin-top: 12px; max-width: 66ch; color: var(--ink-muted); font-size: 17px; }
+  .badges { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge { font-size: 12.5px; padding: 5px 11px; border-radius: 3px; border: 1px solid var(--line-strong); color: var(--ink-muted); background: var(--surface-2); display: inline-flex; align-items: center; gap: 6px; }
+  nav.rail { position: sticky; top: 24px; padding: 24px 0; font-size: 14px; max-height: calc(100vh - 48px); overflow-y: auto; }
+  nav.rail .rail-label { font-size: 11.5px; letter-spacing: 0.08em; color: var(--ink-faint); margin-bottom: 12px; padding-right: 12px; }
+  nav.rail ol { list-style: none; margin: 0; padding: 0; counter-reset: navsteps; border-right: 2px solid var(--line); }
+  nav.rail li { counter-increment: navsteps; }
+  nav.rail a { display: flex; align-items: baseline; gap: 8px; padding: 7px 14px 7px 8px; margin-right: -2px; border-right: 2px solid transparent; color: var(--ink-muted); text-decoration: none; transition: color .15s ease, border-color .15s ease; }
+  nav.rail a::before { content: counter(navsteps, decimal-leading-zero); font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); }
+  nav.rail a:hover, nav.rail a.active { color: var(--ink); border-right-color: var(--accent); }
+  nav.rail a.active::before { color: var(--accent); }
+  main { min-width: 0; padding: 48px 0 96px; }
+  section.block { padding-top: 56px; margin-top: 56px; border-top: 1px solid var(--line); scroll-margin-top: 20px; }
+  section.block:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  .block-head { margin-bottom: 24px; }
+  .block-num { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-bottom: 6px; display: block; }
+  h2.block-title { font-size: 24px; font-weight: 700; }
+  p.block-intro { margin-top: 12px; max-width: 68ch; color: var(--ink-muted); }
+  .prose { max-width: 68ch; }
+  .prose p { margin: 0 0 14px; color: var(--ink); }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--ink); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+  .field-label { font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); margin-bottom: 4px; }
+  .field-value { font-size: 15px; color: var(--ink); }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); }
+  thead th { text-align: right; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); background: var(--surface-2); padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td .mono, th .mono { font-size: 13px; color: var(--teal); }
+  .method { font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; padding: 2px 7px; border-radius: 3px; letter-spacing: 0.03em; }
+  .method.get { background: var(--teal-soft); color: var(--teal); }
+  .method.patch { background: var(--amber-soft); color: var(--amber); }
+  .code-block { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.7; direction: ltr; text-align: left; color: var(--ink); }
+  .code-block .k { color: var(--accent); }
+  .code-block .s { color: var(--teal); }
+  .code-block .c { color: var(--ink-faint); }
+  .rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .rules li { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 13px 16px; font-size: 14.5px; }
+  .rules li .tag { flex: none; font-family: var(--font-mono); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 3px; margin-top: 1px; }
+  .rules li.built .tag { background: var(--teal-soft); color: var(--teal); }
+  .rules li.deferred .tag { background: var(--amber-soft); color: var(--amber); }
+  .filemap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .filemap { grid-template-columns: 1fr; } }
+  .filemap .col h3 { font-size: 13px; letter-spacing: .04em; color: var(--ink-faint); margin-bottom: 10px; }
+  .filemap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .filemap li { font-family: var(--font-mono); font-size: 12.8px; padding: 6px 10px; border-radius: 4px; direction: ltr; text-align: left; color: var(--ink-muted); }
+  .filemap li:hover { background: var(--surface-2); color: var(--ink); }
+  .filemap li .fdesc { font-family: var(--font-body); direction: rtl; text-align: right; display: block; color: var(--ink-faint); font-size: 12px; margin-top: 1px; }
+  footer.page-foot { max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px; color: var(--ink-faint); font-size: 13px; border-top: 1px solid var(--line); margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="eyebrow">مرجع تقني — Phase 4 / 8</span>
+    <h1 class="title">نظام الإشعارات</h1>
+    <p class="dek">تحويل جرس كان مقصورًا على دورين ومربوطًا بميزة مختلفة تمامًا، إلى مركز إشعارات حقيقي لكل الأدوار الخمسة — 4 أحداث حقيقية فقط، بغلاف موحَّد قابل للتوسعة بسهولة لاحقًا.</p>
+    <div class="badges">
+      <span class="badge"><span class="dot"></span> Phase 4 — مُنفَّذ 2026-08-16</span>
+      <span class="badge">18 اختبارًا جديدًا</span>
+      <span class="badge">305/306 ناجحة</span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="محتويات الصفحة">
+    <div class="rail-label">المحتويات</div>
+    <ol id="toc">
+      <li><a href="#overview">نظرة عامة</a></li>
+      <li><a href="#events">مصفوفة الأحداث الأربعة</a></li>
+      <li><a href="#envelope">الغلاف الموحَّد</a></li>
+      <li><a href="#routes">المسارات والتحكم</a></li>
+      <li><a href="#ui">واجهة المستخدم</a></li>
+      <li><a href="#deferred">أحداث مؤجَّلة عمدًا</a></li>
+      <li><a href="#files">الملفات المسؤولة</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section class="block" id="overview">
+      <div class="block-head">
+        <span class="block-num">01</span>
+        <h2 class="block-title">نظرة عامة</h2>
+        <p class="block-intro">قبل هذه المرحلة، الجرس أعلى الصفحة كان يشير لـ"لوحة الملاحظات" — ميزة مختلفة تمامًا لإدارة ملاحظات زوار الموقع — وكان مرئيًا فقط لـ<span class="mono">super_admin</span> و<span class="mono">dept_manager</span>.</p>
+      </div>
+      <div class="prose">
+        <p>لا جدول جديد — <span class="mono">notifications</span> القياسي في Laravel كان موجودًا ومفعَّلًا أصلًا (يُستخدم في <span class="mono">ProjectProposalStatusChanged</span> منذ ما قبل هذه المرحلة). العمل هنا كان تعميم الاستخدام، توحيد الشكل، وفصل مركز الإشعارات الشخصي عن لوحة ملاحظات الزوار تمامًا.</p>
+      </div>
+    </section>
+
+    <section class="block" id="events">
+      <div class="block-head">
+        <span class="block-num">02</span>
+        <h2 class="block-title">مصفوفة الأحداث الأربعة</h2>
+        <p class="block-intro">من أصل نحو 17 حدثًا في المواصفة الأصلية، اقتُصر على 4 فقط — كل ما تبقى يفتقر حاليًا لآلية تفعيل حقيقية.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>الحدث</th><th>الكلاس</th><th>المستلمون</th><th>نقطة التفعيل</th></tr></thead>
+          <tbody>
+            <tr><td>تقديم مقترح جديد</td><td class="mono">ProposalSubmitted</td><td>مديرو قسم المقترح</td><td class="mono">ProjectProposalService::create()</td></tr>
+            <tr><td>إعادة تقديم بعد تعديل</td><td class="mono">ProposalSubmitted<br><span style="color:var(--ink-faint)">(isResubmission=true)</span></td><td>مديرو قسم المقترح</td><td class="mono">نفس create() عند replaces_proposal_id</td></tr>
+            <tr><td>تغيّر حالة المقترح</td><td class="mono">ProjectProposalStatusChanged</td><td>الفريق كاملًا + المنشئ + المشرف</td><td class="mono">changeStatus() → notify()</td></tr>
+            <tr><td>تكليف كممتحن</td><td class="mono">ExaminerAssigned</td><td>عضو هيئة التدريس (إن كان له حساب)</td><td class="mono">ProjectFacultyMemberController::assign()</td></tr>
+            <tr><td>جاهزية للمناقشة</td><td class="mono">ProjectReadyForDefense</td><td>المشرف</td><td class="mono">ProjectController::update() عند الانتقال لـ status=6</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block" id="envelope">
+      <div class="block-head">
+        <span class="block-num">03</span>
+        <h2 class="block-title">الغلاف الموحَّد</h2>
+        <p class="block-intro">كل إشعار — قديم أو جديد — يخزّن نفس ثلاثة مفاتيح، بلا أي تغيير في بنية Laravel الافتراضية.</p>
+      </div>
+      <div class="code-block">
+<span class="c">// toDatabase() في أي كلاس إشعار</span>
+[
+  <span class="k">'title'</span>   =&gt; <span class="s">'تكليف كممتحن'</span>,
+  <span class="k">'message'</span> =&gt; <span class="s">'تم تكليفك كممتحن لمشروع "..."'</span>,
+  <span class="k">'url'</span>     =&gt; <span class="k">$this</span>-&gt;urlFor(<span class="k">$notifiable</span>),  <span class="c">// يتغيّر حسب دور المستلم</span>
+]
+      </div>
+      <div class="prose" style="margin-top:16px">
+        <p>سابقًا كان <span class="mono">title</span> في <span class="mono">ProjectProposalStatusChanged</span> يحمل خطأً عنوان المقترح نفسه بدل عنوان الإشعار — أُصلح كجزء من التوحيد. دالة <span class="mono">urlFor()</span> الخاصة تفحص دور المستلم وتُرجع الرابط المناسب: <span class="mono">student.proposal.show</span> للطالب، <span class="mono">supervisor.proposals.show</span> للمشرف، أو <span class="mono">proposals.show</span> لبقية الأدوار — بنفس الكلاس، بلا تفريع أكواد.</p>
+      </div>
+    </section>
+
+    <section class="block" id="routes">
+      <div class="block-head">
+        <span class="block-num">04</span>
+        <h2 class="block-title">المسارات والتحكم</h2>
+        <p class="block-intro">مجموعة واحدة تحت <span class="mono">auth</span> فقط — بلا قيد دور — لأن مركز الإشعارات ملك كل مستخدم لنفسه.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>الطريقة</th><th>المسار</th><th>الغرض</th></tr></thead>
+          <tbody>
+            <tr><td><span class="method get">GET</span></td><td class="mono">/notifications</td><td>صفحة كاملة مُرقَّمة لإشعارات المستخدم الحالي فقط</td></tr>
+            <tr><td><span class="method patch">PATCH</span></td><td class="mono">/notifications/{id}/read</td><td>تعليم إشعار واحد كمقروء — 404 إن كان لمستخدم آخر</td></tr>
+            <tr><td><span class="method patch">PATCH</span></td><td class="mono">/notifications/read-all</td><td>تعليم كل إشعارات المستخدم غير المقروءة دفعة واحدة</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block" id="ui">
+      <div class="block-head">
+        <span class="block-num">05</span>
+        <h2 class="block-title">واجهة المستخدم</h2>
+        <p class="block-intro">مكوّنان — قائمة منسدلة سريعة، وصفحة كاملة للتصفّح العميق.</p>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="field-label">الجرس — قائمة منسدلة</div>
+          <div class="field-value">متاح لكل الأدوار الخمسة الآن، آخر 6 إشعارات، نقطة زرقاء لغير المقروء</div>
+        </div>
+        <div class="panel">
+          <div class="field-label">الصفحة الكاملة</div>
+          <div class="field-value mono">/notifications — بنفس نمط تصفّح Feedback/Index.vue</div>
+        </div>
+      </div>
+      <div class="prose" style="margin-top:16px">
+        <p><strong>لم تُمسّ:</strong> "لوحة الملاحظات" (<span class="mono">/feedback</span>) بقيت ميزة منفصلة تمامًا، حصرًا لـ<span class="mono">super_admin</span>/<span class="mono">dept_manager</span> كما كانت دائمًا — لا خلط بينها وبين مركز الإشعارات الجديد رغم أن الجرس كان يشير خطأً إليها سابقًا.</p>
+      </div>
+    </section>
+
+    <section class="block" id="deferred">
+      <div class="block-head">
+        <span class="block-num">06</span>
+        <h2 class="block-title">أحداث مؤجَّلة عمدًا</h2>
+        <p class="block-intro">لن تُبنى بمنطق وهمي — تنتظر الأنظمة الفعلية التي ستولّد إشاراتها.</p>
+      </div>
+      <ul class="rules">
+        <li class="built"><span class="tag">جاهز</span> الغلاف الموحَّد — أي حدث جديد لاحقًا يُضاف بنفس النمط خلال دقائق</li>
+        <li class="deferred"><span class="tag">مؤجَّل</span> جدولة/تذكير المناقشة — لا نظام جدولة مناقشة فعلي بعد</li>
+        <li class="deferred"><span class="tag">مؤجَّل</span> اعتماد توثيقات المشرف — الإحصاء موجود من Phase 3، لكن لا زر اعتماد فعلي</li>
+        <li class="deferred"><span class="tag">مؤجَّل</span> إخلاء الطرف واكتمال إجراءات التخرج — لا نظام مقابل في قاعدة البيانات</li>
+        <li class="deferred"><span class="tag">مؤجَّل</span> طلبات الإشراف/الانضمام لفكرة مشروع — نُفِّذت لاحقًا في Phase 6</li>
+      </ul>
+    </section>
+
+    <section class="block" id="files">
+      <div class="block-head">
+        <span class="block-num">07</span>
+        <h2 class="block-title">الملفات المسؤولة</h2>
+        <p class="block-intro">خريطة الكود الفعلي وراء نظام الإشعارات.</p>
+      </div>
+      <div class="filemap">
+        <div class="col">
+          <h3>Backend</h3>
+          <ul>
+            <li>app/Notifications/ProposalSubmitted.php<span class="fdesc">تقديم / إعادة تقديم مقترح</span></li>
+            <li>app/Notifications/ProjectProposalStatusChanged.php<span class="fdesc">تغيّر الحالة + urlFor() حسب الدور</span></li>
+            <li>app/Notifications/ExaminerAssigned.php<span class="fdesc">تكليف ممتحن</span></li>
+            <li>app/Notifications/ProjectReadyForDefense.php<span class="fdesc">جاهزية للمناقشة</span></li>
+            <li>app/Services/ProjectProposalService.php<span class="fdesc">notify() + notifyDepartment()</span></li>
+            <li>app/Http/Controllers/NotificationController.php<span class="fdesc">index / markAsRead / markAllAsRead</span></li>
+            <li>app/Http/Middleware/HandleInertiaRequests.php<span class="fdesc">مشاركة unreadCount + recent عالميًا</span></li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Frontend</h3>
+          <ul>
+            <li>resources/js/components/AppSidebarHeader.vue<span class="fdesc">الجرس — قائمة منسدلة لكل الأدوار</span></li>
+            <li>resources/js/pages/Notifications/Index.vue<span class="fdesc">الصفحة الكاملة المُرقَّمة</span></li>
+            <li>resources/js/types/index.ts<span class="fdesc">NotificationItem</span></li>
+          </ul>
+          <h3 style="margin-top:22px">الاختبارات</h3>
+          <ul>
+            <li>tests/Feature/Notification/NotificationTest.php<span class="fdesc">18 اختبارًا — كل حدث + مركز الإشعارات</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="page-foot">توثيق تقني داخلي — نظام أرشفة مشاريع التخرج، كلية التقنية الإلكترونية.</footer>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+    var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+    function onScroll() {
+      var pos = window.scrollY + 120;
+      var activeIdx = 0;
+      sections.forEach(function (s, i) { if (s && s.offsetTop <= pos) activeIdx = i; });
+      links.forEach(function (a, i) { a.classList.toggle('active', i === activeIdx); });
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

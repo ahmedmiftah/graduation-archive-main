@@ -21,7 +21,7 @@ interface Specialization {
 }
 interface Supervisor {
     id: number;
-    name: string;
+    full_name: string;
 }
 
 interface Project {
@@ -236,7 +236,7 @@ const exportExcelUrl = computed(() => route('projects.archived.export.excel', bu
                                 <span v-else class="text-sm text-gray-400">—</span>
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
-                                {{ project.supervisor?.name ?? '—' }}
+                                {{ project.supervisor?.full_name ?? '—' }}
                             </td>
                             <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                                 {{ project.semester ? `${project.semester} ${project.academic_year}` : project.academic_year }}

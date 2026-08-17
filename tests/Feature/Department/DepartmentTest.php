@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Department;
+use App\Models\FacultyMember;
 use App\Models\Project;
 use App\Models\Specialization;
 use App\Models\User;
@@ -95,7 +96,7 @@ test('cannot delete department that has projects', function () {
 
     $dept = Department::factory()->create();
     $spec = Specialization::factory()->create(['department_id' => $dept->id]);
-    $supervisor = userWithRole('supervisor');
+    $supervisor = FacultyMember::factory()->create();
 
     Project::factory()->create([
         'department_id'     => $dept->id,
@@ -156,7 +157,7 @@ test('cannot delete specialization that has projects', function () {
 
     $dept = Department::factory()->create();
     $spec = Specialization::factory()->create(['department_id' => $dept->id]);
-    $supervisor = userWithRole('supervisor');
+    $supervisor = FacultyMember::factory()->create();
 
     Project::factory()->create([
         'department_id'     => $dept->id,

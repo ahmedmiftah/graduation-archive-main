@@ -27,7 +27,7 @@ interface DeptItem {
 
 interface SupervisorItem {
     id: number;
-    name: string;
+    full_name: string;
     department: string | null;
     project_count: number;
 }
@@ -76,7 +76,7 @@ const userDeptId = computed(() => authUser.value?.department_id ?? null);
 
 const filteredSupervisors = computed(() => {
     if (isSuperAdmin.value) return props.report.supervisors;
-    return props.report.supervisors.filter((sup) => sup.department === userDeptName.value);
+    return props.report.supervisors.filter((sup) => sup.department?.split('، ').includes(userDeptName.value ?? ''));
 });
 
 const overallAvg = computed(() => {
@@ -260,7 +260,7 @@ const excelUrl = computed(() => route('reports.export.excel', { type: 'departmen
                         </thead>
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                             <tr v-for="sup in filteredSupervisors" :key="sup.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
-                                <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{{ sup.name }}</td>
+                                <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{{ sup.full_name }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ sup.department ?? '—' }}</td>
                                 <td class="px-4 py-3">
                                     <span

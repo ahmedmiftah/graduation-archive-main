@@ -54,7 +54,7 @@ class UserController extends Controller
                 ],
             ],
             'roles'       => $authUser && $authUser->hasRole('dept_manager')
-                ? Role::orderBy('name')->whereIn('name', ['dept_staff', 'supervisor', 'viewer'])->pluck('name')
+                ? Role::orderBy('name')->whereIn('name', ['dept_staff'])->pluck('name')
                 : Role::orderBy('name')->pluck('name'),
             'departments' => $departmentList,
             'filters'     => $request->only(['search', 'role', 'department_id', 'is_active']),
@@ -72,7 +72,7 @@ class UserController extends Controller
                 abort(403, 'لا يمكنك إضافة مستخدم إلى قسم آخر.');
             }
 
-            $allowedRoles = ['dept_staff', 'supervisor', 'viewer'];
+            $allowedRoles = ['dept_staff'];
             if (!in_array($request->input('role'), $allowedRoles, true)) {
                 abort(403, 'لا يمكنك إنشاء هذا الدور داخل القسم الخاص بك.');
             }
@@ -111,7 +111,7 @@ class UserController extends Controller
                 abort(403, 'لا يمكنك نقل مستخدم إلى قسم آخر.');
             }
 
-            $allowedRoles = ['dept_staff', 'supervisor', 'viewer'];
+            $allowedRoles = ['dept_staff'];
             if (!in_array($request->input('role'), $allowedRoles, true)) {
                 abort(403, 'لا يمكنك تعيين هذا الدور داخل القسم الخاص بك.');
             }

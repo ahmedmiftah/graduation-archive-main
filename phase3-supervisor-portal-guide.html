@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>بوابة المشرف</title>
+<style>
+  :root {
+    --bg: #EDF0F2; --surface: #FFFFFF; --surface-2: #F4F6F7;
+    --ink: #12212E; --ink-muted: #4B6072; --ink-faint: #7C8FA0;
+    --line: #D3DBE0; --line-strong: #AFC0C9;
+    --accent: #8A2E4E; --accent-ink: #FFFFFF; --accent-soft: #F4E4EA;
+    --teal: #1F7A6C; --teal-soft: #E3F1EE;
+    --amber: #A6631E; --amber-soft: #F4E9D8;
+    --shadow: 0 1px 2px rgba(18,33,46,0.06), 0 8px 24px -12px rgba(18,33,46,0.18);
+    --font-display: 'Dubai', 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-body: 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-mono: 'Cascadia Code', 'Consolas', 'SF Mono', 'Courier New', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1720; --surface: #17212C; --surface-2: #1D2833; --ink: #E7ECEF;
+      --ink-muted: #9FB0BD; --ink-faint: #6C7E8C; --line: #2B3946; --line-strong: #3C4C5A;
+      --accent: #D97A97; --accent-ink: #1A0A10; --accent-soft: #2E1B22;
+      --teal: #4FC3B0; --teal-soft: #163430; --amber: #D9A24B; --amber-soft: #332617;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1720; --surface: #17212C; --surface-2: #1D2833; --ink: #E7ECEF;
+    --ink-muted: #9FB0BD; --ink-faint: #6C7E8C; --line: #2B3946; --line-strong: #3C4C5A;
+    --accent: #D97A97; --accent-ink: #1A0A10; --accent-soft: #2E1B22;
+    --teal: #4FC3B0; --teal-soft: #163430; --amber: #D9A24B; --amber-soft: #332617;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.25; color: var(--ink); margin: 0; }
+  code, .mono { font-family: var(--font-mono); direction: ltr; unicode-bidi: isolate; }
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .shell { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px; align-items: start; }
+  @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } }
+  header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+  .top-inner { max-width: 1180px; margin: 0 auto; padding: 40px 24px 32px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; letter-spacing: 0.06em; color: var(--accent); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); padding: 4px 12px; border-radius: 3px; margin-bottom: 18px; }
+  h1.title { font-size: clamp(28px, 4vw, 40px); font-weight: 700; letter-spacing: -0.01em; }
+  p.dek { margin-top: 12px; max-width: 66ch; color: var(--ink-muted); font-size: 17px; }
+  .badges { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge { font-size: 12.5px; padding: 5px 11px; border-radius: 3px; border: 1px solid var(--line-strong); color: var(--ink-muted); background: var(--surface-2); display: inline-flex; align-items: center; gap: 6px; }
+  nav.rail { position: sticky; top: 24px; padding: 24px 0; font-size: 14px; max-height: calc(100vh - 48px); overflow-y: auto; }
+  nav.rail .rail-label { font-size: 11.5px; letter-spacing: 0.08em; color: var(--ink-faint); margin-bottom: 12px; padding-right: 12px; }
+  nav.rail ol { list-style: none; margin: 0; padding: 0; counter-reset: navsteps; border-right: 2px solid var(--line); }
+  nav.rail li { counter-increment: navsteps; }
+  nav.rail a { display: flex; align-items: baseline; gap: 8px; padding: 7px 14px 7px 8px; margin-right: -2px; border-right: 2px solid transparent; color: var(--ink-muted); text-decoration: none; transition: color .15s ease, border-color .15s ease; }
+  nav.rail a::before { content: counter(navsteps, decimal-leading-zero); font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); }
+  nav.rail a:hover, nav.rail a.active { color: var(--ink); border-right-color: var(--accent); }
+  nav.rail a.active::before { color: var(--accent); }
+  main { min-width: 0; padding: 48px 0 96px; }
+  section.block { padding-top: 56px; margin-top: 56px; border-top: 1px solid var(--line); scroll-margin-top: 20px; }
+  section.block:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  .block-head { margin-bottom: 24px; }
+  .block-num { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-bottom: 6px; display: block; }
+  h2.block-title { font-size: 24px; font-weight: 700; }
+  p.block-intro { margin-top: 12px; max-width: 68ch; color: var(--ink-muted); }
+  .prose { max-width: 68ch; }
+  .prose p { margin: 0 0 14px; color: var(--ink); }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--ink); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 720px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .field-label { font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); margin-bottom: 4px; }
+  .field-value { font-size: 15px; color: var(--ink); }
+  .before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .before-after { grid-template-columns: 1fr; } }
+  .ba-col { border-radius: 6px; padding: 18px 20px; border: 1px solid var(--line); background: var(--surface); }
+  .ba-col.after { border-color: var(--teal); }
+  .ba-label { font-size: 11px; letter-spacing: .06em; margin-bottom: 10px; font-weight: 700; }
+  .ba-col:not(.after) .ba-label { color: var(--ink-faint); }
+  .ba-col.after .ba-label { color: var(--teal); }
+  .ba-col ul { margin: 0; padding-right: 18px; font-size: 13.5px; color: var(--ink-muted); }
+  .ba-col li { margin-bottom: 6px; }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); }
+  thead th { text-align: right; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); background: var(--surface-2); padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td .mono, th .mono { font-size: 13px; color: var(--teal); }
+  .code-block { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.7; direction: ltr; text-align: left; color: var(--ink); }
+  .code-block .k { color: var(--accent); }
+  .code-block .s { color: var(--teal); }
+  .code-block .c { color: var(--ink-faint); }
+  .rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .rules li { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 13px 16px; font-size: 14.5px; }
+  .rules li .tag { flex: none; font-family: var(--font-mono); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 3px; margin-top: 1px; }
+  .rules li.allow .tag { background: var(--teal-soft); color: var(--teal); }
+  .rules li.deny .tag { background: var(--accent-soft); color: var(--accent); }
+  .rules li.decision .tag { background: var(--amber-soft); color: var(--amber); }
+  .filemap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .filemap { grid-template-columns: 1fr; } }
+  .filemap .col h3 { font-size: 13px; letter-spacing: .04em; color: var(--ink-faint); margin-bottom: 10px; }
+  .filemap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .filemap li { font-family: var(--font-mono); font-size: 12.8px; padding: 6px 10px; border-radius: 4px; direction: ltr; text-align: left; color: var(--ink-muted); }
+  .filemap li:hover { background: var(--surface-2); color: var(--ink); }
+  .filemap li .fdesc { font-family: var(--font-body); direction: rtl; text-align: right; display: block; color: var(--ink-faint); font-size: 12px; margin-top: 1px; }
+  footer.page-foot { max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px; color: var(--ink-faint); font-size: 13px; border-top: 1px solid var(--line); margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="eyebrow">مرجع تقني — Phase 3 / 8</span>
+    <h1 class="title">بوابة المشرف</h1>
+    <p class="dek">أول حساب دخول حقيقي لعضو هيئة تدريس — اختياري بالكامل، لا يؤثر على أي عضو موجود بلا حساب. مع قدرة ضيّقة ومقصودة: كتابة ملاحظة فقط، لا اعتماد.</p>
+    <div class="badges">
+      <span class="badge"><span class="dot"></span> Phase 3 — مُنفَّذ 2026-08-16</span>
+      <span class="badge">20 اختبارًا جديدًا</span>
+      <span class="badge">293/294 ناجحة</span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="محتويات الصفحة">
+    <div class="rail-label">المحتويات</div>
+    <ol id="toc">
+      <li><a href="#overview">نظرة عامة</a></li>
+      <li><a href="#optional">حساب اختياري، لا استيراد جماعي</a></li>
+      <li><a href="#login">آلية الدخول — لا تعديل لكود مشترك</a></li>
+      <li><a href="#note">قدرة ضيّقة: ملاحظة فقط</a></li>
+      <li><a href="#revision">تعديل قرار من Phase 2</a></li>
+      <li><a href="#dashboard">تعريف "يحتاج إجراء"</a></li>
+      <li><a href="#files">الملفات المسؤولة</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section class="block" id="overview">
+      <div class="block-head">
+        <span class="block-num">01</span>
+        <h2 class="block-title">نظرة عامة</h2>
+        <p class="block-intro">على عكس الطالب (Phase 1: حساب إجباري لكل صف مستورَد)، عضو هيئة التدريس <span class="mono">FacultyMember</span> ظل بيانات وصفية بلا حساب دخول لعقود من عمر النظام — Phase 3 جعل الحساب اختياريًا فقط عند الحاجة الفعلية.</p>
+      </div>
+    </section>
+
+    <section class="block" id="optional">
+      <div class="block-head">
+        <span class="block-num">02</span>
+        <h2 class="block-title">حساب اختياري — لا استيراد جماعي</h2>
+        <p class="block-intro">فرق جوهري عن نمط Phase 1: لا معالج Excel، بل زر واحد لكل عضو منفرد.</p>
+      </div>
+      <div class="before-after">
+        <div class="ba-col">
+          <div class="ba-label">نمط الطالب (Phase 1)</div>
+          <ul>
+            <li>استيراد دفعة كاملة من ملف Excel</li>
+            <li>حساب إجباري لكل صف صالح</li>
+            <li>معالج Preview → Confirm</li>
+          </ul>
+        </div>
+        <div class="ba-col after">
+          <div class="ba-label">نمط المشرف (Phase 3)</div>
+          <ul>
+            <li>عضو واحد في كل مرة، من شاشة موجودة أصلًا</li>
+            <li>حساب اختياري بالكامل — <span class="mono">faculty_members.user_id</span> nullable</li>
+            <li>زر "إنشاء حساب دخول" يظهر فقط بجانب عضو بلا حساب</li>
+          </ul>
+        </div>
+      </div>
+      <div class="prose" style="margin-top:16px">
+        <p>عمود واحد جديد فقط: <span class="mono">faculty_members.user_id</span> (nullable, FK→users, unique). لا يتأثر أي عضو هيئة تدريس حالي بلا حساب — يبقى بيانات وصفية كما كان دائمًا.</p>
+      </div>
+    </section>
+
+    <section class="block" id="login">
+      <div class="block-head">
+        <span class="block-num">03</span>
+        <h2 class="block-title">آلية الدخول — لا حاجة لتعديل كود مشترك هذه المرة</h2>
+        <p class="block-intro">على عكس الطالب، المشرف يملك بريدًا حقيقيًا أصلًا — لا حاجة لأي بريد تركيبي أو تعديل في <span class="mono">LoginRequest</span>.</p>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="field-label">اسم الدخول</div>
+          <div class="field-value mono">email <span style="color:var(--ink-faint); font-family:var(--font-body)">(الحقيقي، الموجود أصلًا في السجل)</span></div>
+        </div>
+        <div class="panel">
+          <div class="field-label">كلمة المرور المؤقتة</div>
+          <div class="field-value mono">phone_number <span style="color:var(--ink-faint); font-family:var(--font-body)">(الموجود أصلًا، بلا حقل جديد)</span></div>
+        </div>
+      </div>
+      <div class="prose" style="margin-top:16px">
+        <p>المشرف يسجّل الدخول ببريده الحقيقي تمامًا مثل بقية الموظفين — آلية <span class="mono">Auth::attempt()</span> الحالية تعمل بلا أي تغيير. الفرق الوحيد عن حالة الطالب في Phase 1 التي احتاجت لمس <span class="mono">LoginRequest</span> المشترك.</p>
+      </div>
+    </section>
+
+    <section class="block" id="note">
+      <div class="block-head">
+        <span class="block-num">04</span>
+        <h2 class="block-title">قدرة ضيّقة ومقصودة: كتابة ملاحظة فقط</h2>
+        <p class="block-intro">ability جديدة مخصَّصة <span class="mono">updateNote</span> — أضيق بكثير من <span class="mono">changeStatus</span> الكاملة.</p>
+      </div>
+      <div class="code-block">
+<span class="c">// ProjectProposalPolicy::updateNote()</span>
+<span class="k">public function</span> updateNote(User <span class="k">$user</span>, ProjectProposal <span class="k">$proposal</span>): <span class="k">bool</span>
+{
+    <span class="k">return</span> <span class="k">$user</span>->hasRole(<span class="s">'supervisor'</span>)
+        && <span class="k">$this</span>->isAssignedSupervisor(<span class="k">$user</span>, <span class="k">$proposal</span>);
+    <span class="c">// لا قدرة على الاعتماد/الرفض/طلب التعديل — تبقى حصرًا لـ changeStatus()</span>
+}
+      </div>
+      <ul class="rules" style="margin-top:16px">
+        <li class="allow"><span class="tag">يسمح</span> كتابة/تعديل <span class="mono">supervisor_note</span> الخاصة به فقط، لمقترحات مُسنَدة له فعليًا</li>
+        <li class="deny"><span class="tag">يمنع</span> الاعتماد أو الرفض أو طلب التعديل — <span class="mono">changeStatus</span> تبقى محصورة بـ<span class="mono">dept_manager</span>/<span class="mono">super_admin</span></li>
+      </ul>
+    </section>
+
+    <section class="block" id="revision">
+      <div class="block-head">
+        <span class="block-num">05</span>
+        <h2 class="block-title">تعديل قرار سابق من Phase 2 — قرار جديد بموافقة صريحة</h2>
+        <p class="block-intro">مثال حي على كيف تُعاد مراجعة قرار مرحلة سابقة عندما يتغيّر السياق الذي بُني عليه.</p>
+      </div>
+      <div class="prose">
+        <p>في Phase 2، تقرَّر أن <span class="mono">dept_manager</span> هو من يملأ <span class="mono">supervisor_note</span> نيابةً عن المشرف — لعدم وجود بوابة مشرف حينها أصلًا. الآن وبعد بناء البوابة فعليًا في هذه المرحلة، <strong>قرَّر المستخدم صراحةً</strong> أن يستطيع المشرف كتابة ملاحظته بنفسه من داخل بوابته. قدرة <span class="mono">dept_manager</span> القديمة على ملء الملاحظة ضمن نفس إجراء المراجعة <strong>أُبقيت كما هي أيضًا</strong> — كلا الطريقين يكتبان لنفس العمود، لا تعارض بينهما.</p>
+      </div>
+    </section>
+
+    <section class="block" id="dashboard">
+      <div class="block-head">
+        <span class="block-num">06</span>
+        <h2 class="block-title">تعريف "يحتاج إجراء" في لوحة تحكم المشرف</h2>
+        <p class="block-intro">إحصاء إعلامي بحت — المشرف لا يملك صلاحية اعتماد أو رفض المقترح نفسه.</p>
+      </div>
+      <div class="grid-3">
+        <div class="panel"><div class="field-label">الشرط</div><div class="field-value mono" style="font-size:13px">status = pending</div></div>
+        <div class="panel"><div class="field-label">و</div><div class="field-value mono" style="font-size:13px">supervisor_note IS NULL</div></div>
+        <div class="panel"><div class="field-label">يعني</div><div class="field-value">لم يُبدِ المشرف رأيه بعد</div></div>
+      </div>
+    </section>
+
+    <section class="block" id="files">
+      <div class="block-head">
+        <span class="block-num">07</span>
+        <h2 class="block-title">الملفات المسؤولة</h2>
+        <p class="block-intro">خريطة الكود الفعلي وراء بوابة المشرف.</p>
+      </div>
+      <div class="filemap">
+        <div class="col">
+          <h3>Backend</h3>
+          <ul>
+            <li>app/Notifications/SupervisorAccountCreated.php<span class="fdesc">قناتا mail+database معًا</span></li>
+            <li>app/Http/Controllers/FacultyMemberController.php<span class="fdesc">createAccount()</span></li>
+            <li>app/Policies/ProjectProposalPolicy.php<span class="fdesc">فرع supervisor + updateNote()</span></li>
+            <li>app/Http/Controllers/Supervisor/DashboardController.php<span class="fdesc">إحصاءات "يحتاج إجراء"</span></li>
+            <li>app/Http/Controllers/Supervisor/ProposalController.php<span class="fdesc">index/show/updateNote</span></li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Frontend</h3>
+          <ul>
+            <li>resources/js/pages/FacultyMembers/Index.vue<span class="fdesc">زر "إنشاء حساب دخول" + شارة الحالة</span></li>
+            <li>resources/js/pages/Supervisor/Dashboard.vue<span class="fdesc">إحصاءات المشرف</span></li>
+            <li>resources/js/pages/Supervisor/Proposals/{Index,Show}.vue<span class="fdesc">تعيد استخدام LifecycleTimeline من Phase 2</span></li>
+          </ul>
+          <h3 style="margin-top:22px">الاختبارات</h3>
+          <ul>
+            <li>tests/Feature/Supervisor/FacultyMemberAccountTest.php<span class="fdesc">5 اختبارات لإنشاء الحساب</span></li>
+            <li>tests/Feature/Supervisor/SupervisorPortalTest.php<span class="fdesc">10 اختبارات للوحة والصلاحيات</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="page-foot">توثيق تقني داخلي — نظام أرشفة مشاريع التخرج، كلية التقنية الإلكترونية.</footer>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+    var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+    function onScroll() {
+      var pos = window.scrollY + 120;
+      var activeIdx = 0;
+      sections.forEach(function (s, i) { if (s && s.offsetTop <= pos) activeIdx = i; });
+      links.forEach(function (a, i) { a.classList.toggle('active', i === activeIdx); });
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

@@ -26,6 +26,7 @@ class NewProjectFeedbackNotification extends Notification
             'visitor_name'    => $this->feedback->visitor_name,
             'feedback_type'   => $this->feedback->feedback_type,
             'title'           => $this->feedback->title,
+            'message'         => 'ملاحظة جديدة على مشروع "' . $this->feedback->project_title . '" من ' . $this->feedback->visitor_name,
             'rating'          => $this->feedback->rating,
             'created_at'      => $this->feedback->created_at->toDateTimeString(),
             'excerpt'         => str($this->feedback->message)->limit(120),

@@ -39,6 +39,6 @@ test('project hasMany project students', function () {
     expect((new Project())->students())->toBeInstanceOf(HasMany::class);
 });
 
-test('project belongsToMany examiner via project_examiners', function () {
-    expect((new Project())->examiners())->toBeInstanceOf(BelongsToMany::class);
+test('project belongsToMany faculty member via project_faculty_members', function () {
+    expect((new Project())->facultyMembers())->toBeInstanceOf(BelongsToMany::class);
 });

@@ -4,6 +4,7 @@ namespace Tests\Unit\Models;
 
 use Tests\TestCase;
 use App\Models\ProjectProposal;
+use App\Models\FacultyMember;
 use App\Models\User;
 use App\Models\Department;
 use App\Models\Specialization;
@@ -34,20 +35,17 @@ class ProjectProposalTest extends TestCase
     public function test_it_has_students()
     {
         $proposal = ProjectProposal::factory()->create();
-        $student1 = User::factory()->create();
-        $student2 = User::factory()->create();
+        $proposal->students()->create(['full_name' => 'أحمد علي', 'registration_number' => '2026001']);
+        $proposal->students()->create(['full_name' => 'سارة محمد', 'registration_number' => '2026002']);
 
-        $proposal->students()->attach([$student1->id, $student2->id]);
-
-        $this->assertCount(2, $proposal->students);
-        $this->assertTrue($proposal->students->contains($student1));
-        $this->assertTrue($proposal->students->contains($student2));
+        $this->assertCount(2, $proposal->fresh()->students);
+        $this->assertEquals('2026001', $proposal->students->first()->registration_number);
     }
 
     public function test_it_has_a_creator_and_optional_supervisor()
     {
         $creator = User::factory()->create();
-        $supervisor = User::factory()->create();
+        $supervisor = FacultyMember::factory()->create();
 
         $proposal = ProjectProposal::factory()->create([
             'created_by' => $creator->id,
@@ -57,7 +55,7 @@ class ProjectProposalTest extends TestCase
         $this->assertInstanceOf(User::class, $proposal->creator);
         $this->assertEquals($creator->id, $proposal->creator->id);
 
-        $this->assertInstanceOf(User::class, $proposal->supervisor);
+        $this->assertInstanceOf(FacultyMember::class, $proposal->supervisor);
         $this->assertEquals($supervisor->id, $proposal->supervisor->id);
     }
 }

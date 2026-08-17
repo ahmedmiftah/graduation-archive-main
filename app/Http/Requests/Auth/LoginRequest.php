@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\Student;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
@@ -22,12 +23,16 @@ class LoginRequest extends FormRequest
     /**
      * Get the validation rules that apply to the request.
      *
+     * Accepts either a real email (staff/manager/supervisor) or a student's
+     * registration_number — resolved to the student's synthetic account
+     * email in authenticate() before the actual auth attempt.
+     *
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'email' => ['required', 'string'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,7 +46,9 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $login = $this->resolveLoginEmail((string) $this->input('email'));
+
+        if (! $login || ! Auth::attempt(['email' => $login, 'password' => $this->input('password')], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -50,6 +57,19 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+    }
+
+    /**
+     * Real emails (staff/manager/supervisor) pass through unchanged. A bare
+     * registration number is resolved to the linked student's account email.
+     */
+    private function resolveLoginEmail(string $input): ?string
+    {
+        if (str_contains($input, '@')) {
+            return $input;
+        }
+
+        return Student::where('registration_number', $input)->first()?->user?->email;
     }
 
     /**

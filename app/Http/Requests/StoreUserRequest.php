@@ -18,7 +18,7 @@ class StoreUserRequest extends FormRequest
             'email'               => ['required', 'email', 'unique:users,email'],
             'password'            => ['required', 'string', 'min:8'],
             'registration_number' => ['nullable', 'string', 'unique:users,registration_number'],
-            'role'                => ['required', 'in:super_admin,dept_manager,supervisor,dept_staff,viewer'],
+            'role'                => ['required', 'in:super_admin,dept_manager,dept_staff'],
             'department_id'       => ['nullable', 'exists:departments,id'],
             'is_active'           => ['boolean'],
         ];

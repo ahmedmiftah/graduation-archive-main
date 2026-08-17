@@ -11,6 +11,10 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             ProjectStatusSeeder::class,
+            AcademicDegreeSeeder::class,
+            SystemSettingSeeder::class,
+            SemesterSeeder::class,
+            LifecycleStageSeeder::class,
             AdminSeeder::class,
             DummyDataSeeder::class,
         ]);

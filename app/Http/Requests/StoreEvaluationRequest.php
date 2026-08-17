@@ -14,8 +14,8 @@ class StoreEvaluationRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'examiner_id' => ['required', 'integer', 'exists:examiners,id'],
-            'notes'       => ['required', 'string'],
+            'faculty_member_id' => ['required', 'integer', 'exists:faculty_members,id'],
+            'notes'             => ['required', 'string'],
         ];
     }
 }

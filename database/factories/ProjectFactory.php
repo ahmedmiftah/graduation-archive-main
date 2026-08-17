@@ -3,8 +3,8 @@
 namespace Database\Factories;
 
 use App\Models\Department;
+use App\Models\FacultyMember;
 use App\Models\Specialization;
-use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class ProjectFactory extends Factory
@@ -19,7 +19,7 @@ class ProjectFactory extends Factory
             'academic_year'     => $year . '/' . ($year + 1),
             'department_id'     => Department::factory(),
             'specialization_id' => Specialization::factory(),
-            'supervisor_id'     => User::factory(),
+            'supervisor_id'     => FacultyMember::factory(),
             'current_status_id' => 5, // in_progress — matches the default for newly created projects
             'is_deleted'        => false,
         ];

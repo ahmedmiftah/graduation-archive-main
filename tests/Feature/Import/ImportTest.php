@@ -2,6 +2,7 @@
 
 use App\Imports\ProjectsImport;
 use App\Models\Department;
+use App\Models\FacultyMember;
 use App\Models\Project;
 use App\Models\Specialization;
 use Database\Seeders\ProjectStatusSeeder;
@@ -66,7 +67,7 @@ function makeImportDeps(): array
         'name'          => 'Software Engineering',
         'department_id' => $dept->id,
     ]);
-    $supervisor = userWithRole('supervisor');
+    $supervisor = FacultyMember::factory()->create();
 
     return compact('dept', 'spec', 'supervisor');
 }

@@ -3,9 +3,9 @@
 namespace App\Imports;
 
 use App\Models\Department;
+use App\Models\FacultyMember;
 use App\Models\Project;
 use App\Models\Specialization;
-use App\Models\User;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -77,7 +77,7 @@ class ProjectsImport implements ToCollection, WithHeadingRow
         $specialization = Specialization::where('name', trim($row['specialization_name']))
             ->where('department_id', $department->id)
             ->first();
-        $supervisor = User::where('email', trim($row['supervisor_email']))->first();
+        $supervisor = FacultyMember::where('email', trim($row['supervisor_email']))->first();
 
         $finalScore = isset($row['final_score']) && $row['final_score'] !== ''
             ? (float) $row['final_score']
@@ -138,13 +138,9 @@ class ProjectsImport implements ToCollection, WithHeadingRow
             return "التخصص غير موجود في هذا القسم: {$row['specialization_name']}";
         }
 
-        $supervisor = User::where('email', trim($row['supervisor_email']))->first();
+        $supervisor = FacultyMember::where('email', trim($row['supervisor_email']))->first();
         if (! $supervisor) {
             return "المشرف غير موجود: {$row['supervisor_email']}";
-        }
-
-        if (! $supervisor->hasRole('supervisor')) {
-            return "المستخدم ليس مشرفاً: {$row['supervisor_email']}";
         }
 
         return null;

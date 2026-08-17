@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Department;
+use App\Models\FacultyMember;
 use App\Models\Project;
 use App\Models\Specialization;
 use App\Models\User;
@@ -24,12 +25,12 @@ beforeEach(function () {
 function makeSearchProject(
     ?Department $dept = null,
     ?Specialization $spec = null,
-    ?User $supervisor = null,
+    ?FacultyMember $supervisor = null,
     array $overrides = [],
 ): Project {
     $dept       ??= Department::factory()->create();
     $spec       ??= Specialization::factory()->create(['department_id' => $dept->id]);
-    $supervisor ??= userWithRole('supervisor');
+    $supervisor ??= FacultyMember::factory()->create();
 
     return Project::factory()->create(array_merge([
         'department_id'     => $dept->id,
@@ -96,7 +97,7 @@ test('filter by department returns only that department projects', function () {
     $specA = Specialization::factory()->create(['department_id' => $deptA->id]);
     $deptB = Department::factory()->create();
     $specB = Specialization::factory()->create(['department_id' => $deptB->id]);
-    $sup   = userWithRole('supervisor');
+    $sup   = FacultyMember::factory()->create();
 
     Project::factory()->count(2)->create([
         'department_id'     => $deptA->id,
@@ -123,7 +124,7 @@ test('filter by specialization returns correct results', function () {
     $dept  = Department::factory()->create();
     $specA = Specialization::factory()->create(['department_id' => $dept->id]);
     $specB = Specialization::factory()->create(['department_id' => $dept->id]);
-    $sup   = userWithRole('supervisor');
+    $sup   = FacultyMember::factory()->create();
 
     Project::factory()->count(2)->create([
         'department_id'     => $dept->id,
@@ -149,7 +150,7 @@ test('filter by specialization returns correct results', function () {
 test('filter by academic year returns correct results', function () {
     $dept = Department::factory()->create();
     $spec = Specialization::factory()->create(['department_id' => $dept->id]);
-    $sup  = userWithRole('supervisor');
+    $sup  = FacultyMember::factory()->create();
 
     Project::factory()->count(2)->create([
         'department_id'     => $dept->id,
@@ -177,8 +178,8 @@ test('filter by academic year returns correct results', function () {
 test('filter by supervisor returns correct results', function () {
     $dept = Department::factory()->create();
     $spec = Specialization::factory()->create(['department_id' => $dept->id]);
-    $supA = userWithRole('supervisor');
-    $supB = userWithRole('supervisor');
+    $supA = FacultyMember::factory()->create();
+    $supB = FacultyMember::factory()->create();
 
     Project::factory()->count(2)->create([
         'department_id'     => $dept->id,
@@ -206,7 +207,7 @@ test('combine multiple filters works correctly', function () {
     $specA = Specialization::factory()->create(['department_id' => $deptA->id]);
     $deptB = Department::factory()->create();
     $specB = Specialization::factory()->create(['department_id' => $deptB->id]);
-    $sup   = userWithRole('supervisor');
+    $sup   = FacultyMember::factory()->create();
 
     // 2 projects that should match (dept A + year 2024/2025)
     Project::factory()->count(2)->create([
@@ -246,7 +247,7 @@ test('combine multiple filters works correctly', function () {
 test('empty search returns all projects', function () {
     $dept = Department::factory()->create();
     $spec = Specialization::factory()->create(['department_id' => $dept->id]);
-    $sup  = userWithRole('supervisor');
+    $sup  = FacultyMember::factory()->create();
 
     Project::factory()->count(3)->create([
         'department_id'     => $dept->id,
@@ -278,7 +279,9 @@ test('similarity detection finds matching titles', function () {
     $results = app(SearchService::class)->detectSimilarity('Home Automation');
 
     expect($results)->toHaveCount(1);
-    expect($results->first()->project_title)->toBe('Smart Home Automation System');
+    expect($results->first()['title'])->toBe('Smart Home Automation System');
+    expect($results->first()['type'])->toBe('project');
+    expect($results->first()['similarity_percent'])->toBeGreaterThanOrEqual(30);
 });
 
 // ── 11. Similarity detection: excludes current project ────────────────────────
@@ -290,10 +293,45 @@ test('similarity detection ignores current project when editing', function () {
     makeSearchProject(overrides: ['project_title' => 'Smart Home Automation System']);
 
     // When excluding by id, only the other project is returned
-    $results = app(SearchService::class)->detectSimilarity('Smart Home Automation', $project->id);
+    $results = app(SearchService::class)->detectSimilarity('Smart Home Automation', excludeProjectId: $project->id);
 
     expect($results)->toHaveCount(1);
-    expect($results->first()->id)->not->toBe($project->id);
+    expect($results->first()['id'])->not->toBe($project->id);
+});
+
+test('similarity detection also finds matching proposals and reports a percentage', function () {
+    $dept = Department::factory()->create();
+    $spec = Specialization::factory()->create(['department_id' => $dept->id]);
+
+    \App\Models\ProjectProposal::factory()->create([
+        'department_id'     => $dept->id,
+        'specialization_id' => $spec->id,
+        'title'             => 'Smart Home Automation System',
+        'description'       => 'A system that automates home appliances',
+        'status'            => 'pending',
+    ]);
+
+    $results = app(SearchService::class)->detectSimilarity('Smart Home Automation', 'A system that automates home appliances');
+
+    expect($results)->toHaveCount(1);
+    expect($results->first()['type'])->toBe('proposal');
+    expect($results->first()['similarity_percent'])->toBeGreaterThan(50);
+});
+
+test('similarity detection excludes superseded proposals', function () {
+    $dept = Department::factory()->create();
+    $spec = Specialization::factory()->create(['department_id' => $dept->id]);
+
+    \App\Models\ProjectProposal::factory()->create([
+        'department_id'     => $dept->id,
+        'specialization_id' => $spec->id,
+        'title'             => 'Smart Home Automation System',
+        'status'            => 'superseded',
+    ]);
+
+    $results = app(SearchService::class)->detectSimilarity('Smart Home Automation System');
+
+    expect($results)->toHaveCount(0);
 });
 
 // ── 12. Suggestions: max 5 results ───────────────────────────────────────────
@@ -301,7 +339,7 @@ test('similarity detection ignores current project when editing', function () {
 test('search suggestions returns max 5 results', function () {
     $dept = Department::factory()->create();
     $spec = Specialization::factory()->create(['department_id' => $dept->id]);
-    $sup  = userWithRole('supervisor');
+    $sup  = FacultyMember::factory()->create();
 
     $titles = ['Alpha Smart', 'Beta Smart', 'Gamma Smart', 'Delta Smart', 'Epsilon Smart', 'Zeta Smart'];
     foreach ($titles as $title) {
@@ -324,7 +362,7 @@ test('search suggestions returns max 5 results', function () {
 test('search suggestions returns matching titles only', function () {
     $dept = Department::factory()->create();
     $spec = Specialization::factory()->create(['department_id' => $dept->id]);
-    $sup  = userWithRole('supervisor');
+    $sup  = FacultyMember::factory()->create();
 
     Project::factory()->create([
         'project_title'     => 'Neural Network Classifier',
@@ -359,7 +397,7 @@ test('unauthenticated user cannot search', function () {
 test('search results are paginated', function () {
     $dept = Department::factory()->create();
     $spec = Specialization::factory()->create(['department_id' => $dept->id]);
-    $sup  = userWithRole('supervisor');
+    $sup  = FacultyMember::factory()->create();
 
     Project::factory()->count(16)->create([
         'department_id'     => $dept->id,

@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>نظام الإشعارات وخارطة الطريق</title>
+<style>
+  :root {
+    --bg: #EDF0F2;
+    --surface: #FFFFFF;
+    --surface-2: #F4F6F7;
+    --ink: #12212E;
+    --ink-muted: #4B6072;
+    --ink-faint: #7C8FA0;
+    --line: #D3DBE0;
+    --line-strong: #AFC0C9;
+    --accent: #8A2E4E;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #F4E4EA;
+    --teal: #1F7A6C;
+    --teal-soft: #E3F1EE;
+    --amber: #A6631E;
+    --amber-soft: #F4E9D8;
+    --stage-done: #1F7A6C;
+    --stage-done-soft: #E3F1EE;
+    --stage-current: #2B5FD9;
+    --stage-current-soft: #E7EDFC;
+    --stage-upcoming: #AFC0C9;
+    --shadow: 0 1px 2px rgba(18,33,46,0.06), 0 8px 24px -12px rgba(18,33,46,0.18);
+    --font-display: 'Dubai', 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-body: 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-mono: 'Cascadia Code', 'Consolas', 'SF Mono', 'Courier New', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1720;
+      --surface: #17212C;
+      --surface-2: #1D2833;
+      --ink: #E7ECEF;
+      --ink-muted: #9FB0BD;
+      --ink-faint: #6C7E8C;
+      --line: #2B3946;
+      --line-strong: #3C4C5A;
+      --accent: #D97A97;
+      --accent-ink: #1A0A10;
+      --accent-soft: #2E1B22;
+      --teal: #4FC3B0;
+      --teal-soft: #163430;
+      --amber: #D9A24B;
+      --amber-soft: #332617;
+      --stage-done: #4FC3B0;
+      --stage-done-soft: #163430;
+      --stage-current: #6C93F5;
+      --stage-current-soft: #1B2740;
+      --stage-upcoming: #3C4C5A;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1720;
+    --surface: #17212C;
+    --surface-2: #1D2833;
+    --ink: #E7ECEF;
+    --ink-muted: #9FB0BD;
+    --ink-faint: #6C7E8C;
+    --line: #2B3946;
+    --line-strong: #3C4C5A;
+    --accent: #D97A97;
+    --accent-ink: #1A0A10;
+    --accent-soft: #2E1B22;
+    --teal: #4FC3B0;
+    --teal-soft: #163430;
+    --amber: #D9A24B;
+    --amber-soft: #332617;
+    --stage-done: #4FC3B0;
+    --stage-done-soft: #163430;
+    --stage-current: #6C93F5;
+    --stage-current-soft: #1B2740;
+    --stage-upcoming: #3C4C5A;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    line-height: 1.25;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  code, .mono {
+    font-family: var(--font-mono);
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--stage-current);
+    outline-offset: 2px;
+  }
+
+  /* ── Shell layout ─────────────────────────────────────────── */
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+  }
+
+  /* ── Header / hero ────────────────────────────────────────── */
+  header.top {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .top-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 24px 32px;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    padding: 4px 12px;
+    border-radius: 3px;
+    margin-bottom: 18px;
+  }
+  h1.title {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  p.dek {
+    margin-top: 12px;
+    max-width: 66ch;
+    color: var(--ink-muted);
+    font-size: 17px;
+  }
+  .badges {
+    margin-top: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .badge {
+    font-size: 12.5px;
+    padding: 5px 11px;
+    border-radius: 3px;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-muted);
+    background: var(--surface-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); flex: none; }
+  .badge.planned .dot { background: var(--amber); }
+
+  /* ── Status pill (built vs planned) ──────────────────────── */
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .pill.built { background: var(--teal-soft); color: var(--teal); }
+  .pill.planned { background: var(--amber-soft); color: var(--amber); }
+
+  /* ── Nav rail ─────────────────────────────────────────────── */
+  nav.rail {
+    position: sticky;
+    top: 24px;
+    padding: 24px 0;
+    font-size: 14px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+  nav.rail .rail-label {
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    margin-bottom: 12px;
+    padding-right: 12px;
+  }
+  nav.rail .rail-group-label {
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--ink-faint);
+    margin: 16px 0 6px;
+    padding-right: 12px;
+  }
+  nav.rail ol {
+    list-style: none;
+    margin: 0; padding: 0;
+    counter-reset: navsteps;
+    border-right: 2px solid var(--line);
+  }
+  nav.rail li { counter-increment: navsteps; }
+  nav.rail a {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 7px 14px 7px 8px;
+    margin-right: -2px;
+    border-right: 2px solid transparent;
+    color: var(--ink-muted);
+    text-decoration: none;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  nav.rail a::before {
+    content: counter(navsteps, decimal-leading-zero);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+  }
+  nav.rail a:hover, nav.rail a.active {
+    color: var(--ink);
+    border-right-color: var(--accent);
+  }
+  nav.rail a.active::before { color: var(--accent); }
+
+  /* ── Main content ─────────────────────────────────────────── */
+  main { min-width: 0; padding: 48px 0 96px; }
+
+  .part-divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 72px 0 40px;
+  }
+  .part-divider:first-child { margin-top: 0; }
+  .part-divider .pd-num {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--surface);
+    background: var(--ink);
+    padding: 4px 10px;
+    border-radius: 3px;
+    flex: none;
+  }
+  .part-divider .pd-title { font-size: 20px; font-weight: 700; }
+  .part-divider .pd-line { flex: 1; height: 1px; background: var(--line); }
+
+  section.block {
+    padding-top: 56px;
+    margin-top: 56px;
+    border-top: 1px solid var(--line);
+    scroll-margin-top: 20px;
+  }
+  section.block.no-border { border-top: none; margin-top: 0; padding-top: 0; }
+
+  .block-head { margin-bottom: 24px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .block-num {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent);
+    margin-bottom: 6px;
+    display: block;
+  }
+  h2.block-title { font-size: 24px; font-weight: 700; }
+  p.block-intro {
+    margin-top: 12px;
+    max-width: 68ch;
+    color: var(--ink-muted);
+  }
+
+  .prose { max-width: 68ch; }
+  .prose p { margin: 0 0 14px; color: var(--ink); }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--ink); }
+  .prose ul { margin: 0 0 14px; padding-right: 20px; color: var(--ink); }
+  .prose li { margin-bottom: 6px; }
+
+  /* ── Cards / panels ───────────────────────────────────────── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 22px;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 720px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .field-label { font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); margin-bottom: 4px; }
+  .field-value { font-size: 15px; color: var(--ink); }
+
+  /* ── Phase cards ──────────────────────────────────────────── */
+  .phase-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 22px 24px;
+    box-shadow: var(--shadow);
+  }
+  .phase-card + .phase-card { margin-top: 16px; }
+  .phase-card .ph-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; flex-wrap: wrap; }
+  .phase-card .ph-title { font-size: 16.5px; font-weight: 700; }
+  .phase-card .ph-body { color: var(--ink-muted); font-size: 14.5px; }
+  .phase-card .ph-body strong { color: var(--ink); }
+  .phase-card .ph-tables { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .phase-card .ph-tables .mono {
+    font-size: 12px; color: var(--teal); background: var(--teal-soft);
+    padding: 3px 8px; border-radius: 3px;
+  }
+
+  /* ── Tables ───────────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); }
+  thead th {
+    text-align: right;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+    background: var(--surface-2);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td .mono, th .mono { font-size: 13px; color: var(--teal); }
+  .method {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+  }
+  .method.get { background: var(--teal-soft); color: var(--teal); }
+  .method.post { background: var(--accent-soft); color: var(--accent); }
+  .method.patch { background: var(--amber-soft); color: var(--amber); }
+
+  /* ── Code block ───────────────────────────────────────────── */
+  .code-block {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.7;
+    direction: ltr;
+    text-align: left;
+    color: var(--ink);
+  }
+  .code-block .k { color: var(--accent); }
+  .code-block .s { color: var(--teal); }
+  .code-block .c { color: var(--ink-faint); }
+
+  /* ── Rule list ────────────────────────────────────────────── */
+  .rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .rules li {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 13px 16px; font-size: 14.5px;
+  }
+  .rules li .tag {
+    flex: none; font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    padding: 3px 8px; border-radius: 3px; margin-top: 1px;
+  }
+  .rules li.built .tag { background: var(--teal-soft); color: var(--teal); }
+  .rules li.deferred .tag { background: var(--amber-soft); color: var(--amber); }
+
+  /* ── File map ─────────────────────────────────────────────── */
+  .filemap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .filemap { grid-template-columns: 1fr; } }
+  .filemap .col h3 { font-size: 13px; letter-spacing: .04em; color: var(--ink-faint); margin-bottom: 10px; }
+  .filemap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .filemap li { font-family: var(--font-mono); font-size: 12.8px; padding: 6px 10px; border-radius: 4px; direction: ltr; text-align: left; color: var(--ink-muted); }
+  .filemap li:hover { background: var(--surface-2); color: var(--ink); }
+  .filemap li .fdesc { font-family: var(--font-body); direction: rtl; text-align: right; display: block; color: var(--ink-faint); font-size: 12px; margin-top: 1px; }
+
+  /* ── Roadmap strip ────────────────────────────────────────── */
+  .roadmap { display: flex; flex-wrap: wrap; gap: 0; margin: 8px 0 0; }
+  .rm-step {
+    flex: 1 1 130px; min-width: 130px;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 14px 16px; position: relative;
+  }
+  .rm-step + .rm-step { margin-right: -1px; }
+  .rm-step .rm-num { font-family: var(--font-mono); font-size: 11px; color: var(--ink-faint); margin-bottom: 6px; }
+  .rm-step .rm-title { font-size: 13.5px; font-weight: 600; margin-bottom: 4px; }
+  .rm-step.done { border-color: var(--stage-done); }
+  .rm-step.done .rm-num { color: var(--stage-done); }
+  .rm-step.next { border-color: var(--amber); box-shadow: 0 0 0 3px var(--amber-soft); }
+  .rm-step.next .rm-num { color: var(--amber); }
+
+  footer.page-foot {
+    max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px;
+    color: var(--ink-faint); font-size: 13px; border-top: 1px solid var(--line); margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="eyebrow">مرجع تقني</span>
+    <h1 class="title">نظام الإشعارات وخارطة الطريق</h1>
+    <p class="dek">توثيق كامل لخمس مراحل متتالية (Phase 4–8) — نظام الإشعارات المركزي، أفكار المشاريع، طلبات الانضمام، الحجز ودورة حياته، وكشف التشابه بالنسبة المئوية. بهذه المرحلة الأخيرة، خطة "منصة دورة حياة مشروع التخرج" الثمانية المراحل مُنفَّذة ومُختبَرة بالكامل.</p>
+    <div class="badges">
+      <span class="badge"><span class="dot"></span> Phase 4 — مُنفَّذ 2026-08-16</span>
+      <span class="badge"><span class="dot"></span> Phase 5 — مُنفَّذ 2026-08-17</span>
+      <span class="badge"><span class="dot"></span> Phase 6 — مُنفَّذ 2026-08-17</span>
+      <span class="badge"><span class="dot"></span> Phase 7 — مُنفَّذ 2026-08-17</span>
+      <span class="badge"><span class="dot"></span> Phase 8 — مُنفَّذ 2026-08-17</span>
+      <span class="badge">Laravel 11 + Vue 3 + Inertia</span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="محتويات الصفحة">
+    <div class="rail-label">المحتويات</div>
+    <ol id="toc">
+      <li><a href="#overview">نظرة عامة</a></li>
+      <li><a href="#events">مصفوفة الأحداث</a></li>
+      <li><a href="#envelope">الغلاف الموحّد</a></li>
+      <li><a href="#routes">المسارات والتحكم</a></li>
+      <li><a href="#ui">واجهة المستخدم</a></li>
+      <li><a href="#deferred">أحداث مؤجَّلة</a></li>
+      <li><a href="#files">الملفات المسؤولة</a></li>
+      <li><a href="#phase5">Phase 5 — أفكار المشاريع</a></li>
+      <li><a href="#phase6">Phase 6 — طلبات الانضمام</a></li>
+      <li><a href="#phase7">Phase 7 — Versioning والحجز</a></li>
+      <li><a href="#phase8">Phase 8 — كشف التشابه</a></li>
+      <li><a href="#schema">الجداول المُنفَّذة</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- 1. Overview -->
+    <section class="block no-border" id="overview">
+      <div class="block-head">
+        <div>
+          <span class="block-num">01</span>
+          <h2 class="block-title">نظرة عامة</h2>
+          <p class="block-intro">الخطة الثمانية المراحل مكتملة — كل صف أدناه مُنفَّذ ومُختبَر فعليًا في الإنتاج.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <span class="pill built">✓ مُنفَّذ</span>
+          <div class="field-value" style="margin-top:10px; font-weight:600">Phase 4 — نظام الإشعارات</div>
+          <p class="tl-signal" style="margin-top:6px; color:var(--ink-muted); font-size:13.5px">4 أحداث حقيقية، غلاف موحّد، جرس + صفحة كاملة لكل الأدوار الخمسة.</p>
+        </div>
+        <div class="panel">
+          <span class="pill built">✓ مُنفَّذ</span>
+          <div class="field-value" style="margin-top:10px; font-weight:600">Phase 5–8 — دورة حياة الفكرة كاملة</div>
+          <p class="tl-signal" style="margin-top:6px; color:var(--ink-muted); font-size:13.5px">نشر فكرة ← طلب انضمام ← حجز بدورة حياته ← كشف تشابه بالنسبة المئوية. 359/360 اختبار ناجح إجمالًا عبر كل الخطة.</p>
+        </div>
+      </div>
+
+      <div class="roadmap">
+        <div class="rm-step done"><div class="rm-num">01</div><div class="rm-title">استيراد الطلاب</div></div>
+        <div class="rm-step done"><div class="rm-num">02</div><div class="rm-title">بوابة الطالب</div></div>
+        <div class="rm-step done"><div class="rm-num">03</div><div class="rm-title">بوابة المشرف</div></div>
+        <div class="rm-step done"><div class="rm-num">04</div><div class="rm-title">الإشعارات</div></div>
+        <div class="rm-step done"><div class="rm-num">05</div><div class="rm-title">أفكار المشاريع</div></div>
+        <div class="rm-step done"><div class="rm-num">06</div><div class="rm-title">طلبات الانضمام</div></div>
+        <div class="rm-step done"><div class="rm-num">07</div><div class="rm-title">Versioning والحجز</div></div>
+        <div class="rm-step done"><div class="rm-num">08</div><div class="rm-title">كشف التشابه</div></div>
+      </div>
+    </section>
+
+    <div class="part-divider">
+      <span class="pd-num">PART A</span>
+      <span class="pd-title">نظام الإشعارات — كيف يعمل فعليًا</span>
+      <span class="pd-line"></span>
+    </div>
+
+    <!-- 2. Events matrix -->
+    <section class="block no-border" id="events">
+      <div class="block-head">
+        <div>
+          <span class="block-num">02</span>
+          <h2 class="block-title">مصفوفة الأحداث الأربعة</h2>
+          <p class="block-intro">من أصل نحو 17 حدثًا وردت في المواصفة الأصلية، اقتصر التنفيذ على 4 أحداث فقط — كل ما تبقى يفتقر حاليًا لآلية تفعيل حقيقية (لا نظام جدولة مناقشة، لا اعتماد توثيقات، لا إخلاء طرف). انظر <a href="#deferred">قسم الأحداث المؤجَّلة</a>.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>الحدث</th><th>الكلاس</th><th>المستلمون</th><th>نقطة التفعيل</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>تقديم مقترح جديد</td>
+              <td class="mono">ProposalSubmitted</td>
+              <td>مديرو قسم المقترح</td>
+              <td class="mono">ProjectProposalService::create()</td>
+            </tr>
+            <tr>
+              <td>إعادة تقديم بعد تعديل</td>
+              <td class="mono">ProposalSubmitted<br><span style="color:var(--ink-faint)">(isResubmission=true)</span></td>
+              <td>مديرو قسم المقترح</td>
+              <td class="mono">نفس create() عند وجود<br>replaces_proposal_id</td>
+            </tr>
+            <tr>
+              <td>تغيّر حالة المقترح<br><span style="color:var(--ink-faint); font-size:12.5px">رفض / تعديل / اعتماد</span></td>
+              <td class="mono">ProjectProposalStatusChanged</td>
+              <td>كل الفريق + المنشئ + المشرف</td>
+              <td class="mono">changeStatus() → notify()</td>
+            </tr>
+            <tr>
+              <td>تكليف كممتحن</td>
+              <td class="mono">ExaminerAssigned</td>
+              <td>عضو هيئة التدريس<br><span style="color:var(--ink-faint); font-size:12.5px">إن كان له حساب دخول</span></td>
+              <td class="mono">ProjectFacultyMemberController::assign()</td>
+            </tr>
+            <tr>
+              <td>جاهزية المشروع للمناقشة</td>
+              <td class="mono">ProjectReadyForDefense</td>
+              <td>المشرف<br><span style="color:var(--ink-faint); font-size:12.5px">إن كان له حساب دخول</span></td>
+              <td class="mono">ProjectController::update()<br><span style="color:var(--ink-faint); font-size:12.5px">عند الانتقال الفعلي لـ current_status_id=6</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 3. Envelope -->
+    <section class="block" id="envelope">
+      <div class="block-head">
+        <div>
+          <span class="block-num">03</span>
+          <h2 class="block-title">الغلاف الموحَّد</h2>
+          <p class="block-intro">كل إشعار — قديم أو جديد — يخزّن نفس ثلاثة مفاتيح في عمود <span class="mono">data</span> بجدول <span class="mono">notifications</span> القياسي. لا جدول جديد، ولا تغيير في بنية Laravel الافتراضية.</p>
+        </div>
+      </div>
+      <div class="code-block">
+<span class="c">// toDatabase() في أي كلاس إشعار</span>
+[
+  <span class="k">'title'</span>   =&gt; <span class="s">'تكليف كممتحن'</span>,          <span class="c">// عنوان الإشعار نفسه</span>
+  <span class="k">'message'</span> =&gt; <span class="s">'تم تكليفك كممتحن لمشروع "..."'</span>,
+  <span class="k">'url'</span>     =&gt; <span class="k">$this</span>-&gt;urlFor(<span class="k">$notifiable</span>),  <span class="c">// رابط يتغيّر حسب دور المستلم</span>
+]
+      </div>
+      <div class="prose" style="margin-top:18px">
+        <p>سابقًا كان مفتاح <span class="mono">title</span> في <span class="mono">ProjectProposalStatusChanged</span> يحمل خطأً عنوان المقترح نفسه بدل عنوان الإشعار — أُصلح ذلك كجزء من التوحيد. دالة <span class="mono">urlFor()</span> الخاصة تفحص دور المستلم وتُرجع الرابط المناسب: <span class="mono">student.proposal.show</span> للطالب، <span class="mono">supervisor.proposals.show</span> للمشرف، أو <span class="mono">proposals.show</span> لبقية الأدوار — بنفس الكلاس، بدون تفريع أكواد.</p>
+      </div>
+    </section>
+
+    <!-- 4. Routes -->
+    <section class="block" id="routes">
+      <div class="block-head">
+        <div>
+          <span class="block-num">04</span>
+          <h2 class="block-title">المسارات والتحكم</h2>
+          <p class="block-intro">مجموعة مسارات واحدة تحت <span class="mono">auth</span> فقط — بلا قيد دور — لأن مركز الإشعارات ملك كل مستخدم لنفسه بغض النظر عن دوره.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>الطريقة</th><th>المسار</th><th>الإجراء</th><th>الغرض</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><span class="method get">GET</span></td>
+              <td class="mono">/notifications</td>
+              <td class="mono">index()</td>
+              <td>صفحة كاملة مُرقَّمة (20 لكل صفحة) لإشعارات المستخدم الحالي فقط</td>
+            </tr>
+            <tr>
+              <td><span class="method patch">PATCH</span></td>
+              <td class="mono">/notifications/{id}/read</td>
+              <td class="mono">markAsRead()</td>
+              <td>يعلّم إشعارًا واحدًا كمقروء — 404 إن كان لمستخدم آخر</td>
+            </tr>
+            <tr>
+              <td><span class="method patch">PATCH</span></td>
+              <td class="mono">/notifications/read-all</td>
+              <td class="mono">markAllAsRead()</td>
+              <td>يعلّم كل الإشعارات غير المقروءة للمستخدم الحالي كمقروءة دفعة واحدة</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="grid-2" style="margin-top:16px">
+        <div class="panel">
+          <div class="field-label">الحماية على مستوى الاستعلام</div>
+          <div class="field-value mono" style="font-size:13.5px">$request-&gt;user()-&gt;notifications()</div>
+          <p class="tl-signal" style="margin-top:8px; color:var(--ink-muted); font-size:13px">لا فحص دور — الحماية طبيعية لأن الاستعلام أصلاً مقيّد بعلاقة المستخدم بنفسه.</p>
+        </div>
+        <div class="panel">
+          <div class="field-label">البيانات المشتركة عالميًا</div>
+          <div class="field-value mono" style="font-size:13.5px">HandleInertiaRequests::share()</div>
+          <p class="tl-signal" style="margin-top:8px; color:var(--ink-muted); font-size:13px"><span class="mono">notifications.unreadCount</span> + <span class="mono">notifications.recent</span> (آخر 6) تصل كل صفحة Inertia دون طلب إضافي.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. UI -->
+    <section class="block" id="ui">
+      <div class="block-head">
+        <div>
+          <span class="block-num">05</span>
+          <h2 class="block-title">واجهة المستخدم</h2>
+          <p class="block-intro">مكوّنان فقط — قائمة منسدلة سريعة، وصفحة كاملة للتصفّح العميق.</p>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="field-label">الجرس — قائمة منسدلة</div>
+          <div class="field-value">AppSidebarHeader.vue</div>
+          <p class="tl-signal" style="margin-top:8px; color:var(--ink-muted); font-size:13.5px">متاح الآن لكل الأدوار الخمسة (كان مقصورًا على <span class="mono">super_admin</span>/<span class="mono">dept_manager</span> ويشير خطأً لـ<span class="mono">/feedback</span>). يعرض آخر 6 إشعارات، نقطة زرقاء لغير المقروء، "تعليم الكل كمقروء"، ورابط "عرض كل الإشعارات".</p>
+        </div>
+        <div class="panel">
+          <div class="field-label">الصفحة الكاملة</div>
+          <div class="field-value">Notifications/Index.vue</div>
+          <p class="tl-signal" style="margin-top:8px; color:var(--ink-muted); font-size:13.5px">نفس نمط تصفّح <span class="mono">Feedback/Index.vue</span> الموجود (ترقيم صفحات، لا تكرار تصميم جديد). النقر على أي إشعار يعلّمه كمقروء ثم ينتقل لرابطه مباشرة.</p>
+        </div>
+      </div>
+      <div class="prose" style="margin-top:18px">
+        <p><strong>ملاحظة مهمة لم تُمسّ:</strong> رابط "لوحة الملاحظات" (<span class="mono">/feedback</span>) — ميزة إدارة ملاحظات الزوار الموجودة أصلاً — بقي مسارًا منفصلاً تمامًا عن مركز الإشعارات الجديد، وحصرًا لـ<span class="mono">super_admin</span>/<span class="mono">dept_manager</span> كما كان دائمًا. لا خلط بين الميزتين رغم أن الجرس كان يشير خطأً إليها سابقًا.</p>
+      </div>
+    </section>
+
+    <!-- 6. Deferred events -->
+    <section class="block" id="deferred">
+      <div class="block-head">
+        <div>
+          <span class="block-num">06</span>
+          <h2 class="block-title">أحداث مؤجَّلة عمدًا</h2>
+          <p class="block-intro">هذه الأحداث لن تُبنى بمنطق وهمي أو Stub — تنتظر الأنظمة الفعلية التي ستولّد إشاراتها في المراحل اللاحقة.</p>
+        </div>
+      </div>
+      <ul class="rules">
+        <li class="built"><span class="tag">جاهز</span> غلاف الإشعار الموحّد (<span class="mono">title/message/url</span>) — أي حدث جديد لاحقًا يُضاف بنفس النمط خلال دقائق</li>
+        <li class="deferred"><span class="tag">مؤجَّل</span> جدولة/تذكير المناقشة — بانتظار نظام جدولة مناقشة فعلي (غير مبني بعد)</li>
+        <li class="deferred"><span class="tag">مؤجَّل</span> اعتماد توثيقات المشرف — الإحصاء موجود في لوحة المشرف من Phase 3، لكن لا زر اعتماد فعلي بعد</li>
+        <li class="deferred"><span class="tag">مؤجَّل</span> إخلاء الطرف واكتمال إجراءات التخرج — لا نظام مقابل في قاعدة البيانات حتى الآن</li>
+        <li class="deferred"><span class="tag">مؤجَّل</span> طلبات الإشراف/الانضمام لفكرة مشروع — تنتظر <a href="#phase6">Phase 6</a> تحديدًا</li>
+        <li class="deferred"><span class="tag">مؤجَّل</span> نشر فكرة مشروع جديدة من مشرف — تنتظر <a href="#phase5">Phase 5</a></li>
+      </ul>
+    </section>
+
+    <!-- 7. File map -->
+    <section class="block" id="files">
+      <div class="block-head">
+        <div>
+          <span class="block-num">07</span>
+          <h2 class="block-title">الملفات المسؤولة</h2>
+          <p class="block-intro">خريطة الكود الفعلي وراء نظام الإشعارات.</p>
+        </div>
+      </div>
+      <div class="filemap">
+        <div class="col">
+          <h3>Backend</h3>
+          <ul>
+            <li>app/Notifications/ProposalSubmitted.php<span class="fdesc">تقديم / إعادة تقديم مقترح</span></li>
+            <li>app/Notifications/ProjectProposalStatusChanged.php<span class="fdesc">تغيّر حالة المقترح + urlFor() حسب الدور</span></li>
+            <li>app/Notifications/ExaminerAssigned.php<span class="fdesc">تكليف ممتحن</span></li>
+            <li>app/Notifications/ProjectReadyForDefense.php<span class="fdesc">جاهزية المشروع للمناقشة</span></li>
+            <li>app/Notifications/StudentAccountCreated.php<span class="fdesc">من Phase 1 — أُضيف مفتاح url فقط</span></li>
+            <li>app/Notifications/SupervisorAccountCreated.php<span class="fdesc">من Phase 3 — أُضيف مفتاح url فقط</span></li>
+            <li>app/Notifications/NewProjectFeedbackNotification.php<span class="fdesc">موجودة أصلاً — أُضيف مفتاح message فقط</span></li>
+            <li>app/Services/ProjectProposalService.php<span class="fdesc">notify() + notifyDepartment()</span></li>
+            <li>app/Http/Controllers/NotificationController.php<span class="fdesc">index / markAsRead / markAllAsRead</span></li>
+            <li>app/Http/Middleware/HandleInertiaRequests.php<span class="fdesc">مشاركة unreadCount + recent عالميًا</span></li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Frontend</h3>
+          <ul>
+            <li>resources/js/components/AppSidebarHeader.vue<span class="fdesc">الجرس — قائمة منسدلة لكل الأدوار</span></li>
+            <li>resources/js/pages/Notifications/Index.vue<span class="fdesc">الصفحة الكاملة المُرقَّمة</span></li>
+            <li>resources/js/components/AppSidebar.vue<span class="fdesc">رابط "الإشعارات" لكل الأدوار + فصل "لوحة الملاحظات"</span></li>
+            <li>resources/js/types/index.ts<span class="fdesc">NotificationItem + SharedData.notifications.recent</span></li>
+          </ul>
+          <h3 style="margin-top:22px">الاختبارات</h3>
+          <ul>
+            <li>tests/Feature/Notification/NotificationTest.php<span class="fdesc">18 اختبارًا — كل حدث + مركز الإشعارات</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. Phase 5 -->
+    <section class="block no-border" id="phase5">
+      <div class="block-head">
+        <div>
+          <span class="block-num">08</span>
+          <h2 class="block-title">Phase 5 — نظام أفكار المشاريع</h2>
+          <p class="block-intro">أول مرحلة تمنح المشرف قدرة نشر — إلى الآن كان دوره حصرًا مراجعة وموافقة.</p>
+        </div>
+        <span class="pill built">✓ مُنفَّذ 2026-08-17</span>
+      </div>
+      <div class="phase-card">
+        <div class="ph-head"><span class="ph-title">الفكرة الأساسية</span></div>
+        <div class="ph-body">
+          <p>المشرف ينشئ "فكرة مشروع" (<span class="mono">ProjectIdea</span>) قائمة بذاتها — عنوان، وصف، تخصص، مهارات مطلوبة، عدد الطلاب المطلوب، كلمات مفتاحية، ملاحظات، وحالة واحدة من: <strong>متاحة / محجوزة / مكتملة / مغلقة</strong> (يتحكم بها المشرف يدويًا حاليًا). الطلاب يتصفّحون الأفكار <strong>المتاحة فقط</strong> عبر <span class="mono">/student/ideas</span>، مع صفحة تفاصيل لكل فكرة (<span class="mono">/student/ideas/{id}</span>). إدارة المشرف لأفكاره عبر <span class="mono">/supervisor/ideas</span> — إنشاء/تعديل/حذف كاملان.</p>
+          <p><strong>قرار نطاق محسوم:</strong> لا ربط فعلي بعد بين الفكرة وأي <span class="mono">ProjectProposal</span>/<span class="mono">Project</span> حقيقي — صفحة تفاصيل الفكرة للطالب تعرض تنويهًا أن إرسال طلب انضمام آلي غير متاح بعد، وتحوّل الطالب للتواصل اليدوي مع المشرف. هذا الربط الفعلي هو بالضبط موضوع <a href="#phase6">Phase 6</a> التالية.</p>
+        </div>
+        <div class="ph-tables"><span class="mono">project_ideas</span></div>
+      </div>
+    </section>
+
+    <!-- 9. Phase 6 -->
+    <section class="block" id="phase6">
+      <div class="block-head">
+        <div>
+          <span class="block-num">09</span>
+          <h2 class="block-title">Phase 6 — طلبات الانضمام</h2>
+          <p class="block-intro">الجسر بين تصفّح الفكرة والالتحاق الفعلي بها.</p>
+        </div>
+        <span class="pill built">✓ مُنفَّذ 2026-08-17</span>
+      </div>
+      <div class="phase-card">
+        <div class="ph-head"><span class="ph-title">تدفّق الطلب</span></div>
+        <div class="ph-body">
+          <p>الطالب يرسل رسالة طلب انضمام لفكرة معيّنة (<span class="mono">ProjectIdeaRequest</span>) من صفحة تفاصيلها ويتابع حالته في "طلباتي" (<span class="mono">/student/idea-requests</span>) → المشرف يراجع كل طلبات فكرته في <span class="mono">/supervisor/ideas/{id}/requests</span> ويقبل أو يرفض. عند القبول: تتحدّث حالة الفكرة تلقائيًا — <strong>محجوزة</strong> عند أول قبول، <strong>مغلقة</strong> تلقائيًا فور بلوغ العدد المطلوب — ويُرسَل إشعار للطالب (بنفس غلاف Phase 4 الموحّد).</p>
+          <p><strong>قاعدة الالتزام الواحد:</strong> لا يُسمح بطلب انضمام إن كان لدى الطالب مشروع نشط بالفعل (نفس قاعدة "مشروع واحد نشط" من Phase 2)، أو طلب فكرة آخر مقبول له بالفعل — امتداد منطقي لنفس القاعدة أُضيف صراحة في هذه المرحلة (<span class="mono">Student::hasAcceptedIdeaRequest()</span>).</p>
+          <p><strong>قرار حدود محسوم مع Phase 7:</strong> القبول هنا <strong>لا</strong> ينشئ <span class="mono">ProjectProposal</span>/<span class="mono">Project</span> فعليًا — التحويل الكامل لحجز مُعتمَد بدورة حياته الخاصة يبقى مسؤولية <a href="#phase7">Phase 7</a> تحديدًا، كما تنص الخطة الأصلية حرفيًا.</p>
+        </div>
+        <div class="ph-tables"><span class="mono">project_idea_requests</span></div>
+      </div>
+    </section>
+
+    <!-- 10. Phase 7 -->
+    <section class="block" id="phase7">
+      <div class="block-head">
+        <div>
+          <span class="block-num">10</span>
+          <h2 class="block-title">Phase 7 — Versioning وحجز الأفكار</h2>
+          <p class="block-intro">طبقة تتبّع فوق آلية إعادة التقديم الموجودة أصلاً — لا إعادة بناء.</p>
+        </div>
+        <span class="pill built">✓ مُنفَّذ 2026-08-17</span>
+      </div>
+      <div class="phase-card">
+        <div class="ph-head"><span class="ph-title">إعادة استخدام، لا تكرار</span></div>
+        <div class="ph-body">
+          <p>آلية النسخ للمقترح نفسه <strong>بقيت كما هي تمامًا</strong> منذ Phase 2 (<span class="mono">replaces_proposal_id</span> + <span class="mono">replacedBy()</span> + <span class="mono">STATUS_SUPERSEDED</span>) — لم تُمسّ إطلاقًا، ولا جدول نسخ جديد للمقترح. المُضاف هو <span class="mono">proposal_reservations</span>: يُنشأ تلقائيًا (حالة <strong>محجوز</strong>) بمجرد قبول المشرف لطلب انضمام من Phase 6، ثم يتنقّل الطالب/المشرف به عبر دورة حياة صارمة الترتيب: <strong>محجوز → قيد المراجعة</strong> (الطالب يُعلن الجدية) <strong>→ معتمد</strong> (المشرف يُثبِّت)، أو يتفرّع لـ<strong>متروك</strong> (الطالب يتخلّى، قبل الاعتماد فقط) <strong>→ محرَّر</strong> (المشرف يُعيد فتح سعة الفكرة) أو <strong>منتهٍ</strong> (بعد الاعتماد).</p>
+          <p><strong>سعة الفكرة أصبحت ديناميكية:</strong> حالة الفكرة (متاحة/محجوزة/مغلقة) تُحسب الآن من عدد الحجوزات <em>النشطة</em> فعليًا (<span class="mono">ProjectIdea::syncStatusFromReservations()</span>) بدل عدّاد طلبات مقبولة ثابت لا يتراجع — فتحرير حجزٍ متروك يُعيد فتح الفكرة بشكل صحيح.</p>
+          <p><strong>قرار نطاق محسوم بالتزام حرفي بنص الخطة:</strong> الحجز "يتتبّع حالته فقط" — لا تحويل تلقائي بعد إلى <span class="mono">ProjectProposal</span>/<span class="mono">Project</span> فعلي، يبقى عملاً مفتوحًا خارج نطاق المراحل الثمانية.</p>
+        </div>
+        <div class="ph-tables"><span class="mono">proposal_reservations</span></div>
+      </div>
+    </section>
+
+    <!-- 11. Phase 8 -->
+    <section class="block" id="phase8">
+      <div class="block-head">
+        <div>
+          <span class="block-num">11</span>
+          <h2 class="block-title">Phase 8 — كشف التشابه</h2>
+          <p class="block-intro">توسيع خدمة موجودة، لا نظام مستقل جديد — المرحلة الأخيرة في الخطة.</p>
+        </div>
+        <span class="pill built">✓ مُنفَّذ 2026-08-17</span>
+      </div>
+      <div class="phase-card">
+        <div class="ph-head"><span class="ph-title">من تطابق نصّي إلى نسبة %</span></div>
+        <div class="ph-body">
+          <p><span class="mono">SearchService::detectSimilarity()</span> كانت تعمل منذ مراحل مبكرة بمطابقة نصّية بسيطة على العنوان، ومقتصرة على المشاريع فقط. أصبحت الآن تقارن <strong>العنوان + الوصف معًا</strong> عبر مؤشر Jaccard (تقاطع/اتحاد الكلمات، بوزن 70% للعنوان و30% للوصف) لإنتاج <strong>نسبة تشابه % حقيقية</strong> بدل تطابق ثنائي، وتقارن ضد <strong>المشاريع والمقترحات معًا</strong> — لا مكتبة NLP خارجية، توكينة Unicode-aware تدعم العربية والإنجليزية بلا اعتماديات جديدة.</p>
+          <p><strong>رُبطت لأول مرة بمسارَي المقترحات</strong> (الموظف والطالب) اللذين لم يكونا يستخدمانها إطلاقًا من قبل — التحذير كان مقصورًا على إنشاء/تعديل المشروع فقط.</p>
+          <p><strong>قرار أمان:</strong> رابط العرض المرفق بكل نتيجة يُبنى حسب صلاحية المستخدم الفعلية — رابط لمقترح فريق آخر لا يظهر للطالب مطلقًا (نص عادي غير قابل للنقر) لأن Policy لا تسمح له برؤيته.</p>
+          <p><strong>قرار محسوم مسبقًا:</strong> تحذير غير حاجب دائمًا — القسم صاحب القرار النهائي في قبول أو رفض التشابه، لا رفض تلقائي بأي نسبة عتبة.</p>
+          <p><strong>إصلاح عرض مكتشَف أثناء التنفيذ:</strong> تحذير المشروع كان يُخزَّن في الجلسة منذ البداية لكنه لم يكن يظهر أبدًا — التحويل بعد الحفظ يذهب لصفحة العرض، بينما المكوّن كان موجودًا فقط في صفحة القائمة. أُضيف العرض لصفحات العرض الثلاث (المشروع، المقترح للموظف، المقترح للطالب).</p>
+        </div>
+        <div class="ph-tables"><span class="mono">لا جدول جديد — تعديل خدمة فقط</span></div>
+      </div>
+    </section>
+
+    <!-- 12. Schema -->
+    <section class="block" id="schema">
+      <div class="block-head">
+        <div>
+          <span class="block-num">12</span>
+          <h2 class="block-title">الجداول المُنفَّذة فعليًا</h2>
+          <p class="block-intro">الحقول الفعلية كما هي في قاعدة البيانات — كل جدول هنا مُهاجَر ومُختبَر.</p>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>الجدول</th><th>المرحلة</th><th>الحقول</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="mono">project_ideas</td>
+              <td>Phase 5</td>
+              <td>faculty_member_id، title، description، specialization_id، required_students_count، skills، keywords، notes، status (available/reserved/completed/closed)</td>
+            </tr>
+            <tr>
+              <td class="mono">project_idea_requests</td>
+              <td>Phase 6</td>
+              <td>project_idea_id، student_id، message، status (pending/accepted/rejected)، decided_at</td>
+            </tr>
+            <tr>
+              <td class="mono">proposal_reservations</td>
+              <td>Phase 7</td>
+              <td>project_idea_id، student_id، project_idea_request_id، status (reserved/under_review/approved/abandoned/released/finished)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="prose" style="margin-top:18px">
+        <p>Phase 8 لم يُضِف جدولًا — تعديل داخل <span class="mono">SearchService</span> الموجودة فقط. جدول <span class="mono">notifications</span> (المُستخدَم في Phase 4) لم يحتَج أي تعديل بنيوي لاستقبال إشعارات المراحل اللاحقة — نفس الغلاف الموحّد <span class="mono">title/message/url</span> كفى في كل مرة.</p>
+        <p style="margin-top:10px"><strong>العمل المفتوح الوحيد المتبقي</strong> خارج نطاق الخطة الثمانية أصلاً: لا تحويل تلقائي من حجز معتمَد (Phase 7) إلى <span class="mono">ProjectProposal</span>/<span class="mono">Project</span> فعلي — قرار نطاق مؤجَّل عمدًا وموثَّق صراحة في كل من Phase 6 وPhase 7.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="page-foot">
+  توثيق تقني داخلي — نظام أرشفة مشاريع التخرج، كلية التقنية الإلكترونية.
+</footer>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+    var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+
+    function onScroll() {
+      var pos = window.scrollY + 120;
+      var activeIdx = 0;
+      sections.forEach(function (s, i) {
+        if (s && s.offsetTop <= pos) activeIdx = i;
+      });
+      links.forEach(function (a, i) {
+        a.classList.toggle('active', i === activeIdx);
+      });
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

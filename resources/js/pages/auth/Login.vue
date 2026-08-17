@@ -28,7 +28,7 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthBase title="تسجيل الدخول" description="أدخل بريدك الإلكتروني وكلمة المرور لتسجيل الدخول">
+    <AuthBase title="تسجيل الدخول" description="أدخل بريدك الإلكتروني أو رقم القيد وكلمة المرور لتسجيل الدخول">
         <Head title="تسجيل الدخول" />
 
         <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
@@ -38,16 +38,16 @@ const submit = () => {
         <form @submit.prevent="submit" class="flex flex-col gap-6">
             <div class="grid gap-6">
                 <div class="grid gap-2">
-                    <Label for="email">البريد الإلكتروني</Label>
+                    <Label for="email">البريد الإلكتروني أو رقم القيد</Label>
                     <Input
                         id="email"
-                        type="email"
+                        type="text"
                         required
                         autofocus
                         tabindex="1"
-                        autocomplete="email"
+                        autocomplete="username"
                         v-model="form.email"
-                        placeholder="البريد الإلكتروني"
+                        placeholder="البريد الإلكتروني أو رقم القيد"
                         class="text-right"
                     />
                     <InputError :message="form.errors.email" />

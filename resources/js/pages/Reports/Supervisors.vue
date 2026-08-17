@@ -14,7 +14,7 @@ interface ByYearItem {
 
 interface SupervisorItem {
     id: number;
-    name: string;
+    full_name: string;
     department: string | null;
     project_count: number;
     avg_score: string | null;
@@ -74,8 +74,8 @@ const sorted = computed(() => {
         let bv: number | string = 0;
 
         if (sortKey.value === 'name') {
-            av = a.name;
-            bv = b.name;
+            av = a.full_name;
+            bv = b.full_name;
             const dir = sortDir.value === 'asc' ? 1 : -1;
             return av < bv ? -dir : av > bv ? dir : 0;
         }
@@ -179,7 +179,7 @@ const sorted = computed(() => {
                         <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
                             <tr v-for="(sup, i) in sorted" :key="sup.id" class="hover:bg-gray-50 dark:hover:bg-gray-700/40">
                                 <td class="px-4 py-3 text-xs text-gray-400">{{ i + 1 }}</td>
-                                <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{{ sup.name }}</td>
+                                <td class="px-4 py-3 font-medium text-gray-800 dark:text-gray-200">{{ sup.full_name }}</td>
                                 <td class="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ sup.department ?? '—' }}</td>
                                 <td class="px-4 py-3">
                                     <span

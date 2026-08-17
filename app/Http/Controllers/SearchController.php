@@ -52,12 +52,12 @@ class SearchController extends Controller
         $suggestions = $query->where(function ($q) use ($q_val) {
                 $q->where('project_title', 'like', "%{$q_val}%")
                   ->orWhereHas('supervisor', function ($query) use ($q_val) {
-                      $query->where('name', 'like', "%{$q_val}%");
+                      $query->where('full_name', 'like', "%{$q_val}%");
                   })
                   ->orWhereHas('students', function ($query) use ($q_val) {
                       $query->where('full_name', 'like', "%{$q_val}%");
                   })
-                  ->orWhereHas('examiners', function ($query) use ($q_val) {
+                  ->orWhereHas('facultyMembers', function ($query) use ($q_val) {
                       $query->where('full_name', 'like', "%{$q_val}%");
                   });
             })

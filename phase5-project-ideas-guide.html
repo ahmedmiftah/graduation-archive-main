@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>نظام أفكار المشاريع</title>
+<style>
+  :root {
+    --bg: #EDF0F2; --surface: #FFFFFF; --surface-2: #F4F6F7;
+    --ink: #12212E; --ink-muted: #4B6072; --ink-faint: #7C8FA0;
+    --line: #D3DBE0; --line-strong: #AFC0C9;
+    --accent: #8A2E4E; --accent-ink: #FFFFFF; --accent-soft: #F4E4EA;
+    --teal: #1F7A6C; --teal-soft: #E3F1EE;
+    --amber: #A6631E; --amber-soft: #F4E9D8;
+    --shadow: 0 1px 2px rgba(18,33,46,0.06), 0 8px 24px -12px rgba(18,33,46,0.18);
+    --font-display: 'Dubai', 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-body: 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-mono: 'Cascadia Code', 'Consolas', 'SF Mono', 'Courier New', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1720; --surface: #17212C; --surface-2: #1D2833; --ink: #E7ECEF;
+      --ink-muted: #9FB0BD; --ink-faint: #6C7E8C; --line: #2B3946; --line-strong: #3C4C5A;
+      --accent: #D97A97; --accent-ink: #1A0A10; --accent-soft: #2E1B22;
+      --teal: #4FC3B0; --teal-soft: #163430; --amber: #D9A24B; --amber-soft: #332617;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1720; --surface: #17212C; --surface-2: #1D2833; --ink: #E7ECEF;
+    --ink-muted: #9FB0BD; --ink-faint: #6C7E8C; --line: #2B3946; --line-strong: #3C4C5A;
+    --accent: #D97A97; --accent-ink: #1A0A10; --accent-soft: #2E1B22;
+    --teal: #4FC3B0; --teal-soft: #163430; --amber: #D9A24B; --amber-soft: #332617;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.25; color: var(--ink); margin: 0; }
+  code, .mono { font-family: var(--font-mono); direction: ltr; unicode-bidi: isolate; }
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .shell { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px; align-items: start; }
+  @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } }
+  header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+  .top-inner { max-width: 1180px; margin: 0 auto; padding: 40px 24px 32px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; letter-spacing: 0.06em; color: var(--accent); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); padding: 4px 12px; border-radius: 3px; margin-bottom: 18px; }
+  h1.title { font-size: clamp(28px, 4vw, 40px); font-weight: 700; letter-spacing: -0.01em; }
+  p.dek { margin-top: 12px; max-width: 66ch; color: var(--ink-muted); font-size: 17px; }
+  .badges { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge { font-size: 12.5px; padding: 5px 11px; border-radius: 3px; border: 1px solid var(--line-strong); color: var(--ink-muted); background: var(--surface-2); display: inline-flex; align-items: center; gap: 6px; }
+  nav.rail { position: sticky; top: 24px; padding: 24px 0; font-size: 14px; max-height: calc(100vh - 48px); overflow-y: auto; }
+  nav.rail .rail-label { font-size: 11.5px; letter-spacing: 0.08em; color: var(--ink-faint); margin-bottom: 12px; padding-right: 12px; }
+  nav.rail ol { list-style: none; margin: 0; padding: 0; counter-reset: navsteps; border-right: 2px solid var(--line); }
+  nav.rail li { counter-increment: navsteps; }
+  nav.rail a { display: flex; align-items: baseline; gap: 8px; padding: 7px 14px 7px 8px; margin-right: -2px; border-right: 2px solid transparent; color: var(--ink-muted); text-decoration: none; transition: color .15s ease, border-color .15s ease; }
+  nav.rail a::before { content: counter(navsteps, decimal-leading-zero); font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); }
+  nav.rail a:hover, nav.rail a.active { color: var(--ink); border-right-color: var(--accent); }
+  nav.rail a.active::before { color: var(--accent); }
+  main { min-width: 0; padding: 48px 0 96px; }
+  section.block { padding-top: 56px; margin-top: 56px; border-top: 1px solid var(--line); scroll-margin-top: 20px; }
+  section.block:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  .block-head { margin-bottom: 24px; }
+  .block-num { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-bottom: 6px; display: block; }
+  h2.block-title { font-size: 24px; font-weight: 700; }
+  p.block-intro { margin-top: 12px; max-width: 68ch; color: var(--ink-muted); }
+  .prose { max-width: 68ch; }
+  .prose p { margin: 0 0 14px; color: var(--ink); }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--ink); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  @media (max-width: 780px) { .grid-2, .grid-4 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 500px) { .grid-2, .grid-4 { grid-template-columns: 1fr; } }
+  .field-label { font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); margin-bottom: 4px; }
+  .field-value { font-size: 15px; color: var(--ink); }
+  .status-card { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 14px 16px; text-align: center; }
+  .status-card .sc-name { font-weight: 700; font-size: 14px; }
+  .status-card .sc-desc { font-size: 12px; color: var(--ink-muted); margin-top: 4px; }
+  .status-card.available { border-top: 3px solid var(--teal); }
+  .status-card.reserved { border-top: 3px solid var(--amber); }
+  .status-card.completed { border-top: 3px solid #2B5FD9; }
+  .status-card.closed { border-top: 3px solid var(--ink-faint); }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); }
+  thead th { text-align: right; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); background: var(--surface-2); padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td .mono, th .mono { font-size: 13px; color: var(--teal); }
+  .code-block { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.7; direction: ltr; text-align: left; color: var(--ink); }
+  .code-block .k { color: var(--accent); }
+  .code-block .s { color: var(--teal); }
+  .code-block .c { color: var(--ink-faint); }
+  .rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .rules li { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 13px 16px; font-size: 14.5px; }
+  .rules li .tag { flex: none; font-family: var(--font-mono); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 3px; margin-top: 1px; }
+  .rules li.allow .tag { background: var(--teal-soft); color: var(--teal); }
+  .rules li.deny .tag { background: var(--accent-soft); color: var(--accent); }
+  .rules li.decision .tag { background: var(--amber-soft); color: var(--amber); }
+  .filemap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .filemap { grid-template-columns: 1fr; } }
+  .filemap .col h3 { font-size: 13px; letter-spacing: .04em; color: var(--ink-faint); margin-bottom: 10px; }
+  .filemap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .filemap li { font-family: var(--font-mono); font-size: 12.8px; padding: 6px 10px; border-radius: 4px; direction: ltr; text-align: left; color: var(--ink-muted); }
+  .filemap li:hover { background: var(--surface-2); color: var(--ink); }
+  .filemap li .fdesc { font-family: var(--font-body); direction: rtl; text-align: right; display: block; color: var(--ink-faint); font-size: 12px; margin-top: 1px; }
+  footer.page-foot { max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px; color: var(--ink-faint); font-size: 13px; border-top: 1px solid var(--line); margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="eyebrow">مرجع تقني — Phase 5 / 8</span>
+    <h1 class="title">نظام أفكار المشاريع</h1>
+    <p class="dek">أول مرحلة تمنح المشرف قدرة نشر حقيقية — إلى الآن كان دوره حصرًا مراجعة وموافقة. كيف تُنشَأ الفكرة، من يراها، وكيف تُدار حالتها.</p>
+    <div class="badges">
+      <span class="badge"><span class="dot"></span> Phase 5 — مُنفَّذ 2026-08-17</span>
+      <span class="badge">15 اختبارًا جديدًا</span>
+      <span class="badge">320/321 ناجحة</span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="محتويات الصفحة">
+    <div class="rail-label">المحتويات</div>
+    <ol id="toc">
+      <li><a href="#overview">نظرة عامة</a></li>
+      <li><a href="#model">نموذج البيانات</a></li>
+      <li><a href="#states">الحالات الأربع</a></li>
+      <li><a href="#policy">من يرى ماذا</a></li>
+      <li><a href="#frontend">إعادة استخدام نمط الواجهة</a></li>
+      <li><a href="#decisions">قرارات نطاق محسومة</a></li>
+      <li><a href="#files">الملفات المسؤولة</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section class="block" id="overview">
+      <div class="block-head">
+        <span class="block-num">01</span>
+        <h2 class="block-title">نظرة عامة</h2>
+        <p class="block-intro">إلى Phase 5، كل قدرات المشرف كانت "قراءة/تعليق" (Phase 3): يرى مقترحاته المُسنَدة، يكتب ملاحظة. هذه أول مرة يُنشئ فيها المشرف محتوى جديدًا يراه آخرون.</p>
+      </div>
+      <div class="prose">
+        <p>المشرف ينشئ "فكرة مشروع" مستقلة — لا علاقة مباشرة بعد بأي <span class="mono">ProjectProposal</span> أو <span class="mono">Project</span> حقيقي. الطالب يتصفّح الأفكار المتاحة، ويطلب الانضمام لاحقًا (Phase 6). هذا الفصل المتعمَّد بين "النشر" و"الالتحاق الفعلي" هو ما يجعل كل مرحلة قابلة للاختبار والشحن منفردة.</p>
+      </div>
+    </section>
+
+    <section class="block" id="model">
+      <div class="block-head">
+        <span class="block-num">02</span>
+        <h2 class="block-title">نموذج البيانات</h2>
+        <p class="block-intro">جدول جديد واحد، بلا أي تعديل على جداول موجودة.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>الحقل</th><th>الغرض</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">faculty_member_id</td><td>صاحب الفكرة — FK→faculty_members، cascadeOnDelete</td></tr>
+            <tr><td class="mono">title / description</td><td>محتوى الفكرة</td></tr>
+            <tr><td class="mono">specialization_id</td><td>FK→specializations، restrictOnDelete</td></tr>
+            <tr><td class="mono">required_students_count</td><td>tinyint، افتراضي 1</td></tr>
+            <tr><td class="mono">skills / keywords / notes</td><td>نصوص اختيارية</td></tr>
+            <tr><td class="mono">status</td><td>نص، افتراضي available</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block" id="states">
+      <div class="block-head">
+        <span class="block-num">03</span>
+        <h2 class="block-title">الحالات الأربع</h2>
+        <p class="block-intro">تُدار يدويًا بالكامل من المشرف في هذه المرحلة — الأتمتة عند قبول طلب انضمام جاءت لاحقًا في Phase 6.</p>
+      </div>
+      <div class="grid-4">
+        <div class="status-card available"><div class="sc-name">متاحة</div><div class="sc-desc">تظهر للطلاب</div></div>
+        <div class="status-card reserved"><div class="sc-name">محجوزة</div><div class="sc-desc">طالب واحد على الأقل مهتم</div></div>
+        <div class="status-card completed"><div class="sc-name">مكتملة</div><div class="sc-desc">اكتمل الفريق</div></div>
+        <div class="status-card closed"><div class="sc-name">مغلقة</div><div class="sc-desc">لم تعد مطروحة</div></div>
+      </div>
+    </section>
+
+    <section class="block" id="policy">
+      <div class="block-head">
+        <span class="block-num">04</span>
+        <h2 class="block-title">من يرى ماذا — ProjectIdeaPolicy</h2>
+        <p class="block-intro">تفريع بسيط: المشرف يدير ملكه، الطالب يتصفّح المتاح فقط.</p>
+      </div>
+      <ul class="rules">
+        <li class="allow"><span class="tag">يسمح</span> للمشرف بإنشاء/تعديل/حذف أفكاره فقط — تحقق ملكية عبر <span class="mono">faculty_member_id === user.facultyMember.id</span></li>
+        <li class="allow"><span class="tag">يسمح</span> للطالب برؤية الأفكار بحالة <span class="mono">available</span> فقط</li>
+        <li class="deny"><span class="tag">يمنع</span> مشرفًا من التعديل على فكرة مشرف آخر (403)</li>
+      </ul>
+    </section>
+
+    <section class="block" id="frontend">
+      <div class="block-head">
+        <span class="block-num">05</span>
+        <h2 class="block-title">إعادة استخدام نمط الواجهة الموجود</h2>
+        <p class="block-intro">لا تصميم جديد — نفس المكوّنات المستخدمة في شاشات إدارية أخرى.</p>
+      </div>
+      <div class="prose">
+        <p>صفحة المشرف <span class="mono">Supervisor/Ideas/Index.vue</span> تستخدم Modal واحد مشترك للإنشاء والتعديل، بنفس نمط <span class="mono">Departments/Index.vue</span> الموجود بالفعل — لا مكوّن جديد يحتاج تعلّمًا. صفحة تصفّح الطالب تتبع نفس نمط بطاقات الشبكة المستخدَم في <span class="mono">Public/Browse.vue</span>.</p>
+      </div>
+    </section>
+
+    <section class="block" id="decisions">
+      <div class="block-head">
+        <span class="block-num">06</span>
+        <h2 class="block-title">قرارات نطاق محسومة عمدًا</h2>
+        <p class="block-intro">ثلاثة قرارات تبسيط واعية، موثَّقة صراحة لا صامتة.</p>
+      </div>
+      <ul class="rules">
+        <li class="decision"><span class="tag">قرار</span> لا حذف "ناعم" — حذف مباشر، لأنه لا يوجد بعد أي جدول يعتمد على <span class="mono">project_ideas</span> كمفتاح خارجي وقت هذه المرحلة</li>
+        <li class="decision"><span class="tag">قرار</span> لا صفحة رقابة لـ<span class="mono">dept_manager</span>/<span class="mono">super_admin</span> على الأفكار — لم تُطلَب في نطاق هذه المرحلة</li>
+        <li class="decision"><span class="tag">قرار</span> لا ربط فعلي بعد بأي <span class="mono">ProjectProposal</span>/<span class="mono">Project</span> — الطالب يُوجَّه للتواصل اليدوي مع المشرف حتى Phase 6</li>
+      </ul>
+    </section>
+
+    <section class="block" id="files">
+      <div class="block-head">
+        <span class="block-num">07</span>
+        <h2 class="block-title">الملفات المسؤولة</h2>
+        <p class="block-intro">خريطة الكود الفعلي وراء نظام الأفكار.</p>
+      </div>
+      <div class="filemap">
+        <div class="col">
+          <h3>Backend</h3>
+          <ul>
+            <li>app/Models/ProjectIdea.php<span class="fdesc">ثوابت الحالة + العلاقات</span></li>
+            <li>app/Policies/ProjectIdeaPolicy.php<span class="fdesc">ملكية المشرف + رؤية الطالب</span></li>
+            <li>app/Http/Controllers/Supervisor/ProjectIdeaController.php<span class="fdesc">CRUD كامل</span></li>
+            <li>app/Http/Controllers/Student/ProjectIdeaController.php<span class="fdesc">index/show — متاحة فقط</span></li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Frontend</h3>
+          <ul>
+            <li>resources/js/pages/Supervisor/Ideas/Index.vue<span class="fdesc">قائمة + Modal مشترك</span></li>
+            <li>resources/js/pages/Student/Ideas/{Index,Show}.vue<span class="fdesc">تصفّح + تفاصيل</span></li>
+            <li>resources/js/lib/ideaStatusBadge.ts<span class="fdesc">ألوان/تسميات الحالات الأربع</span></li>
+          </ul>
+          <h3 style="margin-top:22px">الاختبارات</h3>
+          <ul>
+            <li>tests/Feature/ProjectIdea/ProjectIdeaTest.php<span class="fdesc">15 اختبارًا — CRUD + الصلاحيات</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="page-foot">توثيق تقني داخلي — نظام أرشفة مشاريع التخرج، كلية التقنية الإلكترونية.</footer>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+    var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+    function onScroll() {
+      var pos = window.scrollY + 120;
+      var activeIdx = 0;
+      sections.forEach(function (s, i) { if (s && s.offsetTop <= pos) activeIdx = i; });
+      links.forEach(function (a, i) { a.classList.toggle('active', i === activeIdx); });
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

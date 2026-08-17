@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>نظام كشف التشابه</title>
+<style>
+  :root {
+    --bg: #EDF0F2;
+    --surface: #FFFFFF;
+    --surface-2: #F4F6F7;
+    --ink: #12212E;
+    --ink-muted: #4B6072;
+    --ink-faint: #7C8FA0;
+    --line: #D3DBE0;
+    --line-strong: #AFC0C9;
+    --accent: #8A2E4E;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #F4E4EA;
+    --teal: #1F7A6C;
+    --teal-soft: #E3F1EE;
+    --amber: #A6631E;
+    --amber-soft: #F4E9D8;
+    --stage-done: #1F7A6C;
+    --stage-done-soft: #E3F1EE;
+    --stage-current: #2B5FD9;
+    --stage-current-soft: #E7EDFC;
+    --stage-upcoming: #AFC0C9;
+    --shadow: 0 1px 2px rgba(18,33,46,0.06), 0 8px 24px -12px rgba(18,33,46,0.18);
+    --font-display: 'Dubai', 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-body: 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-mono: 'Cascadia Code', 'Consolas', 'SF Mono', 'Courier New', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1720;
+      --surface: #17212C;
+      --surface-2: #1D2833;
+      --ink: #E7ECEF;
+      --ink-muted: #9FB0BD;
+      --ink-faint: #6C7E8C;
+      --line: #2B3946;
+      --line-strong: #3C4C5A;
+      --accent: #D97A97;
+      --accent-ink: #1A0A10;
+      --accent-soft: #2E1B22;
+      --teal: #4FC3B0;
+      --teal-soft: #163430;
+      --amber: #D9A24B;
+      --amber-soft: #332617;
+      --stage-done: #4FC3B0;
+      --stage-done-soft: #163430;
+      --stage-current: #6C93F5;
+      --stage-current-soft: #1B2740;
+      --stage-upcoming: #3C4C5A;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1720;
+    --surface: #17212C;
+    --surface-2: #1D2833;
+    --ink: #E7ECEF;
+    --ink-muted: #9FB0BD;
+    --ink-faint: #6C7E8C;
+    --line: #2B3946;
+    --line-strong: #3C4C5A;
+    --accent: #D97A97;
+    --accent-ink: #1A0A10;
+    --accent-soft: #2E1B22;
+    --teal: #4FC3B0;
+    --teal-soft: #163430;
+    --amber: #D9A24B;
+    --amber-soft: #332617;
+    --stage-done: #4FC3B0;
+    --stage-done-soft: #163430;
+    --stage-current: #6C93F5;
+    --stage-current-soft: #1B2740;
+    --stage-upcoming: #3C4C5A;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    line-height: 1.25;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  code, .mono {
+    font-family: var(--font-mono);
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--stage-current);
+    outline-offset: 2px;
+  }
+
+  /* ── Shell layout ─────────────────────────────────────────── */
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+  }
+
+  header.top {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .top-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 24px 32px;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    padding: 4px 12px;
+    border-radius: 3px;
+    margin-bottom: 18px;
+  }
+  h1.title {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  p.dek {
+    margin-top: 12px;
+    max-width: 66ch;
+    color: var(--ink-muted);
+    font-size: 17px;
+  }
+  .badges {
+    margin-top: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .badge {
+    font-size: 12.5px;
+    padding: 5px 11px;
+    border-radius: 3px;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-muted);
+    background: var(--surface-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); flex: none; }
+
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 3px;
+    letter-spacing: 0.02em;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .pill.built { background: var(--teal-soft); color: var(--teal); }
+  .pill.warn { background: var(--amber-soft); color: var(--amber); }
+
+  nav.rail {
+    position: sticky;
+    top: 24px;
+    padding: 24px 0;
+    font-size: 14px;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+  }
+  nav.rail .rail-label {
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    margin-bottom: 12px;
+    padding-right: 12px;
+  }
+  nav.rail ol {
+    list-style: none;
+    margin: 0; padding: 0;
+    counter-reset: navsteps;
+    border-right: 2px solid var(--line);
+  }
+  nav.rail li { counter-increment: navsteps; }
+  nav.rail a {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 7px 14px 7px 8px;
+    margin-right: -2px;
+    border-right: 2px solid transparent;
+    color: var(--ink-muted);
+    text-decoration: none;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  nav.rail a::before {
+    content: counter(navsteps, decimal-leading-zero);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+  }
+  nav.rail a:hover, nav.rail a.active {
+    color: var(--ink);
+    border-right-color: var(--accent);
+  }
+  nav.rail a.active::before { color: var(--accent); }
+
+  main { min-width: 0; padding: 48px 0 96px; }
+
+  section.block {
+    padding-top: 56px;
+    margin-top: 56px;
+    border-top: 1px solid var(--line);
+    scroll-margin-top: 20px;
+  }
+  section.block:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+
+  .block-head { margin-bottom: 24px; }
+  .block-num {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent);
+    margin-bottom: 6px;
+    display: block;
+  }
+  h2.block-title { font-size: 24px; font-weight: 700; }
+  p.block-intro {
+    margin-top: 12px;
+    max-width: 68ch;
+    color: var(--ink-muted);
+  }
+
+  .prose { max-width: 68ch; }
+  .prose p { margin: 0 0 14px; color: var(--ink); }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--ink); }
+  .prose ul { margin: 0 0 14px; padding-right: 20px; color: var(--ink); }
+  .prose li { margin-bottom: 6px; }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 22px;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 720px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .field-label { font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); margin-bottom: 4px; }
+  .field-value { font-size: 15px; color: var(--ink); }
+
+  /* ── Pipeline steps ───────────────────────────────────────── */
+  .pipeline { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; margin: 24px 0; }
+  .pipe-step {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 16px 18px; min-width: 170px; flex: 1 1 170px; box-shadow: var(--shadow);
+  }
+  .pipe-step .ps-kicker { font-size: 11px; color: var(--ink-faint); letter-spacing: .04em; margin-bottom: 6px; }
+  .pipe-step .ps-title { font-weight: 600; font-size: 14.5px; margin-bottom: 4px; }
+  .pipe-step .ps-detail { font-size: 12.5px; color: var(--ink-muted); line-height: 1.55; }
+  .pipe-arrow { display: flex; align-items: center; justify-content: center; padding: 0 10px; color: var(--ink-faint); font-size: 18px; flex: 0 0 auto; }
+  @media (max-width: 780px) {
+    .pipeline { flex-direction: column; }
+    .pipe-arrow { transform: rotate(90deg); padding: 4px 0; }
+  }
+
+  /* ── Worked example ───────────────────────────────────────── */
+  .worked {
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 22px 24px; margin: 20px 0;
+  }
+  .word-set { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .word-chip {
+    font-family: var(--font-mono); font-size: 12.5px; padding: 3px 9px; border-radius: 3px;
+    background: var(--surface-2); color: var(--ink-muted); border: 1px solid var(--line);
+  }
+  .word-chip.shared { background: var(--teal-soft); color: var(--teal); border-color: transparent; font-weight: 700; }
+  .formula {
+    font-family: var(--font-mono); font-size: 14px; text-align: center;
+    background: var(--surface-2); border-radius: 6px; padding: 16px; margin-top: 16px;
+    direction: ltr; color: var(--ink);
+  }
+  .formula .result { color: var(--accent); font-weight: 700; }
+
+  /* ── Tables ───────────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); }
+  thead th {
+    text-align: right; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint);
+    background: var(--surface-2); padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap;
+  }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td .mono, th .mono { font-size: 13px; color: var(--teal); }
+  .method {
+    font-family: var(--font-mono); font-size: 11.5px; font-weight: 700; padding: 2px 7px;
+    border-radius: 3px; letter-spacing: 0.03em;
+  }
+  .method.get { background: var(--teal-soft); color: var(--teal); }
+  .method.post { background: var(--accent-soft); color: var(--accent); }
+
+  /* ── Code block ───────────────────────────────────────────── */
+  .code-block {
+    background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px;
+    padding: 16px 18px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px;
+    line-height: 1.7; direction: ltr; text-align: left; color: var(--ink);
+  }
+  .code-block .k { color: var(--accent); }
+  .code-block .s { color: var(--teal); }
+  .code-block .c { color: var(--ink-faint); }
+
+  /* ── Rule list ────────────────────────────────────────────── */
+  .rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .rules li {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 13px 16px; font-size: 14.5px;
+  }
+  .rules li .tag {
+    flex: none; font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    padding: 3px 8px; border-radius: 3px; margin-top: 1px;
+  }
+  .rules li.fixed .tag { background: var(--teal-soft); color: var(--teal); }
+  .rules li.decision .tag { background: var(--accent-soft); color: var(--accent); }
+  .rules li.warn .tag { background: var(--amber-soft); color: var(--amber); }
+
+  /* ── Before/after ─────────────────────────────────────────── */
+  .before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .before-after { grid-template-columns: 1fr; } }
+  .ba-col { border-radius: 6px; padding: 18px 20px; border: 1px solid var(--line); }
+  .ba-col.before { background: var(--surface); }
+  .ba-col.after { background: var(--surface); border-color: var(--teal); }
+  .ba-label { font-size: 11px; letter-spacing: .06em; margin-bottom: 10px; font-weight: 700; }
+  .ba-col.before .ba-label { color: var(--ink-faint); }
+  .ba-col.after .ba-label { color: var(--teal); }
+  .ba-col ul { margin: 0; padding-right: 18px; font-size: 13.5px; color: var(--ink-muted); }
+  .ba-col li { margin-bottom: 6px; }
+
+  /* ── File map ─────────────────────────────────────────────── */
+  .filemap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .filemap { grid-template-columns: 1fr; } }
+  .filemap .col h3 { font-size: 13px; letter-spacing: .04em; color: var(--ink-faint); margin-bottom: 10px; }
+  .filemap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .filemap li { font-family: var(--font-mono); font-size: 12.8px; padding: 6px 10px; border-radius: 4px; direction: ltr; text-align: left; color: var(--ink-muted); }
+  .filemap li:hover { background: var(--surface-2); color: var(--ink); }
+  .filemap li .fdesc { font-family: var(--font-body); direction: rtl; text-align: right; display: block; color: var(--ink-faint); font-size: 12px; margin-top: 1px; }
+
+  footer.page-foot {
+    max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px;
+    color: var(--ink-faint); font-size: 13px; border-top: 1px solid var(--line); margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="eyebrow">مرجع تقني</span>
+    <h1 class="title">نظام كشف التشابه</h1>
+    <p class="dek">كيف تتحوّل عنوان ووصف مقترح أو مشروع جديد إلى نسبة تشابه % ضد كل ما هو موجود بالفعل — الخوارزمية خطوة بخطوة، نقاط الربط الأربع، قرار الأمان في الروابط، والعطل الذي كان يخفي التحذير عن المستخدم منذ البداية.</p>
+    <div class="badges">
+      <span class="badge"><span class="dot"></span> Phase 8 — مُنفَّذ 2026-08-17</span>
+      <span class="badge">SearchService::detectSimilarity()</span>
+      <span class="badge">بلا اعتماديات جديدة</span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="محتويات الصفحة">
+    <div class="rail-label">المحتويات</div>
+    <ol id="toc">
+      <li><a href="#overview">نظرة عامة</a></li>
+      <li><a href="#tokenize">التجزئة إلى كلمات</a></li>
+      <li><a href="#jaccard">حساب التشابه — مثال محسوب</a></li>
+      <li><a href="#weight">وزن العنوان مقابل الوصف</a></li>
+      <li><a href="#prefilter">الترشيح الأولي</a></li>
+      <li><a href="#wiring">نقاط الربط الأربع</a></li>
+      <li><a href="#security">قرار الأمان في الروابط</a></li>
+      <li><a href="#bug">عطل العرض المُكتشَف</a></li>
+      <li><a href="#breaking">تغيير كاسر موثَّق</a></li>
+      <li><a href="#files">الملفات المسؤولة</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- 1. Overview -->
+    <section class="block" id="overview">
+      <div class="block-head">
+        <span class="block-num">01</span>
+        <h2 class="block-title">نظرة عامة</h2>
+        <p class="block-intro">الدالة كانت موجودة من قبل لكنها بدائية جدًا — Phase 8 وسّعها بالكامل بدل بناء نظام جديد.</p>
+      </div>
+      <div class="before-after">
+        <div class="ba-col before">
+          <div class="ba-label">قبل</div>
+          <ul>
+                <li>مطابقة نصية <span class="mono">LIKE '%العنوان الكامل%'</span> فقط</li>
+                <li>العنوان وحده — لا الوصف</li>
+                <li>المشاريع فقط — لا تعرف بوجود المقترحات</li>
+                <li>نتيجة ثنائية: يطابق أو لا يطابق</li>
+                <li>مستخدَمة في مكان واحد فقط (إنشاء/تعديل مشروع)</li>
+          </ul>
+        </div>
+        <div class="ba-col after">
+          <div class="ba-label">بعد</div>
+          <ul>
+                <li>ترشيح أولي بكلمات مفردة + حساب نسبة دقيقة لكل مرشَّح</li>
+                <li>العنوان (70%) + الوصف (30%) معًا</li>
+                <li>المشاريع <strong>والمقترحات</strong> معًا</li>
+                <li>نسبة % من 0 إلى 100، بعتبة دنيا 30%</li>
+                <li>4 نقاط ربط: مشروع (موظف) + مقترح (موظف) + مقترح (طالب) ×2</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Tokenization -->
+    <section class="block" id="tokenize">
+      <div class="block-head">
+        <span class="block-num">02</span>
+        <h2 class="block-title">التجزئة إلى كلمات</h2>
+        <p class="block-intro">أول خطوة قبل أي مقارنة — تحويل النص الحر إلى مجموعة كلمات نظيفة وقابلة للمقارنة.</p>
+      </div>
+      <div class="pipeline">
+        <div class="pipe-step">
+          <div class="ps-kicker">01</div>
+          <div class="ps-title">تصغير الحروف</div>
+          <div class="ps-detail"><span class="mono">mb_strtolower()</span> — يدعم العربية والإنجليزية</div>
+        </div>
+        <div class="pipe-arrow">←</div>
+        <div class="pipe-step">
+          <div class="ps-kicker">02</div>
+          <div class="ps-title">تقسيم Unicode-aware</div>
+          <div class="ps-detail"><span class="mono">preg_split</span> بنمط <span class="mono">[^\p{L}\p{N}]+</span> — أي حرف أو رقم من أي لغة يُعامَل ككلمة</div>
+        </div>
+        <div class="pipe-arrow">←</div>
+        <div class="pipe-step">
+          <div class="ps-kicker">03</div>
+          <div class="ps-title">حذف الكلمات القصيرة</div>
+          <div class="ps-detail">أقل من حرفين تُهمَل (مثل "في"، "من")</div>
+        </div>
+        <div class="pipe-arrow">←</div>
+        <div class="pipe-step">
+          <div class="ps-kicker">04</div>
+          <div class="ps-title">إزالة التكرار</div>
+          <div class="ps-detail"><span class="mono">array_unique()</span> — كل كلمة تُحسَب مرة واحدة بغضّ النظر عن تكرارها</div>
+        </div>
+      </div>
+      <div class="code-block">
+<span class="c">// significantWords()</span>
+<span class="k">"نظام إدارة المكتبة الذكي"</span>
+  ↓
+[<span class="s">"نظام"</span>, <span class="s">"إدارة"</span>, <span class="s">"المكتبة"</span>, <span class="s">"الذكي"</span>]
+      </div>
+      <div class="prose" style="margin-top:16px">
+        <p><strong>قصور معروف ومقصود:</strong> لا معالجة صرفية (Stemming) — "المكتبة" و"مكتبة" و"المكتبات" تُعامَل ككلمات مختلفة تمامًا حرفيًا. هذا يقلّل الدقة مع اللغة العربية تحديدًا بسبب اشتقاقاتها الغنية، لكنه القرار المتعمَّد لتفادي إضافة مكتبة NLP/تشكيل خارجية لم تكن مطلوبة في الخطة الأصلية — الميزة تبقى "تحذير مساعد"، لا نظام كشف انتحال دقيق.</p>
+      </div>
+    </section>
+
+    <!-- 3. Jaccard worked example -->
+    <section class="block" id="jaccard">
+      <div class="block-head">
+        <span class="block-num">03</span>
+        <h2 class="block-title">حساب التشابه — مؤشر Jaccard</h2>
+        <p class="block-intro">نسبة بسيطة وقابلة للشرح: تقاطع الكلمات المشتركة ÷ اتحاد كل الكلمات.</p>
+      </div>
+
+      <div class="worked">
+        <div class="field-label">العنوان الجديد المُقدَّم</div>
+        <div class="field-value">نظام إدارة مكتبة ذكي</div>
+        <div class="word-set">
+          <span class="word-chip shared">نظام</span>
+          <span class="word-chip">إدارة</span>
+          <span class="word-chip">مكتبة</span>
+          <span class="word-chip">ذكي</span>
+        </div>
+
+        <div class="field-label" style="margin-top:18px">عنوان موجود في القاعدة</div>
+        <div class="field-value">نظام لإدارة المكتبات الذكية</div>
+        <div class="word-set">
+          <span class="word-chip shared">نظام</span>
+          <span class="word-chip">لإدارة</span>
+          <span class="word-chip">المكتبات</span>
+          <span class="word-chip">الذكية</span>
+        </div>
+
+        <div class="formula">
+          intersection = { نظام } = <span class="result">1</span> word
+          &nbsp;&nbsp;/&nbsp;&nbsp;
+          union = { نظام, إدارة, مكتبة, ذكي, لإدارة, المكتبات, الذكية } = <span class="result">7</span> words
+          <br><br>
+          similarity = 1 / 7 ≈ <span class="result">14%</span>
+        </div>
+      </div>
+
+      <div class="prose">
+        <p>لاحظ أن "إدارة" و"لإدارة" و"مكتبة" و"المكتبات" و"ذكي" و"الذكية" — رغم قربها الدلالي الواضح لعين القارئ — تُحسَب كلمات <strong>مختلفة تمامًا</strong> في الخوارزمية، لأنها حرفيًا سلاسل نصية غير متطابقة. هذا مثال حي على القصور المذكور أعلاه: 14% نسبة منخفضة رغم أن العنوانين متشابهان جدًا فعليًا لقارئ بشري. هذه الحالة تحديدًا لن تتجاوز عتبة الـ30% الدنيا، فلن تظهر كتحذير.</p>
+      </div>
+    </section>
+
+    <!-- 4. Weighting -->
+    <section class="block" id="weight">
+      <div class="block-head">
+        <span class="block-num">04</span>
+        <h2 class="block-title">وزن العنوان مقابل الوصف</h2>
+        <p class="block-intro">العنوان أكثر دلالة على الموضوع من فقرة وصف طويلة قد تتشارك كلمات عامة.</p>
+      </div>
+      <div class="formula">
+        percent = (title_similarity × <span class="result">0.7</span>) + (description_similarity × <span class="result">0.3</span>)
+      </div>
+      <div class="prose" style="margin-top:16px">
+        <p>إن غاب الوصف من أحد الطرفين (نص فارغ)، يُستخدَم تشابه العنوان وحده بلا وزن الوصف — لا قسمة على صفر ولا نتيجة مضلَّلة.</p>
+      </div>
+    </section>
+
+    <!-- 5. Pre-filter -->
+    <section class="block" id="prefilter">
+      <div class="block-head">
+        <span class="block-num">05</span>
+        <h2 class="block-title">الترشيح الأولي — قبل حساب أي نسبة</h2>
+        <p class="block-intro">حساب Jaccard لكل صف في الجدول غير عملي — لذلك تُختار المرشَّحات المحتملة أولاً عبر استعلام SQL سريع.</p>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="field-label">الاستعلام</div>
+          <div class="field-value mono" style="font-size:13.5px">title LIKE %العنوان الكامل%<br>OR title LIKE %كل كلمة مفردة%</div>
+        </div>
+        <div class="panel">
+          <div class="field-label">الحد + العتبة النهائية</div>
+          <div class="field-value">20 مرشَّحًا من كل جدول → حساب دقيق → استبعاد أقل من 30% → أعلى 5 نتائج</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Wiring -->
+    <section class="block" id="wiring">
+      <div class="block-head">
+        <span class="block-num">06</span>
+        <h2 class="block-title">نقاط الربط الأربع</h2>
+        <p class="block-intro">اثنتان كانتا موجودتين من قبل، واثنتان جديدتان بالكامل في هذه المرحلة.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>الكونترولر</th><th>كانت مربوطة قبل Phase 8؟</th><th>التغيير</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="mono">ProjectController::store()</td>
+              <td><span class="pill built">✓ موجودة</span></td>
+              <td>صار يمرّر الوصف أيضًا (لم يكن يُمرَّر سابقًا)</td>
+            </tr>
+            <tr>
+              <td class="mono">ProjectController::update()</td>
+              <td><span class="pill built">✓ موجودة</span></td>
+              <td>نفس التمرير + استبعاد المشروع نفسه من نتائجه</td>
+            </tr>
+            <tr>
+              <td class="mono">ProjectProposalWebController<br><span style="color:var(--ink-faint); font-size:12.5px">(الموظف)</span></td>
+              <td><span class="pill warn">✕ غير مربوطة إطلاقًا</span></td>
+              <td>ربط كامل جديد في store() وupdate()</td>
+            </tr>
+            <tr>
+              <td class="mono">Student\ProposalController<br><span style="color:var(--ink-faint); font-size:12.5px">(الطالب)</span></td>
+              <td><span class="pill warn">✕ غير مربوطة إطلاقًا</span></td>
+              <td>ربط كامل جديد + قرار أمان خاص بالروابط (القسم التالي)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 7. Security -->
+    <section class="block" id="security">
+      <div class="block-head">
+        <span class="block-num">07</span>
+        <h2 class="block-title">قرار الأمان في الروابط</h2>
+        <p class="block-intro">كل نتيجة تشابه تحمل رابط عرض — لكن الرابط لا يُبنى دائمًا، لأن الوصول للمقترح مقيَّد بـPolicy.</p>
+      </div>
+      <ul class="rules">
+        <li class="fixed"><span class="tag">آمن دائمًا</span> نتيجة من نوع <span class="mono">project</span> — صفحة عرض المشروع مفتوحة لكل الأدوار المسجَّلة دون قيد دور</li>
+        <li class="warn"><span class="tag">مقيَّد</span> نتيجة من نوع <span class="mono">proposal</span> ظاهرة لطالب — الرابط يُبنى فقط إن كان السياق موظفًا (يملك صلاحية رؤية أي مقترح)</li>
+        <li class="decision"><span class="tag">قرار</span> عندما يكون العارض طالبًا ونوع النتيجة <span class="mono">proposal</span> لفريق آخر: <span class="mono">url = null</span> — يُعرض العنوان كنص عادي غير قابل للنقر بدل رابط سيُرجع 403</li>
+      </ul>
+      <div class="code-block" style="margin-top:16px">
+<span class="c">// Student\ProposalController::withUrls()</span>
+<span class="k">'url'</span> =&gt; <span class="k">$item</span>[<span class="s">'type'</span>] === <span class="s">'project'</span>
+    ? route(<span class="s">'projects.show'</span>, <span class="k">$item</span>[<span class="s">'id'</span>])
+    : <span class="k">null</span>,  <span class="c">// لا رابط لمقترح فريق آخر — Policy لا تسمح برؤيته</span>
+      </div>
+    </section>
+
+    <!-- 8. Display bug -->
+    <section class="block" id="bug">
+      <div class="block-head">
+        <span class="block-num">08</span>
+        <h2 class="block-title">عطل العرض المُكتشَف أثناء التنفيذ</h2>
+        <p class="block-intro">آلية التحذير على المشاريع كانت تعمل من الخلفية منذ البداية — لكن لا أحد كان يراها.</p>
+      </div>
+      <div class="pipeline">
+        <div class="pipe-step">
+          <div class="ps-kicker">يحدث</div>
+          <div class="ps-title">التحذير يُخزَّن في الجلسة</div>
+          <div class="ps-detail"><span class="mono">flash('similarity_warning', ...)</span></div>
+        </div>
+        <div class="pipe-arrow">←</div>
+        <div class="pipe-step">
+          <div class="ps-kicker">يحدث</div>
+          <div class="ps-title">تحويل لصفحة العرض</div>
+          <div class="ps-detail"><span class="mono">redirect()->route('projects.show', ...)</span></div>
+        </div>
+        <div class="pipe-arrow">←</div>
+        <div class="pipe-step">
+          <div class="ps-kicker">المشكلة</div>
+          <div class="ps-title">لا أحد يقرأ الفلاش هناك</div>
+          <div class="ps-detail">المكوّن <span class="mono">SimilarityWarning</span> كان موجودًا فقط في صفحة <strong>القائمة</strong>، لا صفحة <strong>العرض</strong></div>
+        </div>
+      </div>
+      <div class="prose" style="margin-top:8px">
+        <p>النتيجة: التحذير كان يُحسب ويُخزَّن بشكل صحيح تمامًا في كل مرة، لكنه <strong>لم يظهر للمستخدم إطلاقًا</strong> منذ أن كُتبت هذه الآلية أول مرة — لأن المستخدم لا يمرّ بصفحة القائمة بعد الحفظ مباشرة. أُضيف عرض <span class="mono">SimilarityWarning</span> لصفحات العرض الثلاث (المشروع، مقترح الموظف، مقترح الطالب) ليعمل فعليًا لأول مرة.</p>
+      </div>
+    </section>
+
+    <!-- 9. Breaking change -->
+    <section class="block" id="breaking">
+      <div class="block-head">
+        <span class="block-num">09</span>
+        <h2 class="block-title">تغيير كاسر موثَّق</h2>
+        <p class="block-intro">شكل القيمة المُرجَعة تغيّر بالكامل — وثِّق ذلك بدل أن يُترك ليكسر الاختبارات بصمت.</p>
+      </div>
+      <div class="before-after">
+        <div class="ba-col before">
+          <div class="ba-label">قبل</div>
+          <div class="code-block" style="margin:0">
+Collection&lt;Project&gt;
+<span class="k">$results</span>-&gt;first()-&gt;project_title
+          </div>
+        </div>
+        <div class="ba-col after">
+          <div class="ba-label">بعد</div>
+          <div class="code-block" style="margin:0">
+Collection&lt;array&gt;
+<span class="k">$results</span>-&gt;first()[<span class="s">'title'</span>]
+<span class="c">// + type, similarity_percent, url</span>
+          </div>
+        </div>
+      </div>
+      <div class="prose" style="margin-top:16px">
+        <p>السبب: النتيجة الآن قد تكون <span class="mono">Project</span> أو <span class="mono">ProjectProposal</span> — نموذجان مختلفان لا يمكن دمجهما في Collection واحدة من نوع Eloquent موحَّد بحقول متطابقة. حُدِّث اختباران قديمان في <span class="mono">SearchTest.php</span> ليعكسا الشكل الجديد بدل ترك الكسر ضمنيًا.</p>
+      </div>
+    </section>
+
+    <!-- 10. Files -->
+    <section class="block" id="files">
+      <div class="block-head">
+        <span class="block-num">10</span>
+        <h2 class="block-title">الملفات المسؤولة</h2>
+        <p class="block-intro">خريطة الكود الفعلي وراء هذه المرحلة.</p>
+      </div>
+      <div class="filemap">
+        <div class="col">
+          <h3>Backend</h3>
+          <ul>
+            <li>app/Services/SearchService.php<span class="fdesc">detectSimilarity() + significantWords() + jaccard() + similarityPercent()</span></li>
+            <li>app/Http/Controllers/ProjectController.php<span class="fdesc">store/update — تمرير الوصف + withUrls()</span></li>
+            <li>app/Http/Controllers/ProjectProposalWebController.php<span class="fdesc">ربط جديد كامل + withUrls()</span></li>
+            <li>app/Http/Controllers/Student/ProposalController.php<span class="fdesc">ربط جديد + withUrls() المقيَّدة أمنيًا</span></li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Frontend</h3>
+          <ul>
+            <li>resources/js/types/index.ts<span class="fdesc">SimilarProject — type/title/similarity_percent/url</span></li>
+            <li>resources/js/components/SimilarityWarning.vue<span class="fdesc">شارة النوع + نسبة التشابه + رابط شرطي</span></li>
+            <li>resources/js/pages/Projects/Show.vue<span class="fdesc">عرض التحذير — جديد (كان غائبًا)</span></li>
+            <li>resources/js/pages/Proposals/Show.vue<span class="fdesc">عرض التحذير — جديد</span></li>
+            <li>resources/js/pages/Student/Proposal/Show.vue<span class="fdesc">عرض التحذير — جديد</span></li>
+          </ul>
+          <h3 style="margin-top:22px">الاختبارات</h3>
+          <ul>
+            <li>tests/Feature/Search/SearchTest.php<span class="fdesc">اختباران محدَّثان + اختباران جديدان</span></li>
+            <li>tests/Feature/Search/SimilarityDetectionTest.php<span class="fdesc">6 اختبارات تكامل عبر نقاط الربط الأربع</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="page-foot">
+  توثيق تقني داخلي — نظام أرشفة مشاريع التخرج، كلية التقنية الإلكترونية.
+</footer>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+    var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+
+    function onScroll() {
+      var pos = window.scrollY + 120;
+      var activeIdx = 0;
+      sections.forEach(function (s, i) {
+        if (s && s.offsetTop <= pos) activeIdx = i;
+      });
+      links.forEach(function (a, i) {
+        a.classList.toggle('active', i === activeIdx);
+      });
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

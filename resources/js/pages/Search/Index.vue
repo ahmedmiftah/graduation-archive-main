@@ -18,7 +18,7 @@ interface Specialization {
 }
 interface Supervisor {
     id: number;
-    name: string;
+    full_name: string;
 }
 interface ProjectStatus {
     id: number;
@@ -207,7 +207,7 @@ function highlight(text: string): string {
                             <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
                                 <span v-if="project.specialization"> 📚 {{ project.specialization.name }} </span>
                                 <span v-if="project.academic_year"> 📅 {{ project.academic_year }} </span>
-                                <span v-if="project.supervisor"> 👤 {{ project.supervisor.name }} </span>
+                                <span v-if="project.supervisor"> 👤 {{ project.supervisor.full_name }} </span>
                             </div>
 
                             <!-- Students -->

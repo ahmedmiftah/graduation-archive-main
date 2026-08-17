@@ -13,6 +13,7 @@ class Project extends Model
     use HasFactory;
 
     protected $fillable = [
+        'proposal_id',
         'project_title',
         'description',
         'academic_year',
@@ -49,7 +50,7 @@ class Project extends Model
 
     public function supervisor(): BelongsTo
     {
-        return $this->belongsTo(User::class, 'supervisor_id');
+        return $this->belongsTo(FacultyMember::class, 'supervisor_id');
     }
 
     public function currentStatus(): BelongsTo
@@ -60,6 +61,11 @@ class Project extends Model
     public function basedOn(): BelongsTo
     {
         return $this->belongsTo(Project::class, 'based_on_project_id');
+    }
+
+    public function proposal(): BelongsTo
+    {
+        return $this->belongsTo(ProjectProposal::class, 'proposal_id');
     }
 
     public function students(): HasMany
@@ -77,10 +83,10 @@ class Project extends Model
         return $this->hasMany(Evaluation::class);
     }
 
-    public function examiners(): BelongsToMany
+    public function facultyMembers(): BelongsToMany
     {
-        return $this->belongsToMany(Examiner::class, 'project_examiners')
-            ->using(ProjectExaminer::class)
+        return $this->belongsToMany(FacultyMember::class, 'project_faculty_members')
+            ->using(ProjectFacultyMember::class)
             ->withPivot('assigned_by')
             ->withTimestamps();
     }

@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Department;
+use App\Models\FacultyMember;
 use App\Models\Project;
 use App\Models\Specialization;
 use App\Models\User;
@@ -19,12 +20,12 @@ beforeEach(function () {
 function makeReportProject(
     ?Department $dept = null,
     ?Specialization $spec = null,
-    ?User $supervisor = null,
+    ?FacultyMember $supervisor = null,
     array $overrides = [],
 ): Project {
     $dept       ??= Department::factory()->create();
     $spec       ??= Specialization::factory()->create(['department_id' => $dept->id]);
-    $supervisor ??= userWithRole('supervisor');
+    $supervisor ??= FacultyMember::factory()->create();
 
     return Project::factory()->create(array_merge([
         'department_id'     => $dept->id,
@@ -40,7 +41,7 @@ function makeReportProject(
 test('super_admin can view full dashboard stats', function () {
     $dept = Department::factory()->create();
     $spec = Specialization::factory()->create(['department_id' => $dept->id]);
-    $sup  = userWithRole('supervisor');
+    $sup  = FacultyMember::factory()->create();
 
     Project::factory()->count(3)->create([
         'department_id'     => $dept->id,
@@ -69,7 +70,7 @@ test('super_admin can view full dashboard stats', function () {
 test('dept_manager sees only their department stats', function () {
     $dept    = Department::factory()->create();
     $spec    = Specialization::factory()->create(['department_id' => $dept->id]);
-    $sup     = userWithRole('supervisor');
+    $sup     = FacultyMember::factory()->create();
     $manager = userWithRole('dept_manager');
     $manager->update(['department_id' => $dept->id]);
 
@@ -167,7 +168,7 @@ test('dept_staff cannot access reports', function () {
 
 test('specialization report returns top 10 correctly', function () {
     $dept = Department::factory()->create();
-    $sup  = userWithRole('supervisor');
+    $sup  = FacultyMember::factory()->create();
 
     // specA: 3 projects, specB: 1 project, specC: 0 projects
     $specA = Specialization::factory()->create(['department_id' => $dept->id]);
@@ -204,7 +205,7 @@ test('specialization report returns top 10 correctly', function () {
 test('supervisor report calculates average score correctly', function () {
     $dept = Department::factory()->create();
     $spec = Specialization::factory()->create(['department_id' => $dept->id]);
-    $sup  = userWithRole('supervisor');
+    $sup  = FacultyMember::factory()->create();
 
     makeReportProject($dept, $spec, $sup, ['final_score' => 80]);
     makeReportProject($dept, $spec, $sup, ['final_score' => 90]);
@@ -225,7 +226,7 @@ test('supervisor report calculates average score correctly', function () {
 test('yearly report shows correct growth percentage', function () {
     $dept = Department::factory()->create();
     $spec = Specialization::factory()->create(['department_id' => $dept->id]);
-    $sup  = userWithRole('supervisor');
+    $sup  = FacultyMember::factory()->create();
 
     // 4 projects in 2022/2023 → 8 in 2023/2024 → growth = 100%
     Project::factory()->count(4)->create([

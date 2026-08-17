@@ -1,0 +1,768 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>بوابة الطالب</title>
+<style>
+  :root {
+    --bg: #EDF0F2;
+    --surface: #FFFFFF;
+    --surface-2: #F4F6F7;
+    --ink: #12212E;
+    --ink-muted: #4B6072;
+    --ink-faint: #7C8FA0;
+    --line: #D3DBE0;
+    --line-strong: #AFC0C9;
+    --accent: #8A2E4E;
+    --accent-ink: #FFFFFF;
+    --accent-soft: #F4E4EA;
+    --teal: #1F7A6C;
+    --teal-soft: #E3F1EE;
+    --amber: #A6631E;
+    --amber-soft: #F4E9D8;
+    --stage-done: #1F7A6C;
+    --stage-done-soft: #E3F1EE;
+    --stage-current: #2B5FD9;
+    --stage-current-soft: #E7EDFC;
+    --stage-upcoming: #AFC0C9;
+    --shadow: 0 1px 2px rgba(18,33,46,0.06), 0 8px 24px -12px rgba(18,33,46,0.18);
+    --font-display: 'Dubai', 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-body: 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-mono: 'Cascadia Code', 'Consolas', 'SF Mono', 'Courier New', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1720;
+      --surface: #17212C;
+      --surface-2: #1D2833;
+      --ink: #E7ECEF;
+      --ink-muted: #9FB0BD;
+      --ink-faint: #6C7E8C;
+      --line: #2B3946;
+      --line-strong: #3C4C5A;
+      --accent: #D97A97;
+      --accent-ink: #1A0A10;
+      --accent-soft: #2E1B22;
+      --teal: #4FC3B0;
+      --teal-soft: #163430;
+      --amber: #D9A24B;
+      --amber-soft: #332617;
+      --stage-done: #4FC3B0;
+      --stage-done-soft: #163430;
+      --stage-current: #6C93F5;
+      --stage-current-soft: #1B2740;
+      --stage-upcoming: #3C4C5A;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1720;
+    --surface: #17212C;
+    --surface-2: #1D2833;
+    --ink: #E7ECEF;
+    --ink-muted: #9FB0BD;
+    --ink-faint: #6C7E8C;
+    --line: #2B3946;
+    --line-strong: #3C4C5A;
+    --accent: #D97A97;
+    --accent-ink: #1A0A10;
+    --accent-soft: #2E1B22;
+    --teal: #4FC3B0;
+    --teal-soft: #163430;
+    --amber: #D9A24B;
+    --amber-soft: #332617;
+    --stage-done: #4FC3B0;
+    --stage-done-soft: #163430;
+    --stage-current: #6C93F5;
+    --stage-current-soft: #1B2740;
+    --stage-upcoming: #3C4C5A;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.75;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    text-wrap: balance;
+    line-height: 1.25;
+    color: var(--ink);
+    margin: 0;
+  }
+
+  code, .mono {
+    font-family: var(--font-mono);
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--stage-current);
+    outline-offset: 2px;
+  }
+
+  /* ── Shell layout ─────────────────────────────────────────── */
+  .shell {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: grid;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 48px;
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; }
+  }
+
+  /* ── Header / hero (modest, doc-style) ───────────────────── */
+  header.top {
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .top-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 40px 24px 32px;
+  }
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12.5px;
+    letter-spacing: 0.06em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    padding: 4px 12px;
+    border-radius: 3px;
+    margin-bottom: 18px;
+  }
+  h1.title {
+    font-size: clamp(28px, 4vw, 40px);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  p.dek {
+    margin-top: 12px;
+    max-width: 62ch;
+    color: var(--ink-muted);
+    font-size: 17px;
+  }
+  .badges {
+    margin-top: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .badge {
+    font-size: 12.5px;
+    padding: 5px 11px;
+    border-radius: 3px;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-muted);
+    background: var(--surface-2);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--teal); flex: none; }
+
+  /* ── Nav rail ─────────────────────────────────────────────── */
+  nav.rail {
+    position: sticky;
+    top: 24px;
+    padding: 24px 0;
+    font-size: 14px;
+  }
+  nav.rail .rail-label {
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    color: var(--ink-faint);
+    margin-bottom: 12px;
+    padding-right: 12px;
+  }
+  nav.rail ol {
+    list-style: none;
+    margin: 0; padding: 0;
+    counter-reset: navsteps;
+    border-right: 2px solid var(--line);
+  }
+  nav.rail li { counter-increment: navsteps; }
+  nav.rail a {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 7px 14px 7px 8px;
+    margin-right: -2px;
+    border-right: 2px solid transparent;
+    color: var(--ink-muted);
+    text-decoration: none;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  nav.rail a::before {
+    content: counter(navsteps, decimal-leading-zero);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    color: var(--ink-faint);
+  }
+  nav.rail a:hover, nav.rail a.active {
+    color: var(--ink);
+    border-right-color: var(--accent);
+  }
+  nav.rail a.active::before { color: var(--accent); }
+
+  /* ── Main content ─────────────────────────────────────────── */
+  main { min-width: 0; padding: 48px 0 96px; }
+
+  section.block {
+    padding-top: 56px;
+    margin-top: 56px;
+    border-top: 1px solid var(--line);
+    scroll-margin-top: 20px;
+  }
+  section.block:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+
+  .block-head { margin-bottom: 24px; }
+  .block-num {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--accent);
+    margin-bottom: 6px;
+    display: block;
+  }
+  h2.block-title { font-size: 24px; font-weight: 700; }
+  p.block-intro {
+    margin-top: 12px;
+    max-width: 68ch;
+    color: var(--ink-muted);
+  }
+
+  .prose { max-width: 68ch; }
+  .prose p { margin: 0 0 14px; color: var(--ink); }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--ink); }
+
+  /* ── Cards / panels ───────────────────────────────────────── */
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 20px 22px;
+  }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 720px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+
+  .field-label { font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); margin-bottom: 4px; }
+  .field-value { font-size: 15px; color: var(--ink); }
+
+  /* ── Flow diagram ─────────────────────────────────────────── */
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0;
+    margin: 28px 0;
+  }
+  .flow-step {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 16px 18px;
+    min-width: 160px;
+    flex: 1 1 160px;
+    box-shadow: var(--shadow);
+  }
+  .flow-step .fs-kicker { font-size: 11.5px; color: var(--ink-faint); letter-spacing: .04em; margin-bottom: 6px; }
+  .flow-step .fs-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .flow-step .fs-detail { font-size: 13px; color: var(--ink-muted); line-height: 1.5; }
+  .flow-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 10px;
+    color: var(--ink-faint);
+    font-size: 18px;
+    flex: 0 0 auto;
+  }
+  @media (max-width: 780px) {
+    .flow { flex-direction: column; }
+    .flow-arrow { transform: rotate(90deg); padding: 4px 0; }
+  }
+
+  /* ── Tables ───────────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); }
+  thead th {
+    text-align: right;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    color: var(--ink-faint);
+    background: var(--surface-2);
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    white-space: nowrap;
+  }
+  tbody td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td .mono, th .mono { font-size: 13px; color: var(--teal); }
+  .method {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 3px;
+    letter-spacing: 0.03em;
+  }
+  .method.get { background: var(--teal-soft); color: var(--teal); }
+  .method.post { background: var(--accent-soft); color: var(--accent); }
+  .method.put { background: var(--amber-soft); color: var(--amber); }
+
+  /* ── Timeline replica ─────────────────────────────────────── */
+  .tl-wrap { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 22px 24px; }
+  .tl-list { list-style: none; margin: 0; padding: 0; }
+  .tl-item { position: relative; display: flex; gap: 14px; padding-bottom: 22px; }
+  .tl-item:last-child { padding-bottom: 0; }
+  .tl-rail { position: absolute; right: 11px; top: 24px; bottom: 0; width: 2px; }
+  .tl-item.done .tl-rail { background: var(--stage-done); }
+  .tl-item:not(.done) .tl-rail { background: var(--line); }
+  .tl-item:last-child .tl-rail { display: none; }
+  .tl-dot {
+    flex: none; width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; z-index: 1;
+  }
+  .tl-item.done .tl-dot { background: var(--stage-done); color: var(--surface); }
+  .tl-item.current .tl-dot { background: var(--stage-current); color: var(--surface); box-shadow: 0 0 0 4px var(--stage-current-soft); }
+  .tl-item.upcoming .tl-dot { background: var(--surface); border: 2px solid var(--stage-upcoming); }
+  .tl-body { padding-top: 1px; }
+  .tl-name { font-size: 14.5px; font-weight: 600; }
+  .tl-item.upcoming .tl-name { color: var(--ink-faint); font-weight: 500; }
+  .tl-item.current .tl-name { color: var(--stage-current); }
+  .tl-item.done .tl-name { color: var(--stage-done); }
+  .tl-signal { font-size: 12.5px; color: var(--ink-faint); margin-top: 3px; }
+  .tl-legend { display: flex; gap: 18px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--ink-muted); flex-wrap: wrap; }
+  .tl-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .tl-legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+  /* ── Rule list ────────────────────────────────────────────── */
+  .rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .rules li {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 6px;
+    padding: 13px 16px; font-size: 14.5px;
+  }
+  .rules li .tag {
+    flex: none; font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+    padding: 3px 8px; border-radius: 3px; margin-top: 1px;
+  }
+  .rules li.allow .tag { background: var(--teal-soft); color: var(--teal); }
+  .rules li.deny .tag { background: var(--accent-soft); color: var(--accent); }
+  .rules li.note .tag { background: var(--amber-soft); color: var(--amber); }
+
+  /* ── File map ─────────────────────────────────────────────── */
+  .filemap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .filemap { grid-template-columns: 1fr; } }
+  .filemap .col h3 { font-size: 13px; letter-spacing: .04em; color: var(--ink-faint); margin-bottom: 10px; }
+  .filemap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .filemap li { font-family: var(--font-mono); font-size: 12.8px; padding: 6px 10px; border-radius: 4px; direction: ltr; text-align: left; color: var(--ink-muted); }
+  .filemap li:hover { background: var(--surface-2); color: var(--ink); }
+  .filemap li .fdesc { font-family: var(--font-body); direction: rtl; text-align: right; display: block; color: var(--ink-faint); font-size: 12px; margin-top: 1px; }
+
+  footer.page-foot {
+    max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px;
+    color: var(--ink-faint); font-size: 13px; border-top: 1px solid var(--line); margin-top: 40px;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="eyebrow">مرجع تقني</span>
+    <h1 class="title">بوابة الطالب</h1>
+    <p class="dek">كل ما يحتاج معرفته عن آلية عمل بوابة الطالب: من إنشاء الحساب عند الاستيراد، إلى تسجيل الدخول، ولوحة التحكم، وتقديم المقترح، وحساب دورة الحياة — مع خريطة كاملة للمسارات والملفات المسؤولة عن كل جزء.</p>
+    <div class="badges">
+      <span class="badge"><span class="dot"></span> Phase 1 — الحسابات والاستيراد</span>
+      <span class="badge"><span class="dot"></span> Phase 2 — البوابة والمقترح والـTimeline</span>
+      <span class="badge">Laravel 11 + Vue 3 + Inertia</span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="محتويات الصفحة">
+    <div class="rail-label">المحتويات</div>
+    <ol id="toc">
+      <li><a href="#overview">نظرة عامة</a></li>
+      <li><a href="#account">إنشاء الحساب</a></li>
+      <li><a href="#login">تسجيل الدخول</a></li>
+      <li><a href="#routes">المسارات</a></li>
+      <li><a href="#dashboard">لوحة التحكم</a></li>
+      <li><a href="#proposal">المقترح والفريق</a></li>
+      <li><a href="#timeline">دورة الحياة</a></li>
+      <li><a href="#rules">الصلاحيات</a></li>
+      <li><a href="#files">الملفات المسؤولة</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- 1. Overview -->
+    <section class="block" id="overview">
+      <div class="block-head">
+        <span class="block-num">01</span>
+        <h2 class="block-title">نظرة عامة على الرحلة الكاملة</h2>
+        <p class="block-intro">ست محطات تربط الطالب من لحظة استيراده كسجل بيانات، إلى متابعته الحيّة لمشروع تخرجه.</p>
+      </div>
+
+      <div class="flow">
+        <div class="flow-step">
+          <div class="fs-kicker">القسم</div>
+          <div class="fs-title">استيراد Excel</div>
+          <div class="fs-detail">القسم يرفع كشف الطلاب — يُنشأ سجل <span class="mono">Student</span> لكل صف صالح.</div>
+        </div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-step">
+          <div class="fs-kicker">تلقائي</div>
+          <div class="fs-title">إنشاء الحساب</div>
+          <div class="fs-detail">رقم القيد كاسم دخول، تاريخ الميلاد ككلمة مرور مؤقتة.</div>
+        </div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-step">
+          <div class="fs-kicker">الطالب</div>
+          <div class="fs-title">تسجيل الدخول</div>
+          <div class="fs-detail">عبر <span class="mono">/student</span> أو <span class="mono">/login</span> مباشرة.</div>
+        </div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-step">
+          <div class="fs-kicker">إجباري</div>
+          <div class="fs-title">تغيير كلمة المرور</div>
+          <div class="fs-detail">لا تنقّل قبل ذلك — لأي صفحة كانت.</div>
+        </div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-step">
+          <div class="fs-kicker">الطالب</div>
+          <div class="fs-title">تقديم المقترح</div>
+          <div class="fs-detail">هو وفريقه، بربط تلقائي عبر رقم القيد.</div>
+        </div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-step">
+          <div class="fs-kicker">حيّ</div>
+          <div class="fs-title">متابعة الـTimeline</div>
+          <div class="fs-detail">17 مرحلة تُحسب من حالة النظام الفعلية.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Account creation -->
+    <section class="block" id="account">
+      <div class="block-head">
+        <span class="block-num">02</span>
+        <h2 class="block-title">إنشاء الحساب</h2>
+        <p class="block-intro">لا يوجد تسجيل ذاتي للطالب — الحساب يُنشأ تلقائيًا فقط عبر استيراد القسم.</p>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <div class="field-label">اسم الدخول</div>
+          <div class="field-value mono">registration_number</div>
+          <p class="tl-signal" style="margin-top:8px">رقم القيد كما هو، بلا أي تحويل.</p>
+        </div>
+        <div class="panel">
+          <div class="field-label">كلمة المرور المؤقتة</div>
+          <div class="field-value mono">date_of_birth → DDMMYYYY</div>
+          <p class="tl-signal" style="margin-top:8px">مثال: مولود 2003-05-14 ← <span class="mono">14052003</span></p>
+        </div>
+        <div class="panel">
+          <div class="field-label">البريد المخزَّن داخليًا</div>
+          <div class="field-value mono">{registration_number}@students.local</div>
+          <p class="tl-signal" style="margin-top:8px">معرّف تقني فقط — الطالب لا يراه ولا يستخدمه.</p>
+        </div>
+        <div class="panel">
+          <div class="field-label">عند أول دخول</div>
+          <div class="field-value">إجبار تغيير كلمة المرور</div>
+          <p class="tl-signal" style="margin-top:8px"><span class="mono">force_password_change = true</span></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Login mechanism -->
+    <section class="block" id="login">
+      <div class="block-head">
+        <span class="block-num">03</span>
+        <h2 class="block-title">آلية تسجيل الدخول</h2>
+        <p class="block-intro">نفس صفحة الدخول الموحّدة لكل الأدوار — الفرق فقط في ما يُكتب بخانة "البريد".</p>
+      </div>
+      <div class="prose">
+        <p>حقل الدخول يقبل نصًا عامًا. إن احتوى المدخل على <span class="mono">@</span> يُعامَل كبريد حقيقي (الموظفون/المشرفون) دون أي تغيير. إن لم يحتوِ عليه، يبحث النظام عن <span class="mono">Student</span> برقم القيد المطابق، ويستخدم بريد حسابه الداخلي للمصادقة الفعلية — <strong>منطق <span class="mono">Auth::attempt</span> نفسه لم يتغيّر</strong>.</p>
+        <p>بعد نجاح الدخول، ميدل وير <span class="mono">EnsurePasswordIsChanged</span> يفحص <span class="mono">force_password_change</span> على كل طلب. إن كان مفعّلًا، يُحوَّل الطالب إلى صفحة تغيير كلمة المرور مهما كانت الصفحة المطلوبة — باستثناء صفحة التغيير نفسها وتسجيل الخروج.</p>
+      </div>
+    </section>
+
+    <!-- 4. Routes -->
+    <section class="block" id="routes">
+      <div class="block-head">
+        <span class="block-num">04</span>
+        <h2 class="block-title">المسارات</h2>
+        <p class="block-intro">مسار عام واحد بلا تسجيل دخول، ومجموعة خاصة محمية بـ<span class="mono">role:student</span>.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>الطريقة</th><th>المسار</th><th>الكونترولر</th><th>الغرض</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="method get">GET</span></td>
+              <td class="mono">/student</td>
+              <td class="mono">PublicController@studentPortal</td>
+              <td>عامة، بلا دخول — تُعيد استخدام <span class="mono">Browse.vue</span> نفسه بزر "دخول طالب"</td>
+            </tr>
+            <tr>
+              <td><span class="method get">GET</span></td>
+              <td class="mono">/student/dashboard</td>
+              <td class="mono">Student\DashboardController@index</td>
+              <td>لوحة التحكم الرئيسية</td>
+            </tr>
+            <tr>
+              <td><span class="method get">GET</span></td>
+              <td class="mono">/student/proposal/create</td>
+              <td class="mono">Student\ProposalController@create</td>
+              <td>نموذج تقديم مقترح جديد</td>
+            </tr>
+            <tr>
+              <td><span class="method post">POST</span></td>
+              <td class="mono">/student/proposal</td>
+              <td class="mono">Student\ProposalController@store</td>
+              <td>حفظ المقترح الجديد</td>
+            </tr>
+            <tr>
+              <td><span class="method get">GET</span></td>
+              <td class="mono">/student/proposal/{id}</td>
+              <td class="mono">Student\ProposalController@show</td>
+              <td>تفاصيل المقترح + الـTimeline</td>
+            </tr>
+            <tr>
+              <td><span class="method get">GET</span></td>
+              <td class="mono">/student/proposal/{id}/edit</td>
+              <td class="mono">Student\ProposalController@edit</td>
+              <td>نموذج التعديل</td>
+            </tr>
+            <tr>
+              <td><span class="method put">PUT</span></td>
+              <td class="mono">/student/proposal/{id}</td>
+              <td class="mono">Student\ProposalController@update</td>
+              <td>حفظ التعديلات</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5. Dashboard -->
+    <section class="block" id="dashboard">
+      <div class="block-head">
+        <span class="block-num">05</span>
+        <h2 class="block-title">لوحة التحكم</h2>
+        <p class="block-intro">حالتان فقط: لا مقترح بعد، أو مقترح قائم — بلا أي شاشة وسيطة.</p>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="field-label">دائمًا معروض</div>
+          <div class="field-value">الاسم، رقم القيد، القسم، التخصص، حالة الحساب</div>
+        </div>
+        <div class="panel">
+          <div class="field-label">بلا مقترح</div>
+          <div class="field-value">حالة فارغة + زر "تقديم مقترح جديد"</div>
+        </div>
+        <div class="panel">
+          <div class="field-label">مع مقترح</div>
+          <div class="field-value">العنوان، الحالة، اسم المشرف، وزرا عرض/تعديل</div>
+        </div>
+        <div class="panel">
+          <div class="field-label">مصدر البيانات</div>
+          <div class="field-value mono">Student::currentProposal()</div>
+          <p class="tl-signal" style="margin-top:8px">أحدث مقترح غير مُستبدَل ضمن عضوية الفريق.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Proposal & team -->
+    <section class="block" id="proposal">
+      <div class="block-head">
+        <span class="block-num">06</span>
+        <h2 class="block-title">المقترح وربط الفريق</h2>
+        <p class="block-intro">آلية الربط التلقائي هي جوهر بوابة الطالب — لا يوجد أي إجراء يدوي لربط طالب بمقترحه.</p>
+      </div>
+      <div class="prose">
+        <p>عند إنشاء المقترح، يُدرَج الطالب المسجّل دخوله تلقائيًا كعضو في الفريق حتى لو لم يذكر نفسه — هذا يحدث داخل <span class="mono">EnsuresStudentTeamMembership</span> قبل التحقق من صحة الطلب مباشرة، لا داخل الكونترولر لاحقًا.</p>
+        <p>لكل زميل آخر يُذكَر بالاسم ورقم القيد، يبحث <span class="mono">ProjectProposalRepository</span> عن سجل <span class="mono">Student</span> مطابق لرقم القيد ويربطه تلقائيًا عبر <span class="mono">student_id</span>. النتيجة: <strong>كل عضو فريق مرتبط بحساب حقيقي يرى نفس المقترح بالضبط</strong> — رؤية جماعية، لا حصرية على من ضغط "حفظ".</p>
+      </div>
+      <div class="grid-2" style="margin-top:20px">
+        <div class="panel">
+          <div class="field-label">نافذة التعديل</div>
+          <div class="field-value">مبدئي أو بحاجة تعديل فقط</div>
+        </div>
+        <div class="panel">
+          <div class="field-label">قيد النشاط</div>
+          <div class="field-value">لا مقترح ثانٍ ما دام لديه واحد نشط</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Timeline -->
+    <section class="block" id="timeline">
+      <div class="block-head">
+        <span class="block-num">07</span>
+        <h2 class="block-title">دورة الحياة — 17 مرحلة</h2>
+        <p class="block-intro">لا جدول تتبّع منفصل يحتاج مزامنة — كل مرحلة تُحسب حيًّا من حالة المقترح والمشروع الفعلية عبر <span class="mono">LifecycleTimelineService</span>.</p>
+      </div>
+
+      <div class="tl-wrap">
+        <ol class="tl-list">
+          <li class="tl-item done"><div class="tl-rail"></div><div class="tl-dot">✓</div><div class="tl-body"><div class="tl-name">اختيار المشرف</div><div class="tl-signal">مكتملة — <span class="mono">supervisor_id</span> غير فارغ</div></div></li>
+          <li class="tl-item done"><div class="tl-rail"></div><div class="tl-dot">✓</div><div class="tl-body"><div class="tl-name">تقديم المقترح</div><div class="tl-signal">مكتملة دائمًا بمجرد وجود سجل المقترح</div></div></li>
+          <li class="tl-item current"><div class="tl-rail"></div><div class="tl-dot">●</div><div class="tl-body"><div class="tl-name">مراجعة المشرف / مراجعة القسم</div><div class="tl-signal">الحالية — الحالة ما زالت <span class="mono">pending</span></div></div></li>
+          <li class="tl-item upcoming"><div class="tl-rail"></div><div class="tl-dot"></div><div class="tl-body"><div class="tl-name">اعتماد المقترح</div><div class="tl-signal">قادمة — تنتظر <span class="mono">status = approved</span></div></div></li>
+          <li class="tl-item upcoming"><div class="tl-rail"></div><div class="tl-dot"></div><div class="tl-body"><div class="tl-name">بدء المشروع → إنجاز المشروع</div><div class="tl-signal">قادمة — تتبع وجود <span class="mono">Project</span> ثم <span class="mono">current_status_id</span></div></div></li>
+          <li class="tl-item upcoming"><div class="tl-rail"></div><div class="tl-dot"></div><div class="tl-body"><div class="tl-name">إخلاء الطرف / اكتمال إجراءات التخرج</div><div class="tl-signal">قادمة دائمًا حاليًا — لا نظام مقابل بعد</div></div></li>
+        </ol>
+        <div class="tl-legend">
+          <span><i style="background:var(--stage-done)"></i> مكتملة</span>
+          <span><i style="background:var(--stage-current)"></i> حالية</span>
+          <span><i style="border:2px solid var(--stage-upcoming); background:transparent"></i> قادمة</span>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-top:20px">
+        <table>
+          <thead><tr><th>#</th><th>المرحلة</th><th>إشارة التحقق</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">01</td><td>اختيار المشرف</td><td class="mono">proposal.supervisor_id ≠ null</td></tr>
+            <tr><td class="mono">02</td><td>تقديم المقترح</td><td class="mono">دائمًا صحيحة</td></tr>
+            <tr><td class="mono">03–04</td><td>مراجعة المشرف / القسم</td><td class="mono">status ≠ pending</td></tr>
+            <tr><td class="mono">05</td><td>اعتماد المقترح</td><td class="mono">status = approved</td></tr>
+            <tr><td class="mono">06</td><td>بدء المشروع</td><td class="mono">project موجود</td></tr>
+            <tr><td class="mono">07</td><td>رفع التوثيق</td><td class="mono">project.documents().exists()</td></tr>
+            <tr><td class="mono">08</td><td>موافقة المشرف</td><td class="mono">لا إشارة — قادمة دائمًا</td></tr>
+            <tr><td class="mono">09</td><td>الجاهزية للمناقشة</td><td class="mono">status.sort_order ≥ 5</td></tr>
+            <tr><td class="mono">10 / 12</td><td>المناقشة العملية / النهائية</td><td class="mono">status.sort_order ≥ 6</td></tr>
+            <tr><td class="mono">11</td><td>التدريب الميداني</td><td class="mono">لا إشارة — قادمة دائمًا</td></tr>
+            <tr><td class="mono">13</td><td>التعديلات</td><td class="mono">status.sort_order = 7</td></tr>
+            <tr><td class="mono">14</td><td>النسخة النهائية</td><td class="mono">document.is_final = true</td></tr>
+            <tr><td class="mono">15</td><td>إنجاز المشروع</td><td class="mono">status.sort_order = 8 (أرشفة)</td></tr>
+            <tr><td class="mono">16–17</td><td>إخلاء الطرف / اكتمال التخرج</td><td class="mono">لا إشارة — قادمة دائمًا</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 8. Rules -->
+    <section class="block" id="rules">
+      <div class="block-head">
+        <span class="block-num">08</span>
+        <h2 class="block-title">الصلاحيات وقواعد العمل</h2>
+        <p class="block-intro">كلها في <span class="mono">ProjectProposalPolicy</span> — الطالب لا يملك أي مسار يتجاوزها.</p>
+      </div>
+      <ul class="rules">
+        <li class="allow"><span class="tag">يسمح</span> رؤية وتعديل مقترح فريقه فقط، عبر تطابق <span class="mono">student_id</span></li>
+        <li class="allow"><span class="tag">يسمح</span> تعديل المقترح أثناء <span class="mono">pending</span> أو <span class="mono">needs_revision</span> فقط</li>
+        <li class="deny"><span class="tag">يمنع</span> إنشاء مقترح ثانٍ أثناء وجود مقترح نشط</li>
+        <li class="deny"><span class="tag">يمنع</span> رؤية أي مقترح لفريق آخر</li>
+        <li class="deny"><span class="tag">يمنع</span> تغيير حالة المقترح (اعتماد/رفض) — يبقى حصرًا لـ<span class="mono">dept_manager</span></li>
+        <li class="deny"><span class="tag">يمنع</span> الحذف نهائيًا</li>
+        <li class="note"><span class="tag">تنبيه</span> الملفات تُستبدَل عند كل رفع جديد — لا تاريخ إصدارات (قرار مقصود)</li>
+      </ul>
+    </section>
+
+    <!-- 9. Files -->
+    <section class="block" id="files">
+      <div class="block-head">
+        <span class="block-num">09</span>
+        <h2 class="block-title">الملفات المسؤولة</h2>
+        <p class="block-intro">خريطة الكود الفعلي وراء كل جزء من البوابة.</p>
+      </div>
+      <div class="filemap">
+        <div class="col">
+          <h3>Backend</h3>
+          <ul>
+            <li>app/Http/Controllers/Student/DashboardController.php<span class="fdesc">بيانات اللوحة + المقترح الحالي</span></li>
+            <li>app/Http/Controllers/Student/ProposalController.php<span class="fdesc">create/store/show/edit/update</span></li>
+            <li>app/Http/Controllers/PublicController.php<span class="fdesc">studentPortal() — يعيد استخدام browse()</span></li>
+            <li>app/Services/LifecycleTimelineService.php<span class="fdesc">حساب المراحل الـ17 حيًّا</span></li>
+            <li>app/Policies/ProjectProposalPolicy.php<span class="fdesc">فروع student لكل عملية</span></li>
+            <li>app/Http/Requests/Concerns/EnsuresStudentTeamMembership.php<span class="fdesc">إدراج الطالب في فريقه قبل التحقق</span></li>
+            <li>app/Http/Middleware/EnsurePasswordIsChanged.php<span class="fdesc">إجبار تغيير كلمة المرور عالميًا</span></li>
+            <li>app/Http/Requests/Auth/LoginRequest.php<span class="fdesc">تحويل رقم القيد إلى بريد الحساب</span></li>
+            <li>app/Models/Student.php<span class="fdesc">currentProposal() و hasActiveProposal()</span></li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Frontend</h3>
+          <ul>
+            <li>resources/js/pages/Student/Dashboard.vue<span class="fdesc">اللوحة الرئيسية</span></li>
+            <li>resources/js/pages/Student/Proposal/Create.vue<span class="fdesc">تقديم مقترح</span></li>
+            <li>resources/js/pages/Student/Proposal/Edit.vue<span class="fdesc">تعديل مقترح</span></li>
+            <li>resources/js/pages/Student/Proposal/Show.vue<span class="fdesc">تفاصيل + Timeline</span></li>
+            <li>resources/js/components/LifecycleTimeline.vue<span class="fdesc">مكوّن الشريط البصري</span></li>
+            <li>resources/js/components/Proposals/ProposalFormModal.vue<span class="fdesc">نموذج مشترك مع شاشة الطاقم</span></li>
+            <li>resources/js/pages/Public/Browse.vue<span class="fdesc">مُعاد استخدامها في /student</span></li>
+            <li>resources/js/pages/auth/Login.vue<span class="fdesc">حقل نصي يقبل رقم القيد</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="page-foot">
+  توثيق تقني داخلي — نظام أرشفة مشاريع التخرج، كلية التقنية الإلكترونية.
+</footer>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+    var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+
+    function onScroll() {
+      var pos = window.scrollY + 120;
+      var activeIdx = 0;
+      sections.forEach(function (s, i) {
+        if (s && s.offsetTop <= pos) activeIdx = i;
+      });
+      links.forEach(function (a, i) {
+        a.classList.toggle('active', i === activeIdx);
+      });
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

@@ -26,11 +26,11 @@ interface Document {
 interface Examiner {
     id: number;
     full_name: string;
-    title: string | null;
+    degree?: { degree_code: string } | null;
 }
 interface Evaluation {
     id: number;
-    examiner_id: number;
+    faculty_member_id: number;
     notes: string | null;
 }
 interface RelatedProject {
@@ -39,7 +39,7 @@ interface RelatedProject {
     academic_year: string;
     department: Department | null;
     specialization: Specialization | null;
-    supervisor: { name: string } | null;
+    supervisor: { full_name: string } | null;
     students: Student[];
 }
 
@@ -53,10 +53,10 @@ interface Project {
     visit_count: number;
     department: Department | null;
     specialization: Specialization | null;
-    supervisor: { id: number; name: string } | null;
+    supervisor: { id: number; full_name: string } | null;
     students: Student[];
     documents: Document[];
-    examiners: Examiner[];
+    faculty_members: Examiner[];
     evaluations: Evaluation[];
 }
 
@@ -163,7 +163,7 @@ function closeFeedbackModal() {
                     </div>
                     <div class="flex gap-2">
                         <span class="w-32 shrink-0 text-text-muted">المشرف:</span>
-                        <span class="font-medium text-text-dark">{{ project.supervisor?.name ?? '—' }}</span>
+                        <span class="font-medium text-text-dark">{{ project.supervisor?.full_name ?? '—' }}</span>
                     </div>
                     <div class="flex gap-2">
                         <span class="w-32 shrink-0 text-text-muted">الدرجة النهائية:</span>
@@ -285,7 +285,7 @@ function closeFeedbackModal() {
                                 الفصل الدراسي: <span class="font-medium text-text-dark">{{ rel.academic_year }}</span>
                             </p>
                             <p>
-                                المشرف: <span class="font-medium text-text-dark">{{ rel.supervisor?.name ?? '—' }}</span>
+                                المشرف: <span class="font-medium text-text-dark">{{ rel.supervisor?.full_name ?? '—' }}</span>
                             </p>
                             <p>
                                 عدد الطلبة: <span class="font-medium text-text-dark">{{ rel.students.length }}</span>

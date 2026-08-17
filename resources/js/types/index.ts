@@ -17,10 +17,59 @@ export interface NavItem {
 }
 
 export interface SimilarProject {
+    type: 'project' | 'proposal';
     id: number;
-    project_title: string;
-    academic_year: string;
+    title: string;
+    academic_year: string | null;
     department: string | null;
+    similarity_percent: number;
+    url: string | null;
+}
+
+export interface Department {
+    id: number;
+    name: string;
+    code?: string;
+}
+
+export interface AcademicDegree {
+    id: number;
+    degree_name: string;
+    degree_code: string;
+}
+
+export interface FacultyMember {
+    id: number;
+    full_name: string;
+    phone_number: string;
+    email: string;
+    degree_id: number;
+    user_id: number | null;
+    degree?: AcademicDegree;
+    departments?: Department[];
+}
+
+export interface Semester {
+    id: number;
+    name: string;
+    sort_order: number;
+    is_active: boolean;
+}
+
+export interface SystemSettings {
+    max_students_per_project: number;
+    examiners_per_project: number;
+    max_projects_per_supervisor_per_semester: number;
+    academic_year_format: '2_digit' | '4_digit';
+}
+
+export interface NotificationItem {
+    id: string;
+    title: string | null;
+    message: string | null;
+    url: string | null;
+    read_at: string | null;
+    created_at: string;
 }
 
 export interface SharedData {
@@ -29,7 +78,10 @@ export interface SharedData {
     auth: Auth;
     notifications: {
         unreadCount: number;
+        recent: NotificationItem[];
     };
+    systemSettings: SystemSettings | null;
+    semesters: string[];
     ziggy: {
         location: string;
         url: string;

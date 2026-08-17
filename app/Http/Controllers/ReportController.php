@@ -7,6 +7,7 @@ use App\Models\Department;
 use App\Models\Project;
 use App\Services\ReportService;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -17,10 +18,18 @@ class ReportController extends Controller
 {
     public function __construct(private ReportService $reportService) {}
 
-    public function dashboard(Request $request): Response
+    public function dashboard(Request $request): Response|RedirectResponse
     {
         /** @var \App\Models\User $user */
         $user = $request->user();
+
+        if ($user->hasRole('student')) {
+            return redirect()->route('student.dashboard');
+        }
+
+        if ($user->hasRole('supervisor')) {
+            return redirect()->route('supervisor.dashboard');
+        }
 
         $stats = match (true) {
             $user->hasRole('super_admin')  => $this->reportService->getDashboardStats(),

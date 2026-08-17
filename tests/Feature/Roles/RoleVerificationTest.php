@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Department;
-use App\Models\Examiner;
+use App\Models\FacultyMember;
 use App\Models\Project;
 use App\Models\Specialization;
 use App\Models\User;
@@ -13,17 +13,18 @@ beforeEach(function () {
     app()[PermissionRegistrar::class]->forgetCachedPermissions();
     $this->seed(RoleSeeder::class);
     $this->seed(ProjectStatusSeeder::class);
+    $this->seed(\Database\Seeders\SemesterSeeder::class);
 });
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Minimal FK chain: department + specialization + supervisor user. */
+/** Minimal FK chain: department + specialization + supervisor faculty member. */
 function rvSetup(): array
 {
     $dept       = Department::factory()->create();
     $spec       = Specialization::factory()->create(['department_id' => $dept->id]);
-    $supervisor = User::factory()->create(['department_id' => $dept->id]);
-    $supervisor->assignRole('supervisor');
+    $supervisor = FacultyMember::factory()->create();
+    $supervisor->departments()->sync([$dept->id]);
 
     return compact('dept', 'spec', 'supervisor');
 }
@@ -222,16 +223,17 @@ test('dept_manager can access department report', function () {
 test('dept_manager can assign examiner to project', function () {
     ['dept' => $dept, 'spec' => $spec, 'supervisor' => $sv] = rvSetup();
     $project  = archivedRvProject($dept->id, $spec->id, $sv->id);
-    $examiner = Examiner::factory()->create(['department_id' => $dept->id]);
-    $mgr      = managerInDept($dept->id);
+    $examiner = FacultyMember::factory()->create();
+    $examiner->departments()->sync([$dept->id]);
+    $mgr = managerInDept($dept->id);
 
     $this->actingAs($mgr)
-        ->post(route('projects.assign-examiner', $project->id), ['examiner_id' => $examiner->id])
+        ->post(route('projects.assign-faculty-member', $project->id), ['faculty_member_id' => $examiner->id])
         ->assertRedirect();
 
-    $this->assertDatabaseHas('project_examiners', [
-        'project_id'  => $project->id,
-        'examiner_id' => $examiner->id,
+    $this->assertDatabaseHas('project_faculty_members', [
+        'project_id'        => $project->id,
+        'faculty_member_id' => $examiner->id,
     ]);
 });
 
@@ -324,92 +326,6 @@ test('super_admin cannot delete department that has linked projects', function (
         ->assertSessionHas('error');
 
     $this->assertDatabaseHas('departments', ['id' => $dept->id]);
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// supervisor — read-only on projects; no CRUD, no reports, no departments
-// ═══════════════════════════════════════════════════════════════════════════════
-
-test('supervisor can access dashboard', function () {
-    $this->actingAs(userWithRole('supervisor'))
-        ->get(route('dashboard'))
-        ->assertOk();
-});
-
-test('supervisor can view projects index', function () {
-    $this->actingAs(userWithRole('supervisor'))
-        ->get(route('projects.index'))
-        ->assertOk();
-});
-
-test('supervisor can view project detail', function () {
-    ['dept' => $dept, 'spec' => $spec, 'supervisor' => $sv] = rvSetup();
-    $project = archivedRvProject($dept->id, $spec->id, $sv->id);
-
-    $this->actingAs($sv)
-        ->get(route('projects.show', $project->id))
-        ->assertOk();
-});
-
-test('supervisor cannot access project create page', function () {
-    $this->actingAs(userWithRole('supervisor'))
-        ->get(route('projects.create'))
-        ->assertForbidden();
-});
-
-test('supervisor cannot store a new project', function () {
-    ['dept' => $dept, 'spec' => $spec, 'supervisor' => $sv] = rvSetup();
-    $actor = userWithRole('supervisor'); // separate from the FK supervisor
-
-    $this->actingAs($actor)
-        ->post(route('projects.store'), validProjectPayload($dept->id, $spec->id, $sv->id))
-        ->assertForbidden();
-});
-
-test('supervisor cannot edit a project', function () {
-    ['dept' => $dept, 'spec' => $spec, 'supervisor' => $sv] = rvSetup();
-    $project = archivedRvProject($dept->id, $spec->id, $sv->id);
-
-    $this->actingAs($sv)
-        ->get(route('projects.edit', $project->id))
-        ->assertForbidden();
-});
-
-test('supervisor cannot delete a project', function () {
-    ['dept' => $dept, 'spec' => $spec, 'supervisor' => $sv] = rvSetup();
-    $project = archivedRvProject($dept->id, $spec->id, $sv->id);
-
-    $this->actingAs($sv)
-        ->delete(route('projects.destroy', $project->id))
-        ->assertForbidden();
-});
-
-test('supervisor cannot access import', function () {
-    $this->actingAs(userWithRole('supervisor'))
-        ->get(route('import.index'))
-        ->assertForbidden();
-});
-
-test('supervisor cannot access department report', function () {
-    $this->actingAs(userWithRole('supervisor'))
-        ->get(route('reports.department'))
-        ->assertForbidden();
-});
-
-test('supervisor cannot access departments management', function () {
-    $this->actingAs(userWithRole('supervisor'))
-        ->get(route('departments.index'))
-        ->assertForbidden();
-});
-
-test('supervisor cannot assign examiners', function () {
-    ['dept' => $dept, 'spec' => $spec, 'supervisor' => $sv] = rvSetup();
-    $project  = archivedRvProject($dept->id, $spec->id, $sv->id);
-    $examiner = Examiner::factory()->create(['department_id' => $dept->id]);
-
-    $this->actingAs($sv)
-        ->post(route('projects.assign-examiner', $project->id), ['examiner_id' => $examiner->id])
-        ->assertForbidden();
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -515,47 +431,5 @@ test('dept_staff cannot access department report', function () {
 test('dept_staff cannot access departments management', function () {
     $this->actingAs(userWithRole('dept_staff'))
         ->get(route('departments.index'))
-        ->assertForbidden();
-});
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// viewer — dashboard only; cannot write, import, report, or manage departments
-// ═══════════════════════════════════════════════════════════════════════════════
-
-test('viewer can access dashboard', function () {
-    $this->actingAs(userWithRole('viewer'))
-        ->get(route('dashboard'))
-        ->assertOk();
-});
-
-test('viewer cannot access project create page', function () {
-    $this->actingAs(userWithRole('viewer'))
-        ->get(route('projects.create'))
-        ->assertForbidden();
-});
-
-test('viewer cannot store a project', function () {
-    ['dept' => $dept, 'spec' => $spec, 'supervisor' => $sv] = rvSetup();
-
-    $this->actingAs(userWithRole('viewer'))
-        ->post(route('projects.store'), validProjectPayload($dept->id, $spec->id, $sv->id))
-        ->assertForbidden();
-});
-
-test('viewer cannot access departments management', function () {
-    $this->actingAs(userWithRole('viewer'))
-        ->get(route('departments.index'))
-        ->assertForbidden();
-});
-
-test('viewer cannot access import', function () {
-    $this->actingAs(userWithRole('viewer'))
-        ->get(route('import.index'))
-        ->assertForbidden();
-});
-
-test('viewer cannot access department report', function () {
-    $this->actingAs(userWithRole('viewer'))
-        ->get(route('reports.department'))
         ->assertForbidden();
 });

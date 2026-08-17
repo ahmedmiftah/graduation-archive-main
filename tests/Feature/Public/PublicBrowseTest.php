@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Department;
+use App\Models\FacultyMember;
 use App\Models\Project;
 use App\Models\Specialization;
 use App\Models\User;
@@ -19,12 +20,12 @@ beforeEach(function () {
 function makePublicProject(
     ?Department $dept = null,
     ?Specialization $spec = null,
-    ?User $supervisor = null,
+    ?FacultyMember $supervisor = null,
     array $overrides = [],
 ): Project {
     $dept       ??= Department::factory()->create();
     $spec       ??= Specialization::factory()->create(['department_id' => $dept->id]);
-    $supervisor ??= userWithRole('supervisor');
+    $supervisor ??= FacultyMember::factory()->create();
 
     return Project::factory()->create(array_merge([
         'department_id'     => $dept->id,

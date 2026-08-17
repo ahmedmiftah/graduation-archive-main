@@ -60,15 +60,6 @@ test('dept_manager can access departments page', function () {
         ->assertOk();
 });
 
-test('viewer cannot access departments page', function () {
-    $user = User::factory()->create();
-    $user->assignRole('viewer');
-
-    $this->actingAs($user)
-        ->get('/departments')
-        ->assertForbidden();
-});
-
 test('dept_staff can access projects create page', function () {
     $user = User::factory()->create();
     $user->assignRole('dept_staff');
@@ -76,13 +67,4 @@ test('dept_staff can access projects create page', function () {
     $this->actingAs($user)
         ->get('/projects/create')
         ->assertOk();
-});
-
-test('viewer cannot access projects create page', function () {
-    $user = User::factory()->create();
-    $user->assignRole('viewer');
-
-    $this->actingAs($user)
-        ->get('/projects/create')
-        ->assertForbidden();
 });

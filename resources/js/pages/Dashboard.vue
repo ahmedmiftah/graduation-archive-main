@@ -28,7 +28,7 @@ interface SpecItem {
 }
 interface SupervisorItem {
     id: number;
-    name: string;
+    full_name: string;
     department: string | null;
     project_count: number;
 }
@@ -119,9 +119,7 @@ const reportLinks = [
                               ? 'مدير القسم'
                               : role === 'dept_staff'
                                 ? 'موظف القسم'
-                                : role === 'supervisor'
-                                  ? 'مشرف'
-                                  : role
+                                : role
                     }}
                 </p>
             </div>
@@ -285,7 +283,7 @@ const reportLinks = [
                         </div>
                         <div class="divide-y divide-gray-100 dark:divide-gray-700">
                             <div v-for="sup in stats.supervisors" :key="sup.id" class="flex items-center justify-between px-5 py-3">
-                                <span class="text-sm text-gray-800 dark:text-gray-200">{{ sup.name }}</span>
+                                <span class="text-sm text-gray-800 dark:text-gray-200">{{ sup.full_name }}</span>
                                 <span
                                     class="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:bg-green-900/30 dark:text-green-400"
                                 >
@@ -316,7 +314,7 @@ const reportLinks = [
                 </div>
             </template>
 
-            <!-- ── DEFAULT (dept_staff / supervisor / viewer) ────────── -->
+            <!-- ── DEFAULT (dept_staff) ────────── -->
             <template v-else>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <StatsCard title="إجمالي المشاريع" :value="stats.total_projects ?? 0" :icon="FolderOpen" color="blue" />

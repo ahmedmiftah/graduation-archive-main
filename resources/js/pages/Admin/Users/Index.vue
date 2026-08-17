@@ -76,17 +76,13 @@ const breadcrumbs: BreadcrumbItem[] = [
 const roleLabels: Record<string, string> = {
     super_admin: 'مدير النظام',
     dept_manager: 'مدير القسم',
-    supervisor: 'مشرف',
     dept_staff: 'موظف القسم',
-    viewer: 'مشاهد',
 };
 
 const roleBadgeClass: Record<string, string> = {
     super_admin: 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400',
     dept_manager: 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400',
-    supervisor: 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400',
     dept_staff: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400',
-    viewer: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
 };
 
 // ── Row number ─────────────────────────────────────────────────────────

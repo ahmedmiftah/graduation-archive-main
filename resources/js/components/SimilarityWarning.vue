@@ -27,13 +27,17 @@ const emit = defineEmits<{
                 </p>
 
                 <ul class="mt-2 space-y-1">
-                    <li v-for="p in similarProjects" :key="p.id" class="flex items-center gap-2 text-sm">
+                    <li v-for="p in similarProjects" :key="p.type + '-' + p.id" class="flex flex-wrap items-center gap-2 text-sm">
                         <span class="text-yellow-600 dark:text-yellow-500">•</span>
-                        <a :href="route('projects.show', [p.id])" class="font-medium text-blue-600 hover:underline dark:text-blue-400">
-                            {{ p.project_title }}
+                        <span class="rounded bg-yellow-200/60 px-1.5 py-0.5 text-xs font-medium text-yellow-800 dark:bg-yellow-800/40 dark:text-yellow-300">
+                            {{ p.type === 'project' ? 'مشروع' : 'مقترح' }}
+                        </span>
+                        <a v-if="p.url" :href="p.url" class="font-medium text-blue-600 hover:underline dark:text-blue-400">
+                            {{ p.title }}
                         </a>
+                        <span v-else class="font-medium text-gray-700 dark:text-gray-300">{{ p.title }}</span>
                         <span class="text-gray-500 dark:text-gray-400">
-                            — {{ p.department ?? '' }} {{ p.academic_year ? `(${p.academic_year})` : '' }}
+                            — {{ p.department ?? '' }} {{ p.academic_year ? `(${p.academic_year})` : '' }} · تشابه {{ p.similarity_percent }}%
                         </span>
                     </li>
                 </ul>

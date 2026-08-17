@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>الحجز ودورة حياته</title>
+<style>
+  :root {
+    --bg: #EDF0F2; --surface: #FFFFFF; --surface-2: #F4F6F7;
+    --ink: #12212E; --ink-muted: #4B6072; --ink-faint: #7C8FA0;
+    --line: #D3DBE0; --line-strong: #AFC0C9;
+    --accent: #8A2E4E; --accent-ink: #FFFFFF; --accent-soft: #F4E4EA;
+    --teal: #1F7A6C; --teal-soft: #E3F1EE;
+    --amber: #A6631E; --amber-soft: #F4E9D8;
+    --blue: #2B5FD9; --blue-soft: #E7EDFC;
+    --purple: #7C3AED; --purple-soft: #EFE7FD;
+    --shadow: 0 1px 2px rgba(18,33,46,0.06), 0 8px 24px -12px rgba(18,33,46,0.18);
+    --font-display: 'Dubai', 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-body: 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-mono: 'Cascadia Code', 'Consolas', 'SF Mono', 'Courier New', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1720; --surface: #17212C; --surface-2: #1D2833; --ink: #E7ECEF;
+      --ink-muted: #9FB0BD; --ink-faint: #6C7E8C; --line: #2B3946; --line-strong: #3C4C5A;
+      --accent: #D97A97; --accent-ink: #1A0A10; --accent-soft: #2E1B22;
+      --teal: #4FC3B0; --teal-soft: #163430; --amber: #D9A24B; --amber-soft: #332617;
+      --blue: #6C93F5; --blue-soft: #1B2740; --purple: #A78BFA; --purple-soft: #241B3D;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1720; --surface: #17212C; --surface-2: #1D2833; --ink: #E7ECEF;
+    --ink-muted: #9FB0BD; --ink-faint: #6C7E8C; --line: #2B3946; --line-strong: #3C4C5A;
+    --accent: #D97A97; --accent-ink: #1A0A10; --accent-soft: #2E1B22;
+    --teal: #4FC3B0; --teal-soft: #163430; --amber: #D9A24B; --amber-soft: #332617;
+    --blue: #6C93F5; --blue-soft: #1B2740; --purple: #A78BFA; --purple-soft: #241B3D;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.25; color: var(--ink); margin: 0; }
+  code, .mono { font-family: var(--font-mono); direction: ltr; unicode-bidi: isolate; }
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .shell { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px; align-items: start; }
+  @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } }
+  header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+  .top-inner { max-width: 1180px; margin: 0 auto; padding: 40px 24px 32px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; letter-spacing: 0.06em; color: var(--accent); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); padding: 4px 12px; border-radius: 3px; margin-bottom: 18px; }
+  h1.title { font-size: clamp(28px, 4vw, 40px); font-weight: 700; letter-spacing: -0.01em; }
+  p.dek { margin-top: 12px; max-width: 66ch; color: var(--ink-muted); font-size: 17px; }
+  .badges { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge { font-size: 12.5px; padding: 5px 11px; border-radius: 3px; border: 1px solid var(--line-strong); color: var(--ink-muted); background: var(--surface-2); display: inline-flex; align-items: center; gap: 6px; }
+  nav.rail { position: sticky; top: 24px; padding: 24px 0; font-size: 14px; max-height: calc(100vh - 48px); overflow-y: auto; }
+  nav.rail .rail-label { font-size: 11.5px; letter-spacing: 0.08em; color: var(--ink-faint); margin-bottom: 12px; padding-right: 12px; }
+  nav.rail ol { list-style: none; margin: 0; padding: 0; counter-reset: navsteps; border-right: 2px solid var(--line); }
+  nav.rail li { counter-increment: navsteps; }
+  nav.rail a { display: flex; align-items: baseline; gap: 8px; padding: 7px 14px 7px 8px; margin-right: -2px; border-right: 2px solid transparent; color: var(--ink-muted); text-decoration: none; transition: color .15s ease, border-color .15s ease; }
+  nav.rail a::before { content: counter(navsteps, decimal-leading-zero); font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); }
+  nav.rail a:hover, nav.rail a.active { color: var(--ink); border-right-color: var(--accent); }
+  nav.rail a.active::before { color: var(--accent); }
+  main { min-width: 0; padding: 48px 0 96px; }
+  section.block { padding-top: 56px; margin-top: 56px; border-top: 1px solid var(--line); scroll-margin-top: 20px; }
+  section.block:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  .block-head { margin-bottom: 24px; }
+  .block-num { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-bottom: 6px; display: block; }
+  h2.block-title { font-size: 24px; font-weight: 700; }
+  p.block-intro { margin-top: 12px; max-width: 68ch; color: var(--ink-muted); }
+  .prose { max-width: 68ch; }
+  .prose p { margin: 0 0 14px; color: var(--ink); }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--ink); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+  .field-label { font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); margin-bottom: 4px; }
+  .field-value { font-size: 15px; color: var(--ink); }
+
+  /* State machine diagram */
+  .state-machine { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 24px 0; }
+  .state-node {
+    background: var(--surface); border: 2px solid var(--line); border-radius: 8px; padding: 12px 18px;
+    font-weight: 700; font-size: 14px; text-align: center; min-width: 100px;
+  }
+  .state-node.reserved { border-color: var(--blue); color: var(--blue); }
+  .state-node.under-review { border-color: var(--amber); color: var(--amber); }
+  .state-node.approved { border-color: var(--teal); color: var(--teal); }
+  .state-node.finished { border-color: var(--purple); color: var(--purple); }
+  .state-node.abandoned, .state-node.released { border-color: var(--ink-faint); color: var(--ink-faint); }
+  .state-arrow { color: var(--ink-faint); font-size: 20px; flex: none; }
+  .branch-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; padding-right: 30px; }
+  .branch-label { font-size: 11.5px; color: var(--ink-faint); width: 100%; margin-top: 14px; }
+
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); }
+  thead th { text-align: right; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); background: var(--surface-2); padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td .mono, th .mono { font-size: 13px; color: var(--teal); }
+  .code-block { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.7; direction: ltr; text-align: left; color: var(--ink); }
+  .code-block .k { color: var(--accent); }
+  .code-block .s { color: var(--teal); }
+  .code-block .c { color: var(--ink-faint); }
+  .before-after { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .before-after { grid-template-columns: 1fr; } }
+  .ba-col { border-radius: 6px; padding: 18px 20px; border: 1px solid var(--line); background: var(--surface); }
+  .ba-col.after { border-color: var(--teal); }
+  .ba-label { font-size: 11px; letter-spacing: .06em; margin-bottom: 10px; font-weight: 700; }
+  .ba-col:not(.after) .ba-label { color: var(--ink-faint); }
+  .ba-col.after .ba-label { color: var(--teal); }
+  .rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .rules li { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 13px 16px; font-size: 14.5px; }
+  .rules li .tag { flex: none; font-family: var(--font-mono); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 3px; margin-top: 1px; }
+  .rules li.fixed .tag { background: var(--teal-soft); color: var(--teal); }
+  .rules li.decision .tag { background: var(--amber-soft); color: var(--amber); }
+  .filemap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .filemap { grid-template-columns: 1fr; } }
+  .filemap .col h3 { font-size: 13px; letter-spacing: .04em; color: var(--ink-faint); margin-bottom: 10px; }
+  .filemap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .filemap li { font-family: var(--font-mono); font-size: 12.8px; padding: 6px 10px; border-radius: 4px; direction: ltr; text-align: left; color: var(--ink-muted); }
+  .filemap li:hover { background: var(--surface-2); color: var(--ink); }
+  .filemap li .fdesc { font-family: var(--font-body); direction: rtl; text-align: right; display: block; color: var(--ink-faint); font-size: 12px; margin-top: 1px; }
+  footer.page-foot { max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px; color: var(--ink-faint); font-size: 13px; border-top: 1px solid var(--line); margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="eyebrow">مرجع تقني — Phase 7 / 8</span>
+    <h1 class="title">الحجز ودورة حياته</h1>
+    <p class="dek">قبول طلب انضمام (Phase 6) لم يعد يكتفي بتحديث حالة الطلب — الآن يُنشئ حجزًا فعليًا بدورة حياة صارمة الترتيب، وسعة الفكرة تُحسب من الحجوزات النشطة حيًّا.</p>
+    <div class="badges">
+      <span class="badge"><span class="dot"></span> Phase 7 — مُنفَّذ 2026-08-17</span>
+      <span class="badge">16 اختبارًا جديدًا</span>
+      <span class="badge">351/352 ناجحة</span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="محتويات الصفحة">
+    <div class="rail-label">المحتويات</div>
+    <ol id="toc">
+      <li><a href="#overview">نظرة عامة</a></li>
+      <li><a href="#machine">آلة الحالات الست</a></li>
+      <li><a href="#creation">الإنشاء التلقائي عند القبول</a></li>
+      <li><a href="#sync">سعة ديناميكية من الحجوزات النشطة</a></li>
+      <li><a href="#refinement">تحسين قاعدة الالتزام</a></li>
+      <li><a href="#breaking">تحديث اختبار موثَّق</a></li>
+      <li><a href="#boundary">حدود النطاق</a></li>
+      <li><a href="#files">الملفات المسؤولة</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section class="block" id="overview">
+      <div class="block-head">
+        <span class="block-num">01</span>
+        <h2 class="block-title">نظرة عامة</h2>
+        <p class="block-intro">آلية النسخ للمقترح نفسه (<span class="mono">replaces_proposal_id</span> من Phase 2) بقيت كما هي تمامًا — لم تُمسّ إطلاقًا. المُضاف هو طبقة تتبّع جديدة فوقها: <span class="mono">proposal_reservations</span>.</p>
+      </div>
+    </section>
+
+    <section class="block" id="machine">
+      <div class="block-head">
+        <span class="block-num">02</span>
+        <h2 class="block-title">آلة الحالات الست</h2>
+        <p class="block-intro">كل انتقال مقيَّد بحالة سابقة محدَّدة بدقة — لا تخطٍّ للترتيب الطبيعي.</p>
+      </div>
+      <div class="state-machine">
+        <div class="state-node reserved">محجوز</div>
+        <div class="state-arrow">←</div>
+        <div class="state-node under-review">قيد المراجعة</div>
+        <div class="state-arrow">←</div>
+        <div class="state-node approved">معتمد</div>
+        <div class="state-arrow">←</div>
+        <div class="state-node finished">منتهٍ</div>
+      </div>
+      <div class="branch-row">
+        <div class="branch-label">أو، من محجوز/قيد المراجعة (قبل الاعتماد فقط):</div>
+      </div>
+      <div class="state-machine">
+        <div class="state-node abandoned">متروك <span style="font-weight:400; font-size:11px">(الطالب)</span></div>
+        <div class="state-arrow">←</div>
+        <div class="state-node released">مُحرَّر <span style="font-weight:400; font-size:11px">(المشرف)</span></div>
+      </div>
+      <div class="table-wrap" style="margin-top:20px">
+        <table>
+          <thead><tr><th>الانتقال</th><th>من طرف</th><th>الشرط</th></tr></thead>
+          <tbody>
+            <tr><td>reserved → under_review</td><td>الطالب</td><td>إعلان جدية العمل</td></tr>
+            <tr><td>under_review → approved</td><td>المشرف</td><td>لا يُسمح مباشرة من reserved</td></tr>
+            <tr><td>approved → finished</td><td>المشرف</td><td>إغلاق نهائي</td></tr>
+            <tr><td>reserved/under_review → abandoned</td><td>الطالب</td><td>ممنوع بعد الاعتماد</td></tr>
+            <tr><td>abandoned → released</td><td>المشرف</td><td>يُعيد فتح سعة الفكرة</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block" id="creation">
+      <div class="block-head">
+        <span class="block-num">03</span>
+        <h2 class="block-title">الإنشاء التلقائي عند القبول</h2>
+        <p class="block-intro">تعديل مباشر على كود Phase 6 — لا حجز يدوي منفصل.</p>
+      </div>
+      <div class="code-block">
+<span class="c">// Supervisor\ProjectIdeaRequestController::accept() — بعد Phase 7</span>
+<span class="k">$ideaRequest</span>->update([<span class="s">'status'</span> =&gt; <span class="s">'accepted'</span>]);
+
+ProposalReservation::create([
+    <span class="k">'project_idea_id'</span>         =&gt; <span class="k">$idea</span>-&gt;id,
+    <span class="k">'student_id'</span>              =&gt; <span class="k">$ideaRequest</span>-&gt;student_id,
+    <span class="k">'project_idea_request_id'</span> =&gt; <span class="k">$ideaRequest</span>-&gt;id,
+    <span class="k">'status'</span>                  =&gt; <span class="s">'reserved'</span>,
+]);
+
+<span class="k">$idea</span>-&gt;syncStatusFromReservations();  <span class="c">// بدل التحديث اليدوي القديم</span>
+      </div>
+    </section>
+
+    <section class="block" id="sync">
+      <div class="block-head">
+        <span class="block-num">04</span>
+        <h2 class="block-title">سعة ديناميكية من الحجوزات النشطة فعليًا</h2>
+        <p class="block-intro">الإصلاح المنطقي الأهم في هذه المرحلة.</p>
+      </div>
+      <div class="before-after">
+        <div class="ba-col">
+          <div class="ba-label">قبل (Phase 6)</div>
+          <div class="prose"><p style="font-size:13.5px">عدّاد طلبات مقبولة تاريخيًا — <strong>ثابت لا يتراجع</strong>. لو تخلّى طالب عن حجزه، الفكرة تبقى "مغلقة" للأبد رغم توفّر مكان فعليًا.</p></div>
+        </div>
+        <div class="ba-col after">
+          <div class="ba-label">بعد (Phase 7)</div>
+          <div class="prose"><p style="font-size:13.5px"><span class="mono">activeReservationsCount()</span> يحسب فقط الحجوزات بحالة <span class="mono">reserved/under_review/approved</span> — تحرير حجز متروك ينقص العدّاد فورًا، فتُعاد الفكرة لحالة <span class="mono">available</span> أو <span class="mono">reserved</span> تلقائيًا.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="refinement">
+      <div class="block-head">
+        <span class="block-num">05</span>
+        <h2 class="block-title">تحسين قاعدة الالتزام الواحد</h2>
+        <p class="block-intro">نفس النمط: التخلي "يُحرِّر" فورًا، بينما التحرير الرسمي (من المشرف) أمر منفصل.</p>
+      </div>
+      <div class="prose">
+        <p><span class="mono">Student::hasAcceptedIdeaRequest()</span> (Phase 6) استُبدلت بـ<span class="mono">hasActiveReservation()</span> — تتحقق من الحجوزات النشطة فقط، لا من تاريخ الطلبات المقبولة. النتيجة: التخلي عن حجز (<span class="mono">abandoned</span>) يُحرِّر الطالب <strong>فورًا</strong> لطلب فكرة أخرى، حتى قبل أن يُحرِّر المشرف الفكرة نفسها رسميًا — فصل واضح بين "حرية الطالب" و"سعة الفكرة".</p>
+      </div>
+    </section>
+
+    <section class="block" id="breaking">
+      <div class="block-head">
+        <span class="block-num">06</span>
+        <h2 class="block-title">تحديث اختبار موثَّق — لا كسر صامت</h2>
+        <p class="block-intro">تغيير آلية الفحص كان سيكسر اختبارًا قديمًا صالحًا لولا معالجته صراحة.</p>
+      </div>
+      <ul class="rules">
+        <li class="decision"><span class="tag">قبل</span> اختبار Phase 6 كان ينشئ <span class="mono">ProjectIdeaRequest</span> بحالة <span class="mono">accepted</span> فقط، بلا حجز مرافق — يعكس سلوك ما قبل Phase 7</li>
+        <li class="fixed"><span class="tag">بعد</span> أُعيدت تسميته إلى <em>"student with an active reservation cannot request another idea"</em> مع إنشاء <span class="mono">ProposalReservation</span> مطابق فعليًا — يعكس الثابت الحقيقي الجديد بعد أن أصبح كل قبول يُنشئ حجزًا آليًا</li>
+      </ul>
+    </section>
+
+    <section class="block" id="boundary">
+      <div class="block-head">
+        <span class="block-num">07</span>
+        <h2 class="block-title">حدود النطاق — التزام حرفي بنص الخطة</h2>
+        <p class="block-intro">القرار المعماري المعتمد يقول: الحجز "يربط الطالب بالفكرة ويتتبّع حالته <strong>فقط</strong>".</p>
+      </div>
+      <div class="prose">
+        <p>لا تحويل تلقائي بعد من حجز معتمَد إلى <span class="mono">ProjectProposal</span>/<span class="mono">Project</span> فعلي — يبقى عملًا مفتوحًا، خارج نطاق المراحل الثمانية أصلًا وليس مؤجَّلًا لمرحلة تالية محدَّدة.</p>
+      </div>
+    </section>
+
+    <section class="block" id="files">
+      <div class="block-head">
+        <span class="block-num">08</span>
+        <h2 class="block-title">الملفات المسؤولة</h2>
+        <p class="block-intro">خريطة الكود الفعلي وراء نظام الحجز.</p>
+      </div>
+      <div class="filemap">
+        <div class="col">
+          <h3>Backend</h3>
+          <ul>
+            <li>app/Models/ProposalReservation.php<span class="fdesc">6 حالات + ACTIVE_STATUSES</span></li>
+            <li>app/Models/ProjectIdea.php<span class="fdesc">syncStatusFromReservations()</span></li>
+            <li>app/Models/Student.php<span class="fdesc">hasActiveReservation()</span></li>
+            <li>app/Policies/ProposalReservationPolicy.php<span class="fdesc">قيود الانتقال الصارمة</span></li>
+            <li>app/Http/Controllers/Student/ProposalReservationController.php<span class="fdesc">show/markUnderReview/abandon</span></li>
+            <li>app/Http/Controllers/Supervisor/ProposalReservationController.php<span class="fdesc">approve/release/finish</span></li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Frontend</h3>
+          <ul>
+            <li>resources/js/pages/Student/Ideas/Reservation.vue<span class="fdesc">"حجزي"</span></li>
+            <li>resources/js/pages/Supervisor/Ideas/Requests.vue<span class="fdesc">أزرار إدارة الحجز مدمجة</span></li>
+          </ul>
+          <h3 style="margin-top:22px">الاختبارات</h3>
+          <ul>
+            <li>tests/Feature/ProjectIdea/ProposalReservationTest.php<span class="fdesc">16 اختبارًا — كل انتقال + الصلاحيات</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="page-foot">توثيق تقني داخلي — نظام أرشفة مشاريع التخرج، كلية التقنية الإلكترونية.</footer>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+    var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+    function onScroll() {
+      var pos = window.scrollY + 120;
+      var activeIdx = 0;
+      sections.forEach(function (s, i) { if (s && s.offsetTop <= pos) activeIdx = i; });
+      links.forEach(function (a, i) { a.classList.toggle('active', i === activeIdx); });
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

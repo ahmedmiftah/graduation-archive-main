@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/c/xampp/php/php artisan *)",
+      "Read(//tmp/**)",
+      "Bash(cat /tmp/login_response3.html | head -20 *)",
+      "Read(//c/tmp/**)",
+      "Bash(curl -sS -c cookies2.txt -b cookies2.txt -X POST http://127.0.0.1:8000/login -H 'X-XSRF-TOKEN: __TRACKED_VAR__' -H 'Content-Type: application/x-www-form-urlencoded' -H 'Accept: text/html' --data-urlencode email=admin@admin.com --data-urlencode password=password -o /tmp/login_response4.html -w 'login post status: %{http_code}\\\\n' -D /tmp/login_headers4.txt)",
+      "Bash(echo \"%PDF-1.4 fake pdf content\")",
+      "Bash(echo \"%PDF-1.4 fake pdf content 2\")",
+      "Bash(curl -sS -c cookies2.txt -b cookies2.txt -X POST http://127.0.0.1:8000/proposals -H 'X-XSRF-TOKEN: __TRACKED_VAR__' -H 'Accept: text/html' -F 'title=مقترح اختبار حقيقي عبر curl' -F 'description=وصف تجريبي للتحقق من عمل النظام فعلياً' -F specialization_id=1 -F academic_year=2026 -F semester=خريف -F submission_date=2026-08-14 -F supervisor_id=1 -F 'students[0][full_name]=طالب تجريبي' -F students[0][registration_number]=2026777 -F students[0][phone_number]=0500000000 -F 'form_file=@form_test.pdf;type=application/pdf' -F 'proposal_file=@proposal_test.pdf;type=application/pdf' -o /tmp/proposal_store_resp.html -w 'store status: %{http_code}\\\\n' -D /tmp/proposal_store_headers.txt)",
+      "Bash(curl -sS -c cookies2.txt -b cookies2.txt -X POST http://127.0.0.1:8000/proposals -H 'X-XSRF-TOKEN: __TRACKED_VAR__' -H 'Accept: text/html' -F 'title=مقترح اختبار حقيقي عبر curl' -F 'description=وصف تجريبي للتحقق من عمل النظام فعلياً' -F specialization_id=1 -F academic_year=2026 -F semester=خريف -F submission_date=2026-08-14 -F supervisor_id=1 -F 'students[0][full_name]=طالب تجريبي' -F students[0][registration_number]=2026777 -F students[0][phone_number]=0500000000 -F 'form_file=@form_test.pdf;type=application/pdf' -F 'proposal_file=@proposal_test.pdf;type=application/pdf' -o /tmp/proposal_store_resp2.html -w 'store status: %{http_code}\\\\n' -D /tmp/proposal_store_headers2.txt)",
+      "Bash(curl -sS -c cookies2.txt -b cookies2.txt -X POST http://127.0.0.1:8000/proposals -H 'X-XSRF-TOKEN: __TRACKED_VAR__' -H 'Accept: application/json' -F 'title=مقترح اختبار حقيقي عبر curl 2' -F 'description=وصف تجريبي للتحقق من عمل النظام فعلياً' -F specialization_id=1 -F academic_year=2026 -F semester=خريف -F submission_date=2026-08-14 -F supervisor_id=1 -F 'students[0][full_name]=طالب تجريبي' -F students[0][registration_number]=2026778 -F students[0][phone_number]=0500000000 -F 'form_file=@form_test.pdf;type=application/pdf' -F 'proposal_file=@proposal_test.pdf;type=application/pdf' -w '\\\\nstatus: %{http_code}\\\\n')",
+      "Bash(xxd)"
+    ]
+  }
+}

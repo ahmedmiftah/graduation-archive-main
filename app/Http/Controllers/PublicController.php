@@ -24,6 +24,22 @@ class PublicController extends Controller
 
     public function browse(Request $request): Response
     {
+        return $this->renderBrowse($request, 'Public/Browse');
+    }
+
+    /**
+     * Standalone, externally-announceable landing page for students (e.g. a
+     * link posted on the college's Facebook page) — same browse experience
+     * and component as /browse, with the login CTA relabeled for students.
+     * /browse itself is untouched and keeps working exactly as before.
+     */
+    public function studentPortal(Request $request): Response
+    {
+        return $this->renderBrowse($request, 'Public/Browse', routeName: 'student.portal', loginLabel: 'دخول طالب');
+    }
+
+    private function renderBrowse(Request $request, string $component, string $routeName = 'public.browse', string $loginLabel = 'تسجيل الدخول'): Response
+    {
         $query = Project::query()
             ->where('current_status_id', 1)
             ->where('is_deleted', false)
@@ -35,9 +51,9 @@ class PublicController extends Controller
                   ->orWhere('description', 'like', "%{$search}%")
                   ->orWhereHas('department', fn($q) => $q->where('name', 'like', "%{$search}%"))
                   ->orWhereHas('specialization', fn($q) => $q->where('name', 'like', "%{$search}%"))
-                  ->orWhereHas('supervisor', fn($q) => $q->where('name', 'like', "%{$search}%"))
+                  ->orWhereHas('supervisor', fn($q) => $q->where('full_name', 'like', "%{$search}%"))
                   ->orWhereHas('students', fn($q) => $q->where('full_name', 'like', "%{$search}%"))
-                  ->orWhereHas('examiners', fn($q) => $q->where('full_name', 'like', "%{$search}%"));
+                  ->orWhereHas('facultyMembers', fn($q) => $q->where('full_name', 'like', "%{$search}%"));
             });
         }
 
@@ -67,12 +83,14 @@ class PublicController extends Controller
             ->orderByDesc('academic_year')
             ->pluck('academic_year');
 
-        return Inertia::render('Public/Browse', [
+        return Inertia::render($component, [
             'projects'        => $projects,
             'departments'     => $departments,
             'specializations' => $specializations,
             'years'           => $years,
             'filters'         => $request->only(['search', 'department_id', 'specialization_id', 'academic_year', 'degree_level']),
+            'routeName'       => $routeName,
+            'loginLabel'      => $loginLabel,
         ]);
     }
 
@@ -87,7 +105,7 @@ class PublicController extends Controller
                 'supervisor',
                 'students',
                 'documents',
-                'examiners',
+                'facultyMembers',
                 'evaluations',
             ])
             ->firstOrFail();

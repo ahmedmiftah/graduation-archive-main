@@ -30,6 +30,10 @@ class SpecializationController extends Controller
             return back()->with('error', 'لا يمكن حذف التخصص لوجود مشاريع مرتبطة به');
         }
 
+        if ($specialization->students()->exists()) {
+            return back()->with('error', 'لا يمكن حذف التخصص لوجود طلاب مرتبطين به');
+        }
+
         $specialization->delete();
 
         return redirect()->back()

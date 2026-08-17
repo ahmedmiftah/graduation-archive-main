@@ -24,7 +24,7 @@ interface Project {
     academic_year: string;
     department: Department | null;
     specialization: Specialization | null;
-    supervisor: { id: number; name: string } | null;
+    supervisor: { id: number; full_name: string } | null;
     degree_level: string;
     students: Student[];
 }
@@ -42,13 +42,21 @@ interface Paginated {
     per_page: number;
 }
 
-const props = defineProps<{
-    projects: Paginated;
-    departments: Department[];
-    specializations: Specialization[];
-    years: string[];
-    filters: { search?: string; department_id?: string; specialization_id?: string; academic_year?: string; degree_level?: string };
-}>();
+const props = withDefaults(
+    defineProps<{
+        projects: Paginated;
+        departments: Department[];
+        specializations: Specialization[];
+        years: string[];
+        filters: { search?: string; department_id?: string; specialization_id?: string; academic_year?: string; degree_level?: string };
+        routeName?: string;
+        loginLabel?: string;
+    }>(),
+    {
+        routeName: 'public.browse',
+        loginLabel: 'تسجيل الدخول',
+    },
+);
 
 const search = ref(props.filters.search ?? '');
 const departmentId = ref(props.filters.department_id ?? '');
@@ -115,7 +123,7 @@ function closeFeedbackModal() {
 
 function applyFilters() {
     router.get(
-        route('public.browse'),
+        route(props.routeName),
         {
             search: search.value || undefined,
             department_id: departmentId.value || undefined,
@@ -128,7 +136,7 @@ function applyFilters() {
 }
 
 function resetFilters() {
-    router.get(route('public.browse'), {}, { preserveScroll: true });
+    router.get(route(props.routeName), {}, { preserveScroll: true });
 }
 </script>
 
@@ -147,7 +155,7 @@ function resetFilters() {
                     :href="route('login')"
                     class="inline-flex items-center rounded-lg border-2 border-primary px-5 py-2 font-body text-sm font-medium text-primary transition-colors hover:bg-primary hover:text-white"
                 >
-                    تسجيل الدخول
+                    {{ loginLabel }}
                 </Link>
             </div>
         </header>
@@ -261,7 +269,7 @@ function resetFilters() {
                             }}</span>
                         </p>
                         <p>
-                            المشرف: <span class="font-medium text-text-dark">{{ project.supervisor?.name ?? '—' }}</span>
+                            المشرف: <span class="font-medium text-text-dark">{{ project.supervisor?.full_name ?? '—' }}</span>
                         </p>
                         <p>
                             عدد الطلبة: <span class="font-medium text-text-dark">{{ project.students.length }}</span>

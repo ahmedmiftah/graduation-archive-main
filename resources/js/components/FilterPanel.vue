@@ -14,7 +14,7 @@ interface Department {
 }
 interface Supervisor {
     id: number;
-    name: string;
+    full_name: string;
 }
 
 export interface FilterValues {
@@ -186,7 +186,7 @@ const selectClass =
                 <label class="text-xs font-medium text-gray-600 dark:text-gray-400">المشرف</label>
                 <select v-model="local.supervisor_id" :class="selectClass">
                     <option value="">كل المشرفين</option>
-                    <option v-for="sup in supervisors" :key="sup.id" :value="sup.id">{{ sup.name }}</option>
+                    <option v-for="sup in supervisors" :key="sup.id" :value="sup.id">{{ sup.full_name }}</option>
                 </select>
             </div>
 

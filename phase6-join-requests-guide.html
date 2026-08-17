@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<title>طلبات الانضمام</title>
+<style>
+  :root {
+    --bg: #EDF0F2; --surface: #FFFFFF; --surface-2: #F4F6F7;
+    --ink: #12212E; --ink-muted: #4B6072; --ink-faint: #7C8FA0;
+    --line: #D3DBE0; --line-strong: #AFC0C9;
+    --accent: #8A2E4E; --accent-ink: #FFFFFF; --accent-soft: #F4E4EA;
+    --teal: #1F7A6C; --teal-soft: #E3F1EE;
+    --amber: #A6631E; --amber-soft: #F4E9D8;
+    --shadow: 0 1px 2px rgba(18,33,46,0.06), 0 8px 24px -12px rgba(18,33,46,0.18);
+    --font-display: 'Dubai', 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-body: 'Segoe UI', Tahoma, Arial, sans-serif;
+    --font-mono: 'Cascadia Code', 'Consolas', 'SF Mono', 'Courier New', monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1720; --surface: #17212C; --surface-2: #1D2833; --ink: #E7ECEF;
+      --ink-muted: #9FB0BD; --ink-faint: #6C7E8C; --line: #2B3946; --line-strong: #3C4C5A;
+      --accent: #D97A97; --accent-ink: #1A0A10; --accent-soft: #2E1B22;
+      --teal: #4FC3B0; --teal-soft: #163430; --amber: #D9A24B; --amber-soft: #332617;
+      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1720; --surface: #17212C; --surface-2: #1D2833; --ink: #E7ECEF;
+    --ink-muted: #9FB0BD; --ink-faint: #6C7E8C; --line: #2B3946; --line-strong: #3C4C5A;
+    --accent: #D97A97; --accent-ink: #1A0A10; --accent-soft: #2E1B22;
+    --teal: #4FC3B0; --teal-soft: #163430; --amber: #D9A24B; --amber-soft: #332617;
+    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px -12px rgba(0,0,0,0.5);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; } }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 16px; line-height: 1.75; -webkit-font-smoothing: antialiased; }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; line-height: 1.25; color: var(--ink); margin: 0; }
+  code, .mono { font-family: var(--font-mono); direction: ltr; unicode-bidi: isolate; }
+  a { color: var(--accent); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .shell { max-width: 1180px; margin: 0 auto; padding: 0 24px; display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 48px; align-items: start; }
+  @media (max-width: 900px) { .shell { grid-template-columns: 1fr; } }
+  header.top { border-bottom: 1px solid var(--line); background: var(--surface); }
+  .top-inner { max-width: 1180px; margin: 0 auto; padding: 40px 24px 32px; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12.5px; letter-spacing: 0.06em; color: var(--accent); background: var(--accent-soft); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); padding: 4px 12px; border-radius: 3px; margin-bottom: 18px; }
+  h1.title { font-size: clamp(28px, 4vw, 40px); font-weight: 700; letter-spacing: -0.01em; }
+  p.dek { margin-top: 12px; max-width: 66ch; color: var(--ink-muted); font-size: 17px; }
+  .badges { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge { font-size: 12.5px; padding: 5px 11px; border-radius: 3px; border: 1px solid var(--line-strong); color: var(--ink-muted); background: var(--surface-2); display: inline-flex; align-items: center; gap: 6px; }
+  nav.rail { position: sticky; top: 24px; padding: 24px 0; font-size: 14px; max-height: calc(100vh - 48px); overflow-y: auto; }
+  nav.rail .rail-label { font-size: 11.5px; letter-spacing: 0.08em; color: var(--ink-faint); margin-bottom: 12px; padding-right: 12px; }
+  nav.rail ol { list-style: none; margin: 0; padding: 0; counter-reset: navsteps; border-right: 2px solid var(--line); }
+  nav.rail li { counter-increment: navsteps; }
+  nav.rail a { display: flex; align-items: baseline; gap: 8px; padding: 7px 14px 7px 8px; margin-right: -2px; border-right: 2px solid transparent; color: var(--ink-muted); text-decoration: none; transition: color .15s ease, border-color .15s ease; }
+  nav.rail a::before { content: counter(navsteps, decimal-leading-zero); font-family: var(--font-mono); font-size: 11.5px; color: var(--ink-faint); }
+  nav.rail a:hover, nav.rail a.active { color: var(--ink); border-right-color: var(--accent); }
+  nav.rail a.active::before { color: var(--accent); }
+  main { min-width: 0; padding: 48px 0 96px; }
+  section.block { padding-top: 56px; margin-top: 56px; border-top: 1px solid var(--line); scroll-margin-top: 20px; }
+  section.block:first-child { border-top: none; margin-top: 0; padding-top: 0; }
+  .block-head { margin-bottom: 24px; }
+  .block-num { font-family: var(--font-mono); font-size: 13px; color: var(--accent); margin-bottom: 6px; display: block; }
+  h2.block-title { font-size: 24px; font-weight: 700; }
+  p.block-intro { margin-top: 12px; max-width: 68ch; color: var(--ink-muted); }
+  .prose { max-width: 68ch; }
+  .prose p { margin: 0 0 14px; color: var(--ink); }
+  .prose p:last-child { margin-bottom: 0; }
+  .prose strong { color: var(--ink); }
+  .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 20px 22px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+  .field-label { font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); margin-bottom: 4px; }
+  .field-value { font-size: 15px; color: var(--ink); }
+  .pipeline { display: flex; flex-wrap: wrap; align-items: stretch; gap: 0; margin: 24px 0; }
+  .pipe-step { background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; min-width: 170px; flex: 1 1 170px; box-shadow: var(--shadow); }
+  .pipe-step .ps-kicker { font-size: 11px; color: var(--ink-faint); letter-spacing: .04em; margin-bottom: 6px; }
+  .pipe-step .ps-title { font-weight: 600; font-size: 14.5px; margin-bottom: 4px; }
+  .pipe-step .ps-detail { font-size: 12.5px; color: var(--ink-muted); line-height: 1.55; }
+  .pipe-arrow { display: flex; align-items: center; justify-content: center; padding: 0 10px; color: var(--ink-faint); font-size: 18px; flex: 0 0 auto; }
+  @media (max-width: 780px) { .pipeline { flex-direction: column; } .pipe-arrow { transform: rotate(90deg); padding: 4px 0; } }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; background: var(--surface); }
+  thead th { text-align: right; font-size: 12px; letter-spacing: 0.04em; color: var(--ink-faint); background: var(--surface-2); padding: 10px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--line); color: var(--ink); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover { background: var(--surface-2); }
+  td .mono, th .mono { font-size: 13px; color: var(--teal); }
+  .code-block { background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.7; direction: ltr; text-align: left; color: var(--ink); }
+  .code-block .k { color: var(--accent); }
+  .code-block .s { color: var(--teal); }
+  .code-block .c { color: var(--ink-faint); }
+  .rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .rules li { display: flex; gap: 12px; align-items: flex-start; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 13px 16px; font-size: 14.5px; }
+  .rules li .tag { flex: none; font-family: var(--font-mono); font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 3px; margin-top: 1px; }
+  .rules li.deny .tag { background: var(--accent-soft); color: var(--accent); }
+  .rules li.decision .tag { background: var(--amber-soft); color: var(--amber); }
+  .filemap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 720px) { .filemap { grid-template-columns: 1fr; } }
+  .filemap .col h3 { font-size: 13px; letter-spacing: .04em; color: var(--ink-faint); margin-bottom: 10px; }
+  .filemap ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .filemap li { font-family: var(--font-mono); font-size: 12.8px; padding: 6px 10px; border-radius: 4px; direction: ltr; text-align: left; color: var(--ink-muted); }
+  .filemap li:hover { background: var(--surface-2); color: var(--ink); }
+  .filemap li .fdesc { font-family: var(--font-body); direction: rtl; text-align: right; display: block; color: var(--ink-faint); font-size: 12px; margin-top: 1px; }
+  footer.page-foot { max-width: 1180px; margin: 0 auto; padding: 32px 24px 60px; color: var(--ink-faint); font-size: 13px; border-top: 1px solid var(--line); margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <span class="eyebrow">مرجع تقني — Phase 6 / 8</span>
+    <h1 class="title">طلبات الانضمام</h1>
+    <p class="dek">الجسر بين تصفّح فكرة (Phase 5) والالتحاق الفعلي بها — الطالب يطلب، المشرف يقرِّر، وحالة الفكرة تتحدَّث تلقائيًا.</p>
+    <div class="badges">
+      <span class="badge"><span class="dot"></span> Phase 6 — مُنفَّذ 2026-08-17</span>
+      <span class="badge">15 اختبارًا جديدًا</span>
+      <span class="badge">335/336 ناجحة</span>
+    </div>
+  </div>
+</header>
+
+<div class="shell">
+  <nav class="rail" aria-label="محتويات الصفحة">
+    <div class="rail-label">المحتويات</div>
+    <ol id="toc">
+      <li><a href="#overview">نظرة عامة</a></li>
+      <li><a href="#policy-pattern">نمط Policy لنموذج فرعي</a></li>
+      <li><a href="#duplicate">منع التكرار والالتزام المزدوج</a></li>
+      <li><a href="#transition">تحوّل حالة الفكرة تلقائيًا</a></li>
+      <li><a href="#notify">الإشعارات</a></li>
+      <li><a href="#boundary">حد الصلاحية مع Phase 7</a></li>
+      <li><a href="#files">الملفات المسؤولة</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <section class="block" id="overview">
+      <div class="block-head">
+        <span class="block-num">01</span>
+        <h2 class="block-title">نظرة عامة</h2>
+        <p class="block-intro">الطالب يرسل رسالة طلب انضمام لفكرة معيّنة → المشرف صاحب الفكرة يقبل أو يرفض من صفحة مراجعة مخصَّصة لكل فكرة.</p>
+      </div>
+    </section>
+
+    <section class="block" id="policy-pattern">
+      <div class="block-head">
+        <span class="block-num">02</span>
+        <h2 class="block-title">نمط Policy لنموذج فرعي مرتبط بنموذج أب</h2>
+        <p class="block-intro">تحدٍّ تقني حقيقي: كيف تُخوِّل "إنشاء طلب" حين الـability تخص نموذجًا (Request) لكنها تعتمد على نموذج آخر (Idea) له Policy منفصلة أصلًا؟</p>
+      </div>
+      <div class="code-block">
+<span class="c">// الاستدعاء الخاطئ البديهي — يُحلّ عبر ProjectIdeaPolicy وليس المطلوبة!</span>
+<span class="c">// $this->authorize('create', $idea);  ← يستخدم سياسة Idea، لا Request</span>
+
+<span class="c">// الحل: نمط Laravel القياسي لمورد فرعي مرتبط بأب</span>
+<span class="k">$this</span>->authorize(<span class="s">'create'</span>, [ProjectIdeaRequest::<span class="k">class</span>, <span class="k">$idea</span>]);
+
+<span class="c">// العنصر الأول في المصفوفة يحدِّد الـPolicy فقط (لا يُمرَّر كوسيط)</span>
+<span class="c">// الباقي يُمرَّر للدالة: create(User $user, ProjectIdea $idea)</span>
+      </div>
+      <div class="prose" style="margin-top:16px">
+        <p>هذا النمط موثَّق رسميًا في Laravel لسيناريو "إنشاء تعليق مرتبط بمقال" — نفس المبدأ هنا: <span class="mono">ProjectIdeaRequestPolicy::create()</span> تستقبل <span class="mono">ProjectIdea</span> كوسيط ثانٍ رغم أن الـPolicy المُستهدَفة هي <span class="mono">ProjectIdeaRequest</span>.</p>
+      </div>
+    </section>
+
+    <section class="block" id="duplicate">
+      <div class="block-head">
+        <span class="block-num">03</span>
+        <h2 class="block-title">منع التكرار وقاعدة الالتزام الواحد</h2>
+        <p class="block-intro">ثلاثة شروط مستقلة يجب أن تمر جميعًا قبل قبول طلب جديد.</p>
+      </div>
+      <ul class="rules">
+        <li class="deny"><span class="tag">يمنع</span> إن كانت الفكرة ليست <span class="mono">available</span></li>
+        <li class="deny"><span class="tag">يمنع</span> إن كان لدى الطالب مشروع نشط بالفعل (<span class="mono">hasActiveProposal()</span> الموجودة من Phase 2)</li>
+        <li class="deny"><span class="tag">يمنع</span> إن كان لدى الطالب طلب معلَّق أو مقبول <strong>لنفس الفكرة</strong> تحديدًا (لا يمنع طلبات لأفكار أخرى مختلفة)</li>
+      </ul>
+    </section>
+
+    <section class="block" id="transition">
+      <div class="block-head">
+        <span class="block-num">04</span>
+        <h2 class="block-title">تحوّل حالة الفكرة تلقائيًا عند القبول</h2>
+        <p class="block-intro">القبول له أثران فوريان: على الطلب، وعلى الفكرة نفسها.</p>
+      </div>
+      <div class="pipeline">
+        <div class="pipe-step">
+          <div class="ps-kicker">دائمًا</div>
+          <div class="ps-title">الطلب → accepted</div>
+        </div>
+        <div class="pipe-arrow">←</div>
+        <div class="pipe-step">
+          <div class="ps-kicker">إن لم يكتمل العدد</div>
+          <div class="ps-title">الفكرة → reserved</div>
+        </div>
+        <div class="pipe-arrow">←</div>
+        <div class="pipe-step">
+          <div class="ps-kicker">إن اكتمل العدد</div>
+          <div class="ps-title">الفكرة → closed</div>
+        </div>
+      </div>
+      <div class="prose">
+        <p>الشرط الفاصل: عدد الطلبات المقبولة مقارنة بـ<span class="mono">required_students_count</span>. إن كان العدد المطلوب 1 (الحالة الافتراضية)، القبول الأول يُغلق الفكرة مباشرة.</p>
+      </div>
+    </section>
+
+    <section class="block" id="notify">
+      <div class="block-head">
+        <span class="block-num">05</span>
+        <h2 class="block-title">الإشعارات</h2>
+        <p class="block-intro">حدثان جديدان، بنفس غلاف Phase 4 الموحَّد — تفعيل لحدثين كانا مؤجَّلين هناك صراحةً.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>الحدث</th><th>الكلاس</th><th>المستلم</th></tr></thead>
+          <tbody>
+            <tr><td>تقديم طلب جديد</td><td class="mono">ProjectIdeaRequestSubmitted</td><td>المشرف صاحب الفكرة</td></tr>
+            <tr><td>قبول أو رفض الطلب</td><td class="mono">ProjectIdeaRequestDecided</td><td>الطالب صاحب الطلب</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="block" id="boundary">
+      <div class="block-head">
+        <span class="block-num">06</span>
+        <h2 class="block-title">حد الصلاحية المحسوم مع Phase 7</h2>
+        <p class="block-intro">القرار الأهم في هذه المرحلة: ماذا "لا" تفعل، لا فقط ماذا تفعل.</p>
+      </div>
+      <ul class="rules">
+        <li class="decision"><span class="tag">قرار</span> القبول <strong>لا</strong> ينشئ <span class="mono">ProjectProposal</span> أو <span class="mono">Project</span> فعليًا — يقتصر على تحديث حالة الطلب والفكرة فقط</li>
+        <li class="decision"><span class="tag">سبب</span> نص الخطة الأصلية ينص أن جدول <span class="mono">proposal_reservations</span> (Phase 7) هو من "يربط الطالب بالفكرة تحديدًا" رسميًا — تنفيذ ذلك هنا كان سيكرِّر منطقًا سيُعاد بناؤه بشكل مختلف لاحقًا</li>
+      </ul>
+    </section>
+
+    <section class="block" id="files">
+      <div class="block-head">
+        <span class="block-num">07</span>
+        <h2 class="block-title">الملفات المسؤولة</h2>
+        <p class="block-intro">خريطة الكود الفعلي وراء نظام طلبات الانضمام.</p>
+      </div>
+      <div class="filemap">
+        <div class="col">
+          <h3>Backend</h3>
+          <ul>
+            <li>app/Models/ProjectIdeaRequest.php<span class="fdesc">ثوابت الحالة الثلاث</span></li>
+            <li>app/Policies/ProjectIdeaRequestPolicy.php<span class="fdesc">create/viewAny/decide</span></li>
+            <li>app/Http/Controllers/Student/ProjectIdeaRequestController.php<span class="fdesc">store/index</span></li>
+            <li>app/Http/Controllers/Supervisor/ProjectIdeaRequestController.php<span class="fdesc">index/accept/reject</span></li>
+            <li>app/Notifications/ProjectIdeaRequest{Submitted,Decided}.php<span class="fdesc">إشعارا الطلب والقرار</span></li>
+          </ul>
+        </div>
+        <div class="col">
+          <h3>Frontend</h3>
+          <ul>
+            <li>resources/js/pages/Student/Ideas/Show.vue<span class="fdesc">نموذج طلب + حالة الطلب الحالي</span></li>
+            <li>resources/js/pages/Student/Ideas/MyRequests.vue<span class="fdesc">"طلباتي"</span></li>
+            <li>resources/js/pages/Supervisor/Ideas/Requests.vue<span class="fdesc">مراجعة + قبول/رفض</span></li>
+          </ul>
+          <h3 style="margin-top:22px">الاختبارات</h3>
+          <ul>
+            <li>tests/Feature/ProjectIdea/ProjectIdeaRequestTest.php<span class="fdesc">15 اختبارًا</span></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<footer class="page-foot">توثيق تقني داخلي — نظام أرشفة مشاريع التخرج، كلية التقنية الإلكترونية.</footer>
+
+<script>
+  (function () {
+    var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+    var sections = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+    function onScroll() {
+      var pos = window.scrollY + 120;
+      var activeIdx = 0;
+      sections.forEach(function (s, i) { if (s && s.offsetTop <= pos) activeIdx = i; });
+      links.forEach(function (a, i) { a.classList.toggle('active', i === activeIdx); });
+    }
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  })();
+</script>
+
+</body>
+</html>

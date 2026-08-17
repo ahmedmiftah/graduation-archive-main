@@ -1,24 +1,21 @@
 <script setup lang="ts">
-import AssignExaminerModal from '@/components/AssignExaminerModal.vue';
+import AssignFacultyMemberModal from '@/components/AssignFacultyMemberModal.vue';
 import ConfirmDelete from '@/components/ConfirmDelete.vue';
 import ScoreInput from '@/components/ScoreInput.vue';
+import SimilarityWarning from '@/components/SimilarityWarning.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { statusColor, statusLabel } from '@/lib/statusBadge';
-import { type BreadcrumbItem, type SharedData } from '@/types';
+import { type BreadcrumbItem, type Department, type SharedData, type SimilarProject } from '@/types';
 import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
-interface Department {
-    id: number;
-    name: string;
-}
 interface Specialization {
     id: number;
     name: string;
 }
 interface Supervisor {
     id: number;
-    name: string;
+    full_name: string;
 }
 interface ProjectStatus {
     id: number;
@@ -36,15 +33,15 @@ interface ProjectDocument {
     document_type: string;
     is_final: boolean;
 }
-interface Examiner {
+interface FacultyMember {
     id: number;
     full_name: string;
-    title: string | null;
-    department?: { id: number; name: string } | null;
+    degree?: { degree_code: string } | null;
+    departments?: Department[];
 }
 interface Evaluation {
     id: number;
-    examiner_id: number;
+    faculty_member_id: number;
     notes: string;
     created_at: string;
 }
@@ -64,18 +61,21 @@ interface Project {
     current_status: ProjectStatus | null;
     students: ProjectStudent[];
     documents: ProjectDocument[];
-    examiners: Examiner[];
+    faculty_members: FacultyMember[];
     evaluations: Evaluation[];
 }
 
 const props = defineProps<{
     project: Project;
-    availableExaminers: Examiner[];
+    availableExaminers: FacultyMember[];
 }>();
 
 const page = usePage<SharedData>();
 const flash = computed(() => page.props.flash ?? {});
+const dismissedWarning = ref(false);
+const similarProjects = computed<SimilarProject[]>(() => (dismissedWarning.value ? [] : (flash.value.similarity_warning ?? [])));
 const userRole = computed(() => (page.props.auth.user as { role?: string }).role ?? '');
+const maxExaminers = computed(() => page.props.systemSettings?.examiners_per_project ?? 2);
 
 // Tracks whether this page was opened from the archived-projects list so the
 // breadcrumb, sidebar highlight, and score editability all match that context.
@@ -112,20 +112,20 @@ function deleteProject() {
     });
 }
 
-// ── Examiner assign / remove ───────────────────────────────────────
+// ── Faculty member assign / remove ─────────────────────────────────
 const showAssignModal = ref(false);
-const confirmRemoveExaminer = ref<Examiner | null>(null);
+const confirmRemoveExaminer = ref<FacultyMember | null>(null);
 
 function removeExaminer() {
     if (!confirmRemoveExaminer.value) return;
-    router.delete(route('projects.remove-examiner', [props.project.id, confirmRemoveExaminer.value.id]), {
+    router.delete(route('projects.remove-faculty-member', [props.project.id, confirmRemoveExaminer.value.id]), {
         onFinish: () => (confirmRemoveExaminer.value = null),
     });
 }
 
 // ── Evaluation helpers ─────────────────────────────────────────────
-function evaluationFor(examinerId: number): Evaluation | null {
-    return props.project.evaluations.find((e) => e.examiner_id === examinerId) ?? null;
+function evaluationFor(facultyMemberId: number): Evaluation | null {
+    return props.project.evaluations.find((e) => e.faculty_member_id === facultyMemberId) ?? null;
 }
 
 // ── Score helpers ──────────────────────────────────────────────────
@@ -162,6 +162,13 @@ const studentStatusLabel: Record<string, string> = {
             <div v-if="flash.error" class="rounded-lg bg-red-50 p-4 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-400">
                 {{ flash.error }}
             </div>
+
+            <SimilarityWarning
+                :show="similarProjects.length > 0"
+                :similar-projects="similarProjects"
+                @continue="dismissedWarning = true"
+                @change-title="dismissedWarning = true"
+            />
 
             <!-- Header row -->
             <div class="flex flex-wrap items-start justify-between gap-4">
@@ -248,27 +255,27 @@ const studentStatusLabel: Record<string, string> = {
                         </div>
                     </div>
 
-                    <!-- Examiners + Evaluations -->
+                    <!-- Faculty members (examiners) + Evaluations -->
                     <div class="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
                         <div class="mb-4 flex items-center justify-between">
                             <h2 class="text-base font-semibold text-gray-800 dark:text-gray-200">
                                 المناقشون
-                                <span class="text-sm font-normal text-gray-400">({{ project.examiners.length }}/2)</span>
+                                <span class="text-sm font-normal text-gray-400">({{ project.faculty_members.length }}/{{ maxExaminers }})</span>
                             </h2>
                             <button
-                                v-if="canManage && project.examiners.length < 2"
+                                v-if="canManage && project.faculty_members.length < maxExaminers"
                                 type="button"
                                 class="rounded-lg bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
                                 @click="showAssignModal = true"
                             >
-                                + تعيين ممتحن
+                                + تعيين عضو هيئة تدريس
                             </button>
                         </div>
 
-                        <div v-if="project.examiners.length > 0" class="space-y-4">
+                        <div v-if="project.faculty_members.length > 0" class="space-y-4">
                             <div
-                                v-for="examiner in project.examiners"
-                                :key="examiner.id"
+                                v-for="member in project.faculty_members"
+                                :key="member.id"
                                 class="rounded-lg border border-gray-100 p-4 dark:border-gray-700"
                             >
                                 <div class="flex items-start justify-between gap-3">
@@ -276,29 +283,31 @@ const studentStatusLabel: Record<string, string> = {
                                         <div
                                             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-indigo-600 dark:bg-indigo-900/20 dark:text-indigo-400"
                                         >
-                                            <span class="text-sm font-bold">{{ examiner.full_name.charAt(0) }}</span>
+                                            <span class="text-sm font-bold">{{ member.full_name.charAt(0) }}</span>
                                         </div>
                                         <div>
-                                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ examiner.full_name }}</p>
-                                            <p v-if="examiner.title" class="text-xs text-gray-500">{{ examiner.title }}</p>
-                                            <p v-if="examiner.department" class="text-xs text-gray-400">{{ examiner.department.name }}</p>
+                                            <p class="text-sm font-medium text-gray-800 dark:text-gray-200">{{ member.full_name }}</p>
+                                            <p v-if="member.degree" class="text-xs text-gray-500">{{ member.degree.degree_code }}</p>
+                                            <p v-if="member.departments?.length" class="text-xs text-gray-400">
+                                                {{ member.departments.map((d) => d.name).join('، ') }}
+                                            </p>
                                         </div>
                                     </div>
                                     <button
                                         v-if="canManage"
                                         type="button"
                                         class="shrink-0 rounded px-2 py-1 text-xs text-red-500 hover:bg-red-50 hover:text-red-700 dark:hover:bg-red-900/20"
-                                        @click="confirmRemoveExaminer = examiner"
+                                        @click="confirmRemoveExaminer = member"
                                     >
                                         إزالة
                                     </button>
                                 </div>
 
-                                <!-- Evaluation notes for this examiner -->
-                                <div v-if="evaluationFor(examiner.id)" class="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
+                                <!-- Evaluation notes for this faculty member -->
+                                <div v-if="evaluationFor(member.id)" class="mt-3 border-t border-gray-100 pt-3 dark:border-gray-700">
                                     <p class="mb-1 text-xs font-medium text-gray-400">ملاحظات التقييم</p>
                                     <p class="text-sm text-gray-700 dark:text-gray-300">
-                                        {{ evaluationFor(examiner.id)!.notes }}
+                                        {{ evaluationFor(member.id)!.notes }}
                                     </p>
                                 </div>
                             </div>
@@ -328,7 +337,7 @@ const studentStatusLabel: Record<string, string> = {
                             <div>
                                 <dt class="text-xs text-gray-500 dark:text-gray-400">المشرف</dt>
                                 <dd class="mt-0.5 text-sm font-medium text-gray-800 dark:text-gray-200">
-                                    {{ project.supervisor?.name ?? '—' }}
+                                    {{ project.supervisor?.full_name ?? '—' }}
                                 </dd>
                             </div>
                             <div>
@@ -408,8 +417,8 @@ const studentStatusLabel: Record<string, string> = {
             @cancelled="confirmRemoveExaminer = null"
         />
 
-        <!-- Assign examiner modal -->
-        <AssignExaminerModal
+        <!-- Assign faculty member modal -->
+        <AssignFacultyMemberModal
             :show="showAssignModal"
             :project-id="project.id"
             :available-examiners="availableExaminers"

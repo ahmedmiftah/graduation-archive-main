@@ -22,4 +22,9 @@ class Specialization extends Model
     {
         return $this->hasMany(Project::class);
     }
+
+    public function students(): HasMany
+    {
+        return $this->hasMany(Student::class);
+    }
 }

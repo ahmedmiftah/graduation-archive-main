@@ -71,13 +71,13 @@ test('super_admin can update user info', function () {
         ->patch(route('admin.users.update', $target->id), [
             'name'  => 'Updated Name',
             'email' => $target->email,
-            'role'  => 'supervisor',
+            'role'  => 'dept_manager',
         ])
         ->assertRedirect(route('admin.users.index'))
         ->assertSessionHas('success');
 
     $this->assertDatabaseHas('users', ['id' => $target->id, 'name' => 'Updated Name']);
-    expect($target->fresh()->hasRole('supervisor'))->toBeTrue();
+    expect($target->fresh()->hasRole('dept_manager'))->toBeTrue();
 });
 
 // ── 5. Toggle active ──────────────────────────────────────────────────────────
