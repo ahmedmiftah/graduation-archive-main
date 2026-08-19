@@ -239,6 +239,7 @@ Route::middleware(['auth', 'role:dept_manager,super_admin'])->group(function () 
 
     Route::prefix('students')->name('students.')->group(function () {
         Route::get('/', [StudentController::class, 'index'])->name('index');
+        Route::post('/', [StudentController::class, 'store'])->name('store');
         Route::get('/{student}', [StudentController::class, 'show'])->name('show');
         Route::patch('/{student}/toggle-active', [StudentController::class, 'toggleActive'])->name('toggle-active');
         Route::post('/{student}/reset-password', [StudentController::class, 'resetPassword'])->name('reset-password');

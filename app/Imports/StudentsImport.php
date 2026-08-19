@@ -9,12 +9,9 @@ use App\Models\Semester;
 use App\Models\Specialization;
 use App\Models\Student;
 use App\Models\SystemSetting;
-use App\Models\User;
-use App\Notifications\StudentAccountCreated;
+use App\Services\StudentAccountService;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Notification;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
@@ -195,50 +192,33 @@ class StudentsImport implements ToCollection, WithHeadingRow
     private function createStudentAndAccount(array $row, string $fullName, string $nationalId, string $registrationNumber, int $rowNumber): void
     {
         try {
-            DB::transaction(function () use ($row, $fullName, $nationalId, $registrationNumber, $rowNumber) {
-                $department     = Department::where('code', trim($row['department_code']))->first();
-                $specialization = Specialization::where('name', trim($row['specialization_name']))
-                    ->where('department_id', $department->id)
-                    ->first();
-                $dateOfBirth = $this->parseDateOfBirth($row['date_of_birth']);
+            $department     = Department::where('code', trim($row['department_code']))->first();
+            $specialization = Specialization::where('name', trim($row['specialization_name']))
+                ->where('department_id', $department->id)
+                ->first();
 
-                $student = Student::create([
-                    'full_name'           => $fullName,
-                    'national_id'         => $nationalId,
-                    'registration_number' => $registrationNumber,
-                    'department_id'       => $department->id,
-                    'specialization_id'   => $specialization->id,
-                    'semester'            => trim($row['semester']),
-                    'academic_year'       => trim($row['academic_year']),
-                    'date_of_birth'       => $dateOfBirth,
-                ]);
+            $student = app(StudentAccountService::class)->create([
+                'full_name'           => $fullName,
+                'national_id'         => $nationalId,
+                'registration_number' => $registrationNumber,
+                'department_id'       => $department->id,
+                'specialization_id'   => $specialization->id,
+                'semester'            => trim($row['semester']),
+                'academic_year'       => trim($row['academic_year']),
+                'date_of_birth'       => $this->parseDateOfBirth($row['date_of_birth']),
+            ]);
 
-                $user = User::create([
-                    'name'                  => $fullName,
-                    'email'                 => strtolower($registrationNumber) . '@students.local',
-                    'password'              => $dateOfBirth->format('dmY'),
-                    'is_active'             => true,
-                    'force_password_change' => true,
-                    'email_verified_at'     => now(),
-                ]);
-                $user->assignRole('student');
+            ImportedStudentRow::create([
+                'batch_id'             => $this->batch->id,
+                'row_number'           => $rowNumber,
+                'full_name'            => $fullName,
+                'national_id'          => $nationalId,
+                'registration_number'  => $registrationNumber,
+                'status'               => ImportedStudentRow::STATUS_SUCCESS,
+                'student_id'           => $student->id,
+            ]);
 
-                $student->update(['user_id' => $user->id]);
-
-                ImportedStudentRow::create([
-                    'batch_id'             => $this->batch->id,
-                    'row_number'           => $rowNumber,
-                    'full_name'            => $fullName,
-                    'national_id'          => $nationalId,
-                    'registration_number'  => $registrationNumber,
-                    'status'               => ImportedStudentRow::STATUS_SUCCESS,
-                    'student_id'           => $student->id,
-                ]);
-
-                Notification::send($user, new StudentAccountCreated($student));
-
-                $this->createdCount++;
-            });
+            $this->createdCount++;
         } catch (Throwable $e) {
             $this->fail($rowNumber, ImportedStudentRow::STATUS_INVALID_DATA, 'تعذّر إنشاء الحساب: ' . $e->getMessage(), $fullName, $nationalId, $registrationNumber);
         }

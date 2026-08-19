@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Modal from '@/components/Modal.vue';
+import StudentFormModal from '@/components/Students/StudentFormModal.vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem, type SharedData } from '@/types';
 import { Link, router, usePage } from '@inertiajs/vue3';
@@ -8,9 +9,15 @@ import { computed, ref } from 'vue';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
+interface Department {
+    id: number;
+    name: string;
+}
+
 interface Specialization {
     id: number;
     name: string;
+    department_id: number;
 }
 
 interface StudentRow {
@@ -46,6 +53,7 @@ interface PaginatedStudents {
 const props = defineProps<{
     students: PaginatedStudents;
     specializations: Specialization[];
+    departments: Department[];
     filters: {
         search?: string;
         specialization_id?: string;
@@ -130,6 +138,8 @@ function doResetPassword() {
         },
     );
 }
+
+const showAddModal = ref(false);
 </script>
 
 <template>
@@ -137,13 +147,22 @@ function doResetPassword() {
     <AppLayout :breadcrumbs="breadcrumbs">
         <div class="flex h-full flex-1 flex-col gap-6 p-4" dir="rtl">
             <div class="flex items-center justify-between">
-                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">الطلاب المستوردون</h1>
-                <Link
-                    :href="route('students.import.index')"
-                    class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-                >
-                    + استيراد طلاب
-                </Link>
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">الطلاب</h1>
+                <div class="flex gap-2">
+                    <button
+                        type="button"
+                        class="rounded-lg border border-blue-600 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:border-blue-400 dark:text-blue-400 dark:hover:bg-blue-900/20"
+                        @click="showAddModal = true"
+                    >
+                        + إضافة طالب فردي
+                    </button>
+                    <Link
+                        :href="route('students.import.index')"
+                        class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                    >
+                        + استيراد طلاب
+                    </Link>
+                </div>
             </div>
 
             <div v-if="flash.success" class="rounded-lg bg-green-50 p-4 text-sm text-green-700 dark:bg-green-900/20 dark:text-green-400">
@@ -335,5 +354,14 @@ function doResetPassword() {
                 </button>
             </template>
         </Modal>
+
+        <!-- ── Add single student ──────────────────────────────── -->
+        <StudentFormModal
+            :show="showAddModal"
+            :departments="departments"
+            :specializations="specializations"
+            @close="showAddModal = false"
+            @saved="showAddModal = false"
+        />
     </AppLayout>
 </template>

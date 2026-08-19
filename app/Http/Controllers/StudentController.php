@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreStudentRequest;
+use App\Models\Department;
 use App\Models\Specialization;
 use App\Models\Student;
+use App\Services\StudentAccountService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -12,6 +15,8 @@ use Inertia\Response;
 
 class StudentController extends Controller
 {
+    public function __construct(private StudentAccountService $studentAccountService) {}
+
     public function index(Request $request): Response
     {
         /** @var \App\Models\User $authUser */
@@ -62,9 +67,19 @@ class StudentController extends Controller
                     'per_page'     => $paginated->perPage(),
                 ],
             ],
-            'specializations' => $specializationQuery->get(['id', 'name']),
+            'specializations' => $specializationQuery->get(['id', 'name', 'department_id']),
+            'departments'     => $authUser->hasRole('dept_manager')
+                ? Department::where('id', $authUser->department_id)->get(['id', 'name'])
+                : Department::orderBy('name')->get(['id', 'name']),
             'filters'         => $request->only(['search', 'specialization_id', 'semester', 'academic_year', 'account_status']),
         ]);
+    }
+
+    public function store(StoreStudentRequest $request): RedirectResponse
+    {
+        $this->studentAccountService->create($request->validated());
+
+        return back()->with('success', 'تم إضافة الطالب بنجاح');
     }
 
     public function show(Request $request, Student $student): Response
